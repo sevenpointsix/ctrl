@@ -221,6 +221,8 @@ class CtrlController extends Controller
 	public function save_object(Request $request, $ctrl_class_id, $object_id = NULL)
 	{		
 
+		dd($_POST);
+
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();				
 		$ctrl_properties = $ctrl_class->ctrl_properties()->where('fieldset','!=','')->get();
 
@@ -381,6 +383,22 @@ class CtrlController extends Controller
         return stripslashes(json_encode($response));
     }
 
+    /**
+	 * Upload an item (image, video) using the Krajee file input (http://plugins.krajee.com/file-input)
+	 * @param  Request $request [description]
+	 * @return Response
+	 */
+	public function krajee_upload(Request $request)
+	{
+
+		$response = new \StdClass;
+
+		if ($request->type == 'image') { // or 'file'
+			$response->uploaded = '/uploads/14420.jpg';
+		}
+
+		return stripslashes(json_encode($response));
+	}
 	/**
 	 * Present the login screen
 	 *

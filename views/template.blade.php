@@ -23,9 +23,8 @@
       position: relative;
       min-height: 100%;
     }
-    body {    
-      /* Margin bottom by footer height */
-      margin-bottom: 50px;
+    body {          
+      margin-bottom: 70px;
       padding-top: 50px;
     }
     .footer {
