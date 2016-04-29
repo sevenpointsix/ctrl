@@ -156,6 +156,13 @@ class CtrlController extends Controller
 		$ctrl_properties = $ctrl_class->ctrl_properties()->where('fieldset','!=','')->get();	
 		foreach ($ctrl_properties as $ctrl_property) {
 
+			// Adjust the field type, mainly to handle relationships and multiple dropdowns
+			/* Or, do we actually handle this in the dropdown.blade template? Currently, yes we do:
+			if ($ctrl_property->field_type == 'dropdown' && $ctrl_property->relationship_type == 'belongsToMany') {
+				$ctrl_property->field_type = 'dropdown_multiple';
+			}
+			*/
+
 			if (!view()->exists('ctrl::form_fields.'.$ctrl_property->field_type)) {
 				trigger_error("Cannot load view for field type ".$ctrl_property->field_type);
 			}
@@ -171,12 +178,12 @@ class CtrlController extends Controller
 				}
 			}
 
+
 			// Ascertain the name current value of this field
 			// This essentially converts 'one' to 'one_id' and so on
 			$field_name = $ctrl_property->get_field_name();
 
-			if ($ctrl_property->related_to_id && $ctrl_property->relationship_type == 'hasMany') {
-				// Probably also true of belongsToMany?
+			if ($ctrl_property->related_to_id && in_array($ctrl_property->relationship_type,['hasMany','belongsToMany'])) {
 				$related_objects = $object->$field_name;
 				$value = [];
 				foreach ($related_objects as $related_object) {
