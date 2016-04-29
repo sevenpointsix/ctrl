@@ -23,6 +23,11 @@ Route::group(['as' => 'ctrl::','prefix'=>'admin','middleware' => ['web']], funct
 		'uses'=>'CtrlController@save_object'
 	]);
 
+	Route::post('froala',[
+		'as'=>'froala_upload',
+		'uses'=>'CtrlController@froala_upload'
+	]);
+
 	Route::match(['get', 'post'],'data/{ctrl_class_id}',[
 		'as'=>'get_data',
 		'uses'=>'CtrlController@get_data'
