@@ -36,7 +36,7 @@ class CtrlServiceprovider extends ServiceProvider{
 				__DIR__.'/config/ctrl.php' => config_path('ctrl.php'),
 		]);
 
-		// This copies our assets folder into the public folder for easy access
+		// This copies our assets folder into the public folder for easy access, again using artisan vendor:publish
 		$this->publishes([
 	        realpath(__DIR__.'/../assets') => public_path('assets/vendor/ctrl'),
 	        	// We could potentially just use 'vendor/ctrl'; check best practice here.

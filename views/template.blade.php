@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
 
     @yield('css')
+    @stack('css') {{-- Individual form fields push to the stack --}}
 
     <!-- Fix header and footer -->
     <style>
@@ -22,9 +23,8 @@
       position: relative;
       min-height: 100%;
     }
-    body {    
-      /* Margin bottom by footer height */
-      margin-bottom: 50px;
+    body {          
+      margin-bottom: 70px;
       padding-top: 50px;
     }
     .footer {
@@ -89,6 +89,7 @@
     <script src="{{ asset('assets/vendor/ctrl/vendor/bootstrap/js/bootstrap.min.js') }}"></script>
     
     @yield('js')
+    @stack('js') {{-- Individual form fields push to the stack --}}
 
   </body>
 </html>

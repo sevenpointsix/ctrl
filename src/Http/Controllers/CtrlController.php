@@ -156,6 +156,13 @@ class CtrlController extends Controller
 		$ctrl_properties = $ctrl_class->ctrl_properties()->where('fieldset','!=','')->get();	
 		foreach ($ctrl_properties as $ctrl_property) {
 
+			// Adjust the field type, mainly to handle relationships and multiple dropdowns
+			/* Or, do we actually handle this in the dropdown.blade template? Currently, yes we do:
+			if ($ctrl_property->field_type == 'dropdown' && $ctrl_property->relationship_type == 'belongsToMany') {
+				$ctrl_property->field_type = 'dropdown_multiple';
+			}
+			*/
+
 			if (!view()->exists('ctrl::form_fields.'.$ctrl_property->field_type)) {
 				trigger_error("Cannot load view for field type ".$ctrl_property->field_type);
 			}
@@ -171,12 +178,12 @@ class CtrlController extends Controller
 				}
 			}
 
+
 			// Ascertain the name current value of this field
 			// This essentially converts 'one' to 'one_id' and so on
 			$field_name = $ctrl_property->get_field_name();
 
-			if ($ctrl_property->related_to_id && $ctrl_property->relationship_type == 'hasMany') {
-				// Probably also true of belongsToMany?
+			if ($ctrl_property->related_to_id && in_array($ctrl_property->relationship_type,['hasMany','belongsToMany'])) {
 				$related_objects = $object->$field_name;
 				$value = [];
 				foreach ($related_objects as $related_object) {
@@ -213,6 +220,8 @@ class CtrlController extends Controller
 	 */
 	public function save_object(Request $request, $ctrl_class_id, $object_id = NULL)
 	{		
+
+		dd($_POST);
 
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();				
 		$ctrl_properties = $ctrl_class->ctrl_properties()->where('fieldset','!=','')->get();
@@ -316,10 +325,80 @@ class CtrlController extends Controller
             return redirect($redirect);            
         }
 
-
-
 	}
 
+
+	/**
+	 * Upload an item (image, video) to the Froala WYSIWYG
+	 * @param  Request $request [description]
+	 * @return Response
+	 */
+	public function froala_upload(Request $request)
+	{
+		// See: https://laravel.com/docs/5.1/requests#files
+		// See also: https://www.froala.com/wysiwyg-editor/docs/server-integrations/php-image-upload
+
+		/*
+			We could add validation here, BUT; froala appears to validate the file type (ie, images only) already.
+			This may be a Chrome/HTML5 feature though; we may yet to run serverside validation in IE or similar.
+		*/
+		/*
+		$this->validate($request, [
+	        'file' => 'required|image'
+	    ]);
+	    */
+
+	    $response = new \StdClass;
+
+		if ($request->file('file')->isValid()) {
+			
+			$extension = $request->file('file')->getClientOriginalExtension();
+			
+			if ($request->type == 'image') {
+				$name      = uniqid('image_');
+			}
+			else if ($request->type == 'file') {
+				// We could add something a little more intelligent here
+				$name = basename($request->file('file')->getClientOriginalName(),".$extension").'-'.rand(11111,99999);
+			}
+			
+			$target_folder = 'uploads';
+			$target_file   = $name.'.'.$extension;
+			
+			$moved_file      = $request->file('file')->move($target_folder, $target_file);			
+			$response->link  = '/'.$moved_file->getPathname();
+		}
+		else {
+			$response->error = 'An error has occurred';
+			/*
+				Or, we could potentially use:
+					$request->file('file')->getErrorMessage();
+				... or
+					$request->file('file')->getError();
+				See: http://api.symfony.com/2.7/Symfony/Component/HttpFoundation/File/UploadedFile.html#method_getError
+				See also notes above regarding automatic validation in Froala/HTML5 though.
+			*/
+		}		
+        
+        return stripslashes(json_encode($response));
+    }
+
+    /**
+	 * Upload an item (image, video) using the Krajee file input (http://plugins.krajee.com/file-input)
+	 * @param  Request $request [description]
+	 * @return Response
+	 */
+	public function krajee_upload(Request $request)
+	{
+
+		$response = new \StdClass;
+
+		if ($request->type == 'image') { // or 'file'
+			$response->uploaded = '/uploads/14420.jpg';
+		}
+
+		return stripslashes(json_encode($response));
+	}
 	/**
 	 * Present the login screen
 	 *
