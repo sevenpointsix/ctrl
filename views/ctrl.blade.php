@@ -1,4 +1,4 @@
-@extends('ctrl::template')
+@extends('ctrl::master')
 
 
 @section('content')

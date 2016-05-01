@@ -1,29 +1,27 @@
-<div class="form-group">
-    <label for="{{ $field['id'] }}">{{ $field['label'] }}</label>
-    
+@extends('ctrl::form_fields.master')
+
+@section('input')
     @if (is_array($field['value'])) {{-- Indicates a multiple select --}}
 
-    <select class="form-control" id="{{ $field['id'] }}" name="{{ $field['name'] }}[]" multiple>    	
-    	@foreach ($field['values'] as $value=>$text)
-	  		<option value="{{ $value }}" @if (array_key_exists($value,$field['value'])) selected="selected" @endif>{{ $text }}</option>
-	  	@endforeach
-	</select>
+    <select class="form-control" id="{{ $field['id'] }}" name="{{ $field['name'] }}[]" multiple>        
+        @foreach ($field['values'] as $value=>$text)
+            <option value="{{ $value }}" @if (array_key_exists($value,$field['value'])) selected="selected" @endif>{{ $text }}</option>
+        @endforeach
+    </select>
 
     @else
 
     <select class="form-control" id="{{ $field['id'] }}" name="{{ $field['name'] }}">
-    	<option value="">None</option>
-    	@foreach ($field['values'] as $value=>$text)
-	  		<option value="{{ $value }}" @if ($field['value'] == $value) selected="selected" @endif>{{ $text }}</option>
-	  	@endforeach
-	</select>
+        <option value="">None</option>
+        @foreach ($field['values'] as $value=>$text)
+            <option value="{{ $value }}" @if ($field['value'] == $value) selected="selected" @endif>{{ $text }}</option>
+        @endforeach
+    </select>
 
-	@endif
-
-    @if (!empty($field['tip']))
-    <p class="help-block">{{ $field['tip'] }}</p>
     @endif
-</div>
+@overwrite
+{{-- Note that we need @overwrite because we include multiple instances of templates that extend form_fields.master: see https://github.com/laravel/framework/issues/1058 --}}
+
 
 @if (is_array($field['value'])) {{-- Indicates a multiple select --}}
 

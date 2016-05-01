@@ -1,10 +1,10 @@
-@extends('ctrl::template')
+@extends('ctrl::master')
 
 
 @section('content')
 	
 	<div class="page-header">
-	  <h1><i class="fa fa-dashboard"></i> CTRL <small>This is your CMS</small></h1>
+	  <h1>CTRL <small>This is your CMS</small></h1>
 	</div>
 
 	<div class="row">

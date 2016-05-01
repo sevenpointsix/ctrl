@@ -1,4 +1,4 @@
-@extends('ctrl::template')
+@extends('ctrl::master')
 
 
 @section('js')
@@ -42,7 +42,7 @@
 
 				@foreach ($form_fields as $form_field)
 
-					@include('ctrl::form_fields.'.$form_field['type'], ['field' => $form_field])
+					@include('ctrl::form_fields.'.$form_field['template'], ['field' => $form_field])
 
 				@endforeach
 				

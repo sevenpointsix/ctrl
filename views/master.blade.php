@@ -58,11 +58,13 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="{{ route('ctrl::dashboard') }}">CTRL</a>
+          <a class="navbar-brand" href="{{ route('ctrl::dashboard') }}"><i class="fa fa-home fa-2x"></i></a>
         </div>
         <div class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
+            {{-- Don't think we need a "home" link
             <li class="active"><a href="{{ route('ctrl::dashboard') }}">Dashboard</a></li>
+            --}}
           </ul>
         </div><!--/.nav-collapse -->
       </div>

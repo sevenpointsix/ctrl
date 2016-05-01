@@ -48,11 +48,14 @@ class CtrlSynch extends Command
             $this->generate_model_files();
         }
         else if ($action == 'data') {
+            $this->populate_ctrl_tables();            
+        }
+        else if ($action == 'all') {
             $this->populate_ctrl_tables();
             $this->generate_model_files();
         }
         else {
-            $this->line('Usage: php artisan ctrl:synch files|data');
+            $this->line('Usage: php artisan ctrl:synch files|data|all');
         }      
         
     }
@@ -124,7 +127,7 @@ class CtrlSynch extends Command
 
         $tables_processed  = 0;
         $columns_processed = 0; // Could track added/updated counts here, and possibly even 'deleted'
-        $ignore_columns = ['id','created_at','updated_at','deleted_at']; // Do we ever want to see these fields?
+        $ignore_columns = ['id','created_at','updated_at','deleted_at','remember_token']; // Do we ever want to see these fields?
 
         for ($pass = 1; $pass <= 2; $pass++) { // Properties on pass 1, relationships on pass 2
             foreach ($standard_tables as $standard_table) {
@@ -159,6 +162,39 @@ class CtrlSynch extends Command
 
                         // $ctrl_property->ctrl_class()->save($ctrl_class);
                         // I think we can omit this, as we've already set ctrl_class_id when calling firstOrNew():
+
+                         // Set some default flags, labels, field_types and so on:
+                        switch ($ctrl_property->name) {
+                            case 'title':
+                            case 'name':
+                                $ctrl_property->add_to_set('flags','header');
+                                $ctrl_property->add_to_set('flags','string');
+                                $ctrl_property->add_to_set('flags','required');
+                                $ctrl_property->add_to_set('flags','search');
+                                break;
+                            case 'image':
+                            case 'photo':
+                                $ctrl_property->field_type = 'image';
+                                break;
+                            case 'file':                            
+                                $ctrl_property->field_type = 'file';
+                                break;
+                            case 'email':
+                            case 'email_address':
+                                $ctrl_property->field_type = 'email';
+                                break;
+                            case 'content':                            
+                                $ctrl_property->field_type = 'froala';
+                                break;
+                        }
+
+                        if (!$ctrl_property->field_type) {
+                            $ctrl_property->field_type    = $ctrl_property->get_field_type_from_column($column->Type);
+                        }
+
+                        $ctrl_property->label    = ucfirst(str_replace('_',' ',$ctrl_property->name));
+                        $ctrl_property->fieldset = 'Content';
+
                         $ctrl_property->save();             
                     }
                     else if (ends_with($column_name,'_id') && $pass == 2) { // A relationship
@@ -180,11 +216,14 @@ class CtrlSynch extends Command
                             'name'              => str_replace('_id', '', $column_name),
                             'relationship_type' => 'belongsTo',
                             'foreign_key'       => $column_name,
-                            'local_key'         => 'id'
+                            'local_key'         => 'id',
+                            // Assume we always want to include simple "belongsTo" relationships on the form
+                            'field_type' => 'dropdown',
+                            'label'      => ucfirst($column_name),
+                            'fieldset'   => 'Content'
                         ]);                 
 
-                        $ctrl_property->save(); // As above, no need to explicitly save relationship
-                            // Could automatically set flags, labels and field_types here, but still KIS for now
+                        $ctrl_property->save(); // As above, no need to explicitly save relationship                            
                             
                         // We do need to create the inverse property though:
                     

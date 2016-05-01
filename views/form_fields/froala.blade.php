@@ -1,11 +1,9 @@
-{{-- NOTE: we could potentially extend a generic bootstrap field input template here, which would automatically pull in the label and so on, and just customise the actual input --}}
-<div class="form-group">
-    <label for="{{ $field['id'] }}">{{ $field['label'] }}</label>
-    <textarea class="form-control froala-editor" id="{{ $field['id'] }}" name="{{ $field['name'] }}">{{ $field['value'] }}</textarea>
-    @if (!empty($field['tip']))
-    <p class="help-block">{{ $field['tip'] }}</p>
-    @endif
-</div>
+@extends('ctrl::form_fields.master')
+
+@section('input')
+	<textarea class="form-control froala-editor" id="{{ $field['id'] }}" name="{{ $field['name'] }}">{{ $field['value'] }}</textarea>
+@overwrite
+{{-- Note that we need @overwrite because we include multiple instances of templates that extend form_fields.master: see https://github.com/laravel/framework/issues/1058 --}}
 
 {{-- This allows us to push some JS to the JS stack only once; it's a hack, but appears to work --}}
 @if (empty($GLOBALS['push_froala_js']))

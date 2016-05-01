@@ -66,9 +66,21 @@ class CtrlController extends Controller
 			// The ordering here will need work, this is purely a quick solution while bootstrapping the site
 		$menu_links        = [];
 		foreach ($ctrl_classes as $ctrl_class) {
+
+			if ($ctrl_class->plural) {
+				$menu_title = $ctrl_class->plural;
+			}
+			else if ($ctrl_class->singular) {
+				$menu_title = str_plural($ctrl_class->singular);
+			}
+			else {
+				$menu_title = str_plural(strtolower($ctrl_class->name));
+			}
+			
+
 			$menu_links[$ctrl_class->menu_title][] = [
 				'id'    => $ctrl_class->id,
-				'title' => ucwords($ctrl_class->plural ? $ctrl_class->plural : str_plural($ctrl_class->singular)),
+				'title' => ucwords($menu_title),
 			];
 		}
 
@@ -92,6 +104,11 @@ class CtrlController extends Controller
 		]);
 	}
 
+	/**
+	 * Get data for datatables
+	 * @param  [type] $ctrl_class_id [description]
+	 * @return [type]                [description]
+	 */
 	public function get_data($ctrl_class_id) {
 
 		//$objects = \App\Ctrl\Models\Test::query();
@@ -162,8 +179,18 @@ class CtrlController extends Controller
 				$ctrl_property->field_type = 'dropdown_multiple';
 			}
 			*/
+			// We do use the same view for image and file, though:
+			if (in_array($ctrl_property->field_type,['image','file'])) {
+				$ctrl_property->template = 'krajee';
+			}
+			elseif (in_array($ctrl_property->field_type,['date','datetime'])) {
+				$ctrl_property->template = 'date';
+			}
+			else {
+				$ctrl_property->template = $ctrl_property->field_type;
+			}
 
-			if (!view()->exists('ctrl::form_fields.'.$ctrl_property->field_type)) {
+			if (!view()->exists('ctrl::form_fields.'.$ctrl_property->template)) {
 				trigger_error("Cannot load view for field type ".$ctrl_property->field_type);
 			}
 
@@ -175,6 +202,22 @@ class CtrlController extends Controller
 				$related_objects  	= $related_class::all();
 				foreach ($related_objects as $related_object) {
 					$values[$related_object->id] = $related_object->title; // 'title' won't always be true
+				}
+			}
+			else {
+				$column = DB::select("SHOW COLUMNS FROM {$ctrl_property->ctrl_class->table_name} WHERE Field = '{$ctrl_property->name}'");
+				$type = $column[0]->Type;
+				// Is this an ENUM field?
+				preg_match("/enum\((.*)\)/", $type, $matches);				
+				if ($matches) {					
+					// Convert 'One','Two','Three' into an array
+					$enums = explode("','",trim($matches[1],"'"));
+					$loop = 1;
+					foreach ($enums as $enum) {
+						// Note that apostrophes are doubled-up when exported from SHOW COLUMNS
+						$value = str_replace("''","'",$enum);					
+						$values[$loop++] = $value;
+					}
 				}
 			}
 
@@ -195,13 +238,14 @@ class CtrlController extends Controller
 			}
 
 			$form_fields[] = [
-				'id'     => 'form_id_'.$ctrl_property->name,
-				'name'   => $field_name,
-				'values' => $values,
-				'value'  => $value, // Remember that $value can be an array, for relationships / multiple selects etc
-				'type'   => $ctrl_property->field_type,
-				'label'  => $ctrl_property->label,
-				'tip'    => $ctrl_property->tip,
+				'id'       => 'form_id_'.$ctrl_property->name,
+				'name'     => $field_name,
+				'values'   => $values,
+				'value'    => $value, // Remember that $value can be an array, for relationships / multiple selects etc
+				'type'     => $ctrl_property->field_type,
+				'template' => $ctrl_property->template,
+				'label'    => $ctrl_property->label,
+				'tip'      => $ctrl_property->tip,
 			];
 		}		
 
@@ -221,7 +265,7 @@ class CtrlController extends Controller
 	public function save_object(Request $request, $ctrl_class_id, $object_id = NULL)
 	{		
 
-		dd($_POST);
+		// dd($_POST);
 
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();				
 		$ctrl_properties = $ctrl_class->ctrl_properties()->where('fieldset','!=','')->get();
@@ -245,6 +289,11 @@ class CtrlController extends Controller
 			if ($ctrl_property->field_type == 'email') {
 				$validation[$field_name][] = 'email';
 			}
+			// Check for valid dates; not sure if tis is correct?
+			if (in_array($ctrl_property->field_type,['date','datetime'])) {
+				$validation[$field_name][] = 'date';
+			}
+
 			if (!empty($validation[$field_name])) {
 				$validation[$field_name] = implode('|', $validation[$field_name]);
 			}
@@ -255,6 +304,14 @@ class CtrlController extends Controller
 
 	    $class 		= $ctrl_class->get_class();		
 		$object  	= ($object_id) ? $class::where('id',$object_id)->firstOrFail() : new $class;		
+		
+		// Convert dates back into MySQL format; this feels quite messy but I can't see where else to do it:
+		foreach ($ctrl_properties as $ctrl_property) {
+			if (in_array($ctrl_property->field_type,['date','datetime']) && !empty($_POST[$ctrl_property->name])) {				
+				$date_format = $ctrl_property->field_type == 'date' ? 'Y-m-d' : 'Y-m-d H:i:s';
+				$_POST[$ctrl_property->name] = date($date_format,strtotime($_POST[$ctrl_property->name]));
+			}
+		}
 		
         $object->fill($_POST);
        
@@ -385,17 +442,41 @@ class CtrlController extends Controller
 
     /**
 	 * Upload an item (image, video) using the Krajee file input (http://plugins.krajee.com/file-input)
+	 * See: http://webtips.krajee.com/ajax-based-file-uploads-using-fileinput-plugin/
 	 * @param  Request $request [description]
 	 * @return Response
 	 */
 	public function krajee_upload(Request $request)
 	{
 
-		$response = new \StdClass;
+		// This code is very, very similar to froala_upload, but we'll keep them separate for future flexibility
 
-		if ($request->type == 'image') { // or 'file'
-			$response->uploaded = '/uploads/14420.jpg';
+		$response = new \StdClass;
+		
+		$field_name = $request->field_name;
+		// We pass in field_name as a hidden parameter
+		if ($request->file($field_name)->isValid()) {
+			
+			$extension = $request->file($field_name)->getClientOriginalExtension();
+			
+			if ($request->type == 'image') {
+				$name      = uniqid('image_');
+			}
+			else if ($request->type == 'file') {
+				// We could add something a little more intelligent here
+				$name = basename($request->file($field_name)->getClientOriginalName(),".$extension").'-'.rand(11111,99999);
+			}
+			
+			$target_folder = 'uploads';
+			$target_file   = $name.'.'.$extension;
+			
+			$moved_file      = $request->file($field_name)->move($target_folder, $target_file);			
+			$response->link  = '/'.$moved_file->getPathname();
 		}
+		else {
+			$response->error = 'An error has occurred';
+			
+		}		
 
 		return stripslashes(json_encode($response));
 	}

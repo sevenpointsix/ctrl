@@ -1,6 +1,10 @@
 @extends('ctrl::form_fields.master')
 
 @section('input')
-	<input type="text" class="form-control" id="{{ $field['id'] }}" name="{{ $field['name'] }}" value="{{ $field['value'] }}" placeholder="">
+	<div class="input-group">
+    	<span class="input-group-addon">@</span>    	
+		<input type="email" class="form-control" id="{{ $field['id'] }}" name="{{ $field['name'] }}" value="{{ $field['value'] }}" placeholder="">
+	</div>
+
 @overwrite
 {{-- Note that we need @overwrite because we include multiple instances of templates that extend form_fields.master: see https://github.com/laravel/framework/issues/1058 --}}
