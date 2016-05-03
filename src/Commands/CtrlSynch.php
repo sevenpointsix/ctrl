@@ -316,6 +316,10 @@ class CtrlSynch extends Command
      */
     public function generate_model_files()
     {
+        $model_folder = 'Ctrl/Models/';
+        if(!File::exists(app_path($model_folder))) {
+            File::makeDirectory(app_path($model_folder),0777,true); // See http://laravel-recipes.com/recipes/147/creating-a-directory
+        }
 
         $ctrl_classes = \Sevenpointsix\Ctrl\Models\CtrlClass::get();
 
@@ -363,7 +367,7 @@ class CtrlSynch extends Command
             }
 
             $model_code = View::make('ctrl::model_template',$view_data)->render();
-            $model_path = app_path('Ctrl/Models/'.$ctrl_class->name.'.php');
+            $model_path = app_path($model_folder.$ctrl_class->name.'.php');
 
             File::put($model_path, $model_code);
         

@@ -72,10 +72,33 @@ $(function() {
         serverSide: true,
         ajax: '{!! route('ctrl::get_data',array($ctrl_class->id)) !!}',
         columns: {!! $js_columns !!},
-        "drawCallback": function( settings ) {
+        drawCallback: function( settings ) {
         	$('.dropdown-toggle').dropdown(); // Refresh Bootstrap dropdowns
     	},
-    	language: { 'searchPlaceholder': 'Search...','sSearch':'' } // Remove the "Search:" label, and add a placeholder
+    	language: { 'searchPlaceholder': 'Search...','sSearch':'' }, // Remove the "Search:" label, and add a placeholder
+    	initComplete: function () { // Add column filters; see https://datatables.net/examples/api/multi_filter_select.html
+    		var total_columns = this.api().columns().indexes().length;
+            this.api().columns().every( function () {
+                var column = this;         
+                // Don't allow searching of the "actions" column
+                column_filterable = $(column.footer()).attr('data-filterable');                
+                if (column_filterable == 'false') return false;
+
+                var select = $('<select><option value="">-</option></select>')
+                    .appendTo( $(column.footer()).empty() )
+                    .on( 'change', function () {
+                        var val = $.fn.dataTable.util.escapeRegex(
+                            $(this).val()
+                        );
+                        column
+                            .search( val ? '^'+val+'$' : '', true, false )
+                            .draw();
+                    } );
+                column.data().unique().sort().each( function ( d, j ) {
+                    select.append( '<option value="'+d+'">'+d+'</option>' )
+                } );
+            } );
+        }
     });
 
     // Add custom buttons
@@ -107,7 +130,7 @@ $(function() {
 
 	<div class="page-header">
 		<h1>@if ($ctrl_class->icon)<i class="fa fa-cog"></i>@endif
-		{{ $ctrl_class->name }} <small>Description (filter?) if necessary</small></h1>
+		{{ $ctrl_class->name }} <small>Description goes here if necessary</small></h1>
 	</div>
 	
 	<table class="table table-bordered table-striped" id="data-table">
@@ -117,6 +140,12 @@ $(function() {
                 <th class="empty_header" width="1"  data-orderable="false"  data-searchable="false"></th>
             </tr>
         </thead>
+        <tfoot>
+            <tr>
+            	{!! $th_columns !!}
+                <th data-filterable="false">{{-- This isn't an official datatables data attribute; we check it in initComplete() --}}</th>
+            </tr>
+        </tfoot>
     </table>
     <hr />
 

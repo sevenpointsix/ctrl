@@ -18,6 +18,7 @@ use URL;
 use DB;
 use View;
 use File;
+use Storage;
 use Log;
 
 use Datatables;
@@ -89,6 +90,8 @@ class CtrlController extends Controller
 		]);
 	}
 
+
+
 	/**
 	 * List all objects of a given CtrlClass
 	 *
@@ -103,10 +106,10 @@ class CtrlController extends Controller
 		// (Search in set code here: http://stackoverflow.com/questions/28055363/laravel-eloquent-find-in-array-from-sql)
 		// Some minor duplication of code from get_data here:
 		$headers = $ctrl_class->ctrl_properties()->whereRaw(
-		   'find_in_set(?, flags) or find_in_set(?, flags)',
+		   '(find_in_set(?, flags) or find_in_set(?, flags))', // Note that the bracket grouping is required: http://stackoverflow.com/questions/27193509/laravel-eloquent-whereraw-sql-clause-returns-all-rows-when-using-or-operator
 		   ['header','search']		   
 		)->get();
-		dd($headers);
+		
 		/*
 		We need to basically recreate something like this for the JS column definitions		 
 			{ data: 'title', name: 'title' },
@@ -147,11 +150,14 @@ class CtrlController extends Controller
         	}
         	else {
         		$column->data = $header->name;
-        		$column->name = $header->name;
+        		$column->name = $ctrl_class->table_name.'.'.$header->name;
+        			// Again, see http://datatables.yajrabox.com/eloquent/relationships
+        			// "Important! To avoid ambiguous column name error, it is advised to declare your column name as table.column just like on how you declare it when using a join statements."
         	}
         	$js_columns[] = $column;        	
         	$th_columns[] = '<th>'.$header->label.'</th>';
         }
+        // Add the "action" column
         $action_column       = new \StdClass;
         $action_column->data = 'action';
         $action_column->name = 'action';
@@ -180,9 +186,10 @@ class CtrlController extends Controller
 		// This will include all necessary relationships: see http://datatables.yajrabox.com/eloquent/relationships
 		
 		$headers = $ctrl_class->ctrl_properties()->whereRaw(
-		   'find_in_set(?, flags)',
-		   ['header'] // Do we need "searchable" here as well? Need to clarify how datatables actually searches...
+		   '(find_in_set(?, flags) or find_in_set(?, flags))',
+		   ['header','search']
 		)->get();
+
 		$with = array();
 		foreach ($headers as $header) {
 			if ($header->relationship_type) {
@@ -572,10 +579,6 @@ class CtrlController extends Controller
 		return view('ctrl::login');
 	}
 
-
-	
-	
-
 	/**
 	 * Random testing
 	 *
@@ -583,8 +586,20 @@ class CtrlController extends Controller
 	 */
 	public function test()
 	{			
+	
+		$model_folder = 'Ctrl';
 
+        echo app_path($model_folder);
+        
+        if (!File::makeDirectory(app_path($model_folder))) {
+        	echo "fail";
+        }
+        else {
+        	echo "success";
+        }
+		exit();
 		$test = \App\Ctrl\Models\Test::find(1);
+		dd($test->title);
 		$test->fill(['_token'=>'z0nOvDnYZ5BvAh5YAHvg0fcpTyUNG6wBhgYFqQvG','title'=>'testing']);
 		$test->save();
 	}
