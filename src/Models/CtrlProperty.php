@@ -40,6 +40,8 @@ class CtrlProperty extends Model
         return $column;
     }
 
+
+
     /**
      * Add a value to a "SET" field
      * Lifted from the CI version!
@@ -104,6 +106,15 @@ class CtrlProperty extends Model
                 $this->messages->add("Unhandled type $column_type",'danger');
         }
         return $type;
+    }
+
+    /**
+     * A shortcut function to quickly check whether a class is flagged $flag; saves calling in_array() etc all the time
+     * @param  string $flag THe flag we want to check
+     * @return boolean          Whether or not the flag is set
+     */
+    public function flagged($flag) {
+        return (in_array($flag, explode(',',$this->flags)));
     }
 
 }

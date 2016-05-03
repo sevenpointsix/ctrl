@@ -99,8 +99,68 @@ class CtrlController extends Controller
 
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();		
 
+		// We need to include the correct header columns on the table
+		// (Search in set code here: http://stackoverflow.com/questions/28055363/laravel-eloquent-find-in-array-from-sql)
+		// Some minor duplication of code from get_data here:
+		$headers = $ctrl_class->ctrl_properties()->whereRaw(
+		   'find_in_set(?, flags) or find_in_set(?, flags)',
+		   ['header','search']		   
+		)->get();
+		dd($headers);
+		/*
+		We need to basically recreate something like this for the JS column definitions		 
+			{ data: 'title', name: 'title' },
+            { data: 'one.title', name: 'one.title',"defaultContent": '<!-- NONE -->' },
+            { data: 'action', name: 'action' }, 
+        ... and this in the HTML:
+			<th>Title</th>
+            <th>One</th>
+		 */
+        $js_columns = [];
+        $th_columns = [];
+
+        foreach ($headers as $header) {
+        	$column = new \StdClass;
+        	if ($header->relationship_type) {
+        		// We need to identify the "string" column for this related class
+        		// Note that this doesn't yet handle hasMany relationships, I don't think?
+        		// We also haven't allowed for classes with multiple "string" values;
+        		// we may have to utilise something from http://datatables.yajrabox.com/eloquent/dt-row for that
+        		$related_ctrl_class = CtrlClass::where('id',$header->related_to_id)->firstOrFail();	
+        		$string = $ctrl_class->ctrl_properties()->whereRaw(
+				   'find_in_set(?, flags)',
+				   ['string']				   
+				)->firstOrFail();
+				$value = $header->name.'.'.$string->name; // $header->name might not always hold true here?
+        		$column->data = $value;
+        		$column->name = $value;
+
+        		// Hide any columns that are searchable, but not headers (probably quite rare in practice)
+        		// See https://datatables.net/reference/option/columns.visible
+        		if (in_array('search', explode(',',$header->flags)) && !in_array('header', explode(',',$header->flags))) {
+        			$column->visible = false;
+        		}
+
+        		// Get around a problem with datatables if there's no relationship defined
+        		// See https://datatables.net/manual/tech-notes/4
+        		$column->defaultContent = '<!-- NONE -->';
+        	}
+        	else {
+        		$column->data = $header->name;
+        		$column->name = $header->name;
+        	}
+        	$js_columns[] = $column;        	
+        	$th_columns[] = '<th>'.$header->label.'</th>';
+        }
+        $action_column       = new \StdClass;
+        $action_column->data = 'action';
+        $action_column->name = 'action';
+        $js_columns[]        = $action_column;
+
 		return view('ctrl::list_objects',[
 			'ctrl_class' => $ctrl_class,
+			'th_columns' => implode("\n",$th_columns),
+			'js_columns' => json_encode($js_columns),
 		]);
 	}
 
@@ -116,14 +176,33 @@ class CtrlController extends Controller
 
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();		
 		$class      = $ctrl_class->get_class();
-		$objects    = $class::query(); // Why query() and not all()? Are they the same thing>
+		//$objects    = $class::query(); // Why query() and not all()? Are they the same thing>
+		// This will include all necessary relationships: see http://datatables.yajrabox.com/eloquent/relationships
+		
+		$headers = $ctrl_class->ctrl_properties()->whereRaw(
+		   'find_in_set(?, flags)',
+		   ['header'] // Do we need "searchable" here as well? Need to clarify how datatables actually searches...
+		)->get();
+		$with = array();
+		foreach ($headers as $header) {
+			if ($header->relationship_type) {
+				// If this is a relationship, include it in the main query below
+				$with[] = $header->name;
+			}
+		}
+
+		if ($with) {
+			$objects = $class::with(implode(',', $with))->select($ctrl_class->table_name.'.*');	
+		}
+		else {
+			$objects    = $class::query();
+		}
 
 		// See http://datatables.yajrabox.com/eloquent/dt-row for some good tips here
 
         return Datatables::of($objects)
             ->addColumn('action', function ($object) use ($ctrl_class) {
             	$edit_link = route('ctrl::edit_object',[$ctrl_class->id,$object->id]);
-
             	$buttons = '
             	<!-- Split button -->
 <div class="btn-group flex">

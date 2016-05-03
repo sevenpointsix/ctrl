@@ -20,10 +20,11 @@
 	}	
 	*/
 	
-	
+	/* Is this actually necessary? It looks fine with the border:;
 	table.dataTable.table-bordered>thead>tr>th.final_header {
 		border-right: none;
 	}	
+	*/
 	table.dataTable.table-bordered>thead>tr>th.empty_header {
 		border-left: none;
 	}
@@ -70,10 +71,7 @@ $(function() {
         processing: true,
         serverSide: true,
         ajax: '{!! route('ctrl::get_data',array($ctrl_class->id)) !!}',
-        columns: [            
-            { data: 'title', name: 'title' },
-            { data: 'action', name: 'action' },            
-        ],
+        columns: {!! $js_columns !!},
         "drawCallback": function( settings ) {
         	$('.dropdown-toggle').dropdown(); // Refresh Bootstrap dropdowns
     	},
@@ -115,7 +113,7 @@ $(function() {
 	<table class="table table-bordered table-striped" id="data-table">
         <thead>
             <tr>
-                <th class="final_header">Title</th>
+            	{!! $th_columns !!}
                 <th class="empty_header" width="1"  data-orderable="false"  data-searchable="false"></th>
             </tr>
         </thead>
