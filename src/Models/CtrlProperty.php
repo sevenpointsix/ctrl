@@ -86,7 +86,7 @@ class CtrlProperty extends Model
             case 'enum':
             case 'set':
                 // NOTE: not sure that we handle 'set' values, but with DMZ we're unlikely to use them
-                $type = 'enum';
+                $type = 'dropdown';
                 break;
             case 'tinyint':
                 $type = 'checkbox';
@@ -103,7 +103,7 @@ class CtrlProperty extends Model
                 break;
             default:
                 $type = 'text';
-                $this->messages->add("Unhandled type $column_type",'danger');
+                trigger_error("Unhandled type $column_type");
         }
         return $type;
     }

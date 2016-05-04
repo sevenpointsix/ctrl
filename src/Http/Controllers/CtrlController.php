@@ -154,7 +154,14 @@ class CtrlController extends Controller
         		$column->name = $ctrl_class->table_name.'.'.$header->name;
         			// Again, see http://datatables.yajrabox.com/eloquent/relationships
         			// "Important! To avoid ambiguous column name error, it is advised to declare your column name as table.column just like on how you declare it when using a join statements."
-        		$th_columns[] = '<th data-search-text="true">'.$header->label.'</th>';
+        		if ($header->name == 'order') {
+        			// A special case, we use this to allow the table to be reordered
+        			$th_columns[] = '<th width="1" data-order-rows="true">'.$header->label.'</th>';
+        		}
+        		else {
+        			$th_columns[] = '<th data-search-text="true">'.$header->label.'</th>';
+        		}
+        	
         	}
         	$js_columns[] = $column;        	
         	
@@ -216,7 +223,8 @@ class CtrlController extends Controller
 
 		// Known issue, that I'm struggling to resolve; if we have a dropdown to search related fields, but there's no relationship for an object, we can't select the "empty" value and show all items without a relationship. TODO.
 
-        return Datatables::of($objects)        	          
+        return Datatables::of($objects)  
+        	->setRowId('id') // For reordering
             ->addColumn('action', function ($object) use ($ctrl_class) {
             	$edit_link = route('ctrl::edit_object',[$ctrl_class->id,$object->id]);
             	$buttons = '
@@ -650,7 +658,8 @@ class CtrlController extends Controller
 		    	$redirect = URL::previous();
 			    $message  = 'Logged in';
 	        	$messages = collect([$message]);
-	        	$request->session()->flash('messages', $messages);	
+	        	$request->session()->flash('messages', $messages);		        	
+	        	$status = 200;
 		    }
 		    else {
 		    	Auth::logout();		    	
@@ -660,16 +669,21 @@ class CtrlController extends Controller
 		if (!Auth::check()) {
 			// Can't log in, try again			
         	$redirect = route('ctrl::login');
-        	// Set a flash error message
+        	// Set a flash error message; we don't use these, in fact (we just trigger the "shake" error effect from Authenty)
         	$message  = 'Incorrect login';
         	$messages = collect([$message]);
         	$request->session()->flash('errors', $messages);
+     		$status = 400; // Side note: we can set this to 422 to emulate a Laravel validation error
         }	    
 
-        if ($request->ajax()) {        	
-            return json_encode([
-                'redirect' => $redirect
-            ]);
+        if ($request->ajax()) { 
+        	// NOTE: the response here will refresh the page clientside; NOT display Ajax errors inline
+        	// forms.js is designed to handle an Ajax error response from the Laravel validation method only
+        	// We can replicate this manually (see $status below), but for the login form, why bother?
+            $json = [
+                'redirect' => $redirect                
+            ];
+           	return \Response::json($json, $status);
         }
         else {            
             return redirect($redirect);

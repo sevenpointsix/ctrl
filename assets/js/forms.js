@@ -6,7 +6,7 @@ $(document).ready(function() {
   var options = { 
         dataType: 'json',
         success: function(responseText, statusText, xhr, $form)  { 
-          redirect = responseText.redirect;          
+          redirect = responseText.redirect;  
           // If we're trying to reload the page and drop to an anchor, the standard approach doesn't work.
           // See extensive notes on the Rosewood site about this.
           
@@ -35,7 +35,7 @@ $(document).ready(function() {
           if (jqXHR.status == 422) { // This is the status code Laravel returns when validation fails:
             response = $.parseJSON(jqXHR.responseText);           
             var error_messages = new Array();         
-            $.each(response, function(field, error) {
+            $.each(response, function(field, error) {              
             // Field [name=field] now has the error error           
               $('[name="'+field+'"]').parents('div.form-group').addClass('has-error');                          
               error_messages.push(error);

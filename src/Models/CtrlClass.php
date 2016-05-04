@@ -19,7 +19,7 @@ class CtrlClass extends Model
      */
     public function ctrl_properties()
     {       
-        return $this->hasMany('Sevenpointsix\Ctrl\Models\CtrlProperty');
+        return $this->hasMany('Sevenpointsix\Ctrl\Models\CtrlProperty')->orderBy('order');
     }
 
     /**

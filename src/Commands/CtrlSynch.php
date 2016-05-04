@@ -139,6 +139,7 @@ class CtrlSynch extends Command
                     // We could set default permissions, icons, menu items here, but let's KIS for now
 
                 $columns = DB::select("SHOW COLUMNS FROM {$standard_table}");
+                $column_order = 1;
                 foreach ($columns as $column) {
 
                     $column_name = $column->Field;
@@ -162,6 +163,14 @@ class CtrlSynch extends Command
 
                         // $ctrl_property->ctrl_class()->save($ctrl_class);
                         // I think we can omit this, as we've already set ctrl_class_id when calling firstOrNew():
+
+                        if ($ctrl_property->name == 'order') {
+                            // Set this as a header, so that we can reorder the table, then skip the rest
+                            $ctrl_property->add_to_set('flags','header');
+                            $ctrl_property->order = -1; // To force this to be the first column on the left of the table
+                            $ctrl_property->save(); 
+                            continue; // Is this correct? Or break?
+                        }
 
                          // Set some default flags, labels, field_types and so on:
                         switch ($ctrl_property->name) {
@@ -192,6 +201,8 @@ class CtrlSynch extends Command
                             $ctrl_property->field_type    = $ctrl_property->get_field_type_from_column($column->Type);
                         }
 
+                        $ctrl_property->order = $column_order++;
+
                         $ctrl_property->label    = ucfirst(str_replace('_',' ',$ctrl_property->name));
                         $ctrl_property->fieldset = 'Content';
 
@@ -221,7 +232,9 @@ class CtrlSynch extends Command
                             'field_type' => 'dropdown',
                             'label'      => ucfirst($column_name),
                             'fieldset'   => 'Content'
-                        ]);                 
+                        ]); 
+
+                        $ctrl_property->order = $column_order++; // Do we leave this out of the firstOrNew, as order is something we'd tweak manually?                
 
                         $ctrl_property->save(); // As above, no need to explicitly save relationship                            
                             

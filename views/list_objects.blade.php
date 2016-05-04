@@ -4,6 +4,10 @@
 @section('css')
 <!-- DataTables --> 
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/t/bs-3.3.6/dt-1.10.11,b-1.1.2,r-2.0.2/datatables.min.css"/>
+<!-- Row reorder -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.1.1/css/rowReorder.dataTables.min.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.1.1/css/rowReorder.bootstrap.min.css" />
+
 <style type="text/css">
 	.btn-group.flex {
 	  display: flex; /* Prevent button dropdowns from wrapping in table, see https://github.com/twbs/bootstrap/issues/9939 */
@@ -68,6 +72,12 @@
 		right: 14px;
 	}
 
+	/* I believe that the "reorder" column always has this class */
+	td.sorting_1 {
+		text-align: center;
+		cursor: row-resize;
+	}
+
 </style>
 
 @stop
@@ -75,6 +85,8 @@
 @section('js')
 <!-- DataTables --> 
 <script type="text/javascript" src="https://cdn.datatables.net/t/bs-3.3.6/dt-1.10.11,b-1.1.2,r-2.0.2/datatables.min.js"></script>
+<!-- Row reorder -->
+<script type="text/javascript" src="https://cdn.datatables.net/rowreorder/1.1.1/js/dataTables.rowReorder.min.js"></script>
 
 <script>
 
@@ -104,8 +116,9 @@ $(function() {
     $('#data-table thead th').each( function () {
     	var column_searchable = $(this).attr('data-search-text');                    	
         var column_title = $(this).text();
-        if (column_searchable !== 'true') return false;        
-        $(this).html('<div class="input-group"><span class="input-group-addon"><i class="fa fa-search"></i></span><input type="text" class="form-control" placeholder="'+column_title+'" onclick="stopPropagation(event);" /></div>');
+        if (column_searchable === 'true') {
+        	$(this).html('<div class="input-group"><span class="input-group-addon"><i class="fa fa-search"></i></span><input type="text" class="form-control" placeholder="'+column_title+'" onclick="stopPropagation(event);" /></div>');
+        }
     } );
 
     var table = $('#data-table').DataTable({
@@ -114,13 +127,14 @@ $(function() {
 			 "<'row'<'col-sm-12'tr>>" +
 			 "<'row'<'col-sm-5'i><'col-sm-7'p>>",
 			 */
-		"orderCellsTop": true,
+		"orderCellsTop": true, // Is this required? It's designed to prevent the click on a search box propagating to the reorder button, but I think we handle this using stopPropagation above
 		dom: "<'row'<'col-sm-12'tr>>" +
 			 "<'row'<'col-sm-5'i><'col-sm-7'p>>",
         processing: true,
         serverSide: true,
         ajax: '{!! route('ctrl::get_data',array($ctrl_class->id)) !!}',
         columns: {!! $js_columns !!},
+        rowReorder: { update: false }, // Prevents the data from being redrawn after we've reordered; is this what we want? Depends if we get the Ajax saving sorted
         drawCallback: function( settings ) {
         	$('.dropdown-toggle').dropdown(); // Refresh Bootstrap dropdowns
     	},
@@ -166,7 +180,27 @@ $(function() {
                     .draw();
             }
         } );
+
     } );
+
+    // Re-order rows   
+   table.on('row-reorder', function (e, diff, edit) { // See https://datatables.net/reference/event/row-reorder   		
+	   	var result = [];
+        for ( var i=0, ien=diff.length ; i<ien ; i++ ) {
+	        // $(diff[i].node).addClass("reordered");	 
+	        var row = $(diff[i].node);
+	        var row_id = row.attr('id');       
+   			// var row_old_order = diff[i].oldPosition + 1; // Not useful
+   			var row_new_order = diff[i].newPosition + 1;   
+	        // result += 'Moving row '+row_id+' from '+row_old_position+' to '+row_new_position+"\n";
+	        result.push({ 
+		        "id" : row_id,
+		        "order" : row_new_order
+		    }); 
+	    }
+	    // Now, send this result to a script that updates object orders, and it should all just work. Do we call draw() afterwards?
+	     console.log(result );
+    });
 
     // Add custom buttons
      
