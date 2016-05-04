@@ -146,17 +146,20 @@ class CtrlController extends Controller
 
         		// Get around a problem with datatables if there's no relationship defined
         		// See https://datatables.net/manual/tech-notes/4
-        		$column->defaultContent = '<!-- NONE -->';
+        		$column->defaultContent = '';
+        		$th_columns[] = '<th data-search-dropdown="true">'.$header->label.'</th>';
         	}
         	else {
         		$column->data = $header->name;
         		$column->name = $ctrl_class->table_name.'.'.$header->name;
         			// Again, see http://datatables.yajrabox.com/eloquent/relationships
         			// "Important! To avoid ambiguous column name error, it is advised to declare your column name as table.column just like on how you declare it when using a join statements."
+        		$th_columns[] = '<th data-search-text="true">'.$header->label.'</th>';
         	}
         	$js_columns[] = $column;        	
-        	$th_columns[] = '<th>'.$header->label.'</th>';
+        	
         }
+        // dd($js_columns);
         // Add the "action" column
         $action_column       = new \StdClass;
         $action_column->data = 'action';
@@ -182,7 +185,7 @@ class CtrlController extends Controller
 
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();		
 		$class      = $ctrl_class->get_class();
-		//$objects    = $class::query(); // Why query() and not all()? Are they the same thing>
+		//$objects    = $class::query(); // Why query() and not all()? Are they the same thing?
 		// This will include all necessary relationships: see http://datatables.yajrabox.com/eloquent/relationships
 		
 		$headers = $ctrl_class->ctrl_properties()->whereRaw(
@@ -199,6 +202,10 @@ class CtrlController extends Controller
 		}
 
 		if ($with) {
+			// Use Eager Loading to pull in related items
+			// Again, see http://datatables.yajrabox.com/eloquent/relationships			
+      		// Note that we shouldn't filter the query here; we want this to pull as much information back as possible
+      		// so that we can rely on datatables to filter everything for us
 			$objects = $class::with(implode(',', $with))->select($ctrl_class->table_name.'.*');	
 		}
 		else {
@@ -207,7 +214,9 @@ class CtrlController extends Controller
 
 		// See http://datatables.yajrabox.com/eloquent/dt-row for some good tips here
 
-        return Datatables::of($objects)
+		// Known issue, that I'm struggling to resolve; if we have a dropdown to search related fields, but there's no relationship for an object, we can't select the "empty" value and show all items without a relationship. TODO.
+
+        return Datatables::of($objects)        	          
             ->addColumn('action', function ($object) use ($ctrl_class) {
             	$edit_link = route('ctrl::edit_object',[$ctrl_class->id,$object->id]);
             	$buttons = '
