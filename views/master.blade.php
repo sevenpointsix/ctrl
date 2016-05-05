@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
 
     <title>CTRL</title>
 
@@ -13,6 +14,8 @@
     <link href="{{ asset('assets/vendor/ctrl/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
+    <!-- Animate.css, used by notify -->
+    <link rel="stylesheet" href="{{ asset('assets/vendor/ctrl/vendor/animate.css/animate.min.css') }}">
 
     @yield('css')
     @stack('css') {{-- Individual form fields push to the stack --}}
@@ -89,6 +92,8 @@
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="{{ asset('assets/vendor/ctrl/vendor/jquery/jquery-1.11.3.min.js') }}"></script>
     <script src="{{ asset('assets/vendor/ctrl/vendor/bootstrap/js/bootstrap.min.js') }}"></script>
+
+    <script src="{{ asset('assets/vendor/ctrl/vendor/bootstrap-notify/bootstrap-notify.min.js') }}"></script>
     
     @yield('js')
     @stack('js') {{-- Individual form fields push to the stack --}}

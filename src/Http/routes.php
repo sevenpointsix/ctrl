@@ -37,6 +37,11 @@ Route::group(['as' => 'ctrl::','prefix'=>'admin','middleware' => ['web']], funct
 		'uses'=>'CtrlController@get_data'
 	]);
 
+	Route::post('reorder/{ctrl_class_id}',[
+		'as'=>'reorder_objects',
+		'uses'=>'CtrlController@reorder_objects'
+	]);
+
 	// Testing...
 	Route::get('test',[
 		'as'=>'test',

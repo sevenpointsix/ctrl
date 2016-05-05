@@ -73,10 +73,28 @@
 	}
 
 	/* I believe that the "reorder" column always has this class */
+	/* No, this is the column we're currently sorting on. How to identify the "order" column?
+	We can't do this in JS very easily because we have to wait for the table to be drawn first...
 	td.sorting_1 {
 		text-align: center;
 		cursor: row-resize;
 	}
+	*/
+	/* Add a "Clear search" button, from http://stackoverflow.com/questions/20062218/how-do-i-clear-a-search-box-with-an-x-in-bootstrap-3 */
+	span.input-group-addon.clear-search {
+		background-color: transparent;
+		z-index: 100;
+		border: none;
+		position:absolute;
+	    right:0px;
+	    top:4px;
+	    bottom:0;
+	    height:14px;	    
+	    font-size:14px;
+	    cursor:pointer;
+	    color:#aaa;
+	}
+	/* this needs code adding to actually clear the field */
 
 </style>
 
@@ -117,7 +135,7 @@ $(function() {
     	var column_searchable = $(this).attr('data-search-text');                    	
         var column_title = $(this).text();
         if (column_searchable === 'true') {
-        	$(this).html('<div class="input-group"><span class="input-group-addon"><i class="fa fa-search"></i></span><input type="text" class="form-control" placeholder="'+column_title+'" onclick="stopPropagation(event);" /></div>');
+        	$(this).html('<div class="input-group"><span class="input-group-addon"><i class="fa fa-search"></i></span><input type="text" class="form-control" placeholder="'+column_title+'" onclick="stopPropagation(event);" /><span class="input-group-addon clear-search"><i class="fa fa-times-circle-o"></i></span></div>');
         }
     } );
 
@@ -185,22 +203,36 @@ $(function() {
 
     // Re-order rows   
    table.on('row-reorder', function (e, diff, edit) { // See https://datatables.net/reference/event/row-reorder   		
-	   	var result = [];
+	   	var new_order = [];
         for ( var i=0, ien=diff.length ; i<ien ; i++ ) {
-	        // $(diff[i].node).addClass("reordered");	 
 	        var row = $(diff[i].node);
 	        var row_id = row.attr('id');       
    			// var row_old_order = diff[i].oldPosition + 1; // Not useful
    			var row_new_order = diff[i].newPosition + 1;   
-	        // result += 'Moving row '+row_id+' from '+row_old_position+' to '+row_new_position+"\n";
-	        result.push({ 
-		        "id" : row_id,
+	        new_order.push({ 
+		        "id" : row_id,		        
 		        "order" : row_new_order
 		    }); 
 	    }
 	    // Now, send this result to a script that updates object orders, and it should all just work. Do we call draw() afterwards?
-	     console.log(result );
-    });
+	    var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
+		$.ajax({
+		    url: '{!! route('ctrl::reorder_objects',array($ctrl_class->id)) !!}',
+		    type: 'POST',
+		    data: {_token: CSRF_TOKEN, new_order: new_order },
+		    dataType: 'JSON',
+		    success: function (data) {
+		       $.notify({
+					icon: 'fa fa-check-square-o fa-fw',				
+					message: 'Items reordered',					
+				},{
+					type: "success",
+					newest_on_top: true,
+					delay: 2500,					
+				});		       
+		    }
+		});
+    }).draw(); // Is the redraw actually necessary?
 
     // Add custom buttons
      

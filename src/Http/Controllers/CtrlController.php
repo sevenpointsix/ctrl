@@ -61,30 +61,33 @@ class CtrlController extends Controller
 	{
 		
 		$ctrl_classes = CtrlClass::where('menu_title','!=','')
-								 	->orderBy('menu_title')
-								 	->orderBy('order')
-								 	->get();
+					 	->orderBy('menu_title', 'ASC') // Standalone items first
+					 	->orderBy('order')
+					 	->get();
 			// The ordering here will need work, this is purely a quick solution while bootstrapping the site
 		$menu_links        = [];
 		foreach ($ctrl_classes as $ctrl_class) {
 
 			if ($ctrl_class->plural) {
-				$menu_title = $ctrl_class->plural;
+				$item_title = $ctrl_class->plural;
 			}
 			else if ($ctrl_class->singular) {
-				$menu_title = str_plural($ctrl_class->singular);
+				$item_title = str_plural($ctrl_class->singular);
 			}
 			else {
-				$menu_title = str_plural(strtolower($ctrl_class->name));
+				$item_title = str_plural(strtolower($ctrl_class->name));
 			}
-			
 
-			$menu_links[$ctrl_class->menu_title][] = [
-				'id'    => $ctrl_class->id,
-				'title' => ucwords($menu_title),
-			];
+				
+				$menu_links[$ctrl_class->menu_title][] = [
+					'id'    => $ctrl_class->id,
+					'title' => ucwords($item_title),
+				];
+			
+		
 		}
 
+	
 		return view('ctrl::dashboard',[
 			'menu_links'=>$menu_links
 		]);
@@ -652,7 +655,7 @@ class CtrlController extends Controller
         $password = $request->input('password');
         $remember = $request->input('remember');
 
-        if (Auth::attempt(['email' => $email, 'password' => $password], $remember)) {
+        if (Auth::attempt(['email' => $email, 'password' => $password], !empty($remember))) {
 		    // User logged in, but check that they can actually access the CMS:
 		    if (!empty(Auth::user()->ctrl_group)) {
 		    	$redirect = URL::previous();
@@ -689,6 +692,34 @@ class CtrlController extends Controller
             return redirect($redirect);
         }
 	}
+	
+	/**
+	 * Handle the posted data when we reorder items in the datatable
+	 * @param  int $ctrl_class_id The ID of the Ctrl Class of the objects we're reordering
+	 * @return Response
+	 */
+	
+	public function reorder_objects(Request $request, $ctrl_class_id) {		
+		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();				
+		$class  = $ctrl_class->get_class();
+		if ($new_order = $request->input('new_order')) {
+			foreach ($new_order as $order) {
+				$object = $class::where('id',$order['id'])->firstOrFail();
+				$object->order = $order['order'];
+				$object->save();
+			}		
+			$response = 'Items reordered';
+			$status = 200;
+		}
+		if (empty($response)) {
+			$response = 'An error has occurred';
+			$status = 400;
+		}
+		$json = [
+			'response'      => $response,			
+        ];
+        return \Response::json($json, $status);
+	}	
 
 	/**
 	 * A placeholder function to illustrate how to load config variables

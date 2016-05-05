@@ -64,13 +64,14 @@
 
                   <form class="ajax" role="form" method="post" action="{{ route('ctrl::post_login') }}">
                     {!! csrf_field() !!}
+                    <input type="hidden" value="remember-me" name="remember">
                     <div id="form_1" data-animation="bounceIn">
                       <div class="form-header">
                         <i class="fa fa-user"></i>
                       </div>
                       <div class="form-main">
                         <div class="form-group">
-                          <input type="email" id="un_1" class="form-control" placeholder="Email address" required="required"  name="email" value="{{ old('email','test@test.com') }}">
+                          <input type="email" id="un_1" class="form-control" placeholder="Email address" required="required"  name="email" value="{{ old('email') }}">
                           <input type="password" id="pw_1" class="form-control" placeholder="Password" required="required" name="password">
                         </div>
                         <button id="signIn_1" type="submit" class="btn btn-block signin">Sign In</button>

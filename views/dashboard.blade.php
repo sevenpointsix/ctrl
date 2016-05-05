@@ -35,15 +35,20 @@
 			*/ ?>
 		
 				@foreach ($menu_links as $menu_title=>$links)
+
+					
 					<div class="list-group">
+						@if (count($links) > 1) 
 					  <div class="list-group-item list-group-item-info"><strong>{{ $menu_title }}</strong></div>					  
+					  	@endif
 					  @foreach ($links as $link)
 						<a href="{{ route('ctrl::list_objects',$link['id']) }}" class="list-group-item">
-							<span class="badge">14</span>
+							{{-- Not keen on this <span class="badge">14</span> --}}
 							{{ $link['title'] }}
 						</a>
 						@endforeach
 					</div>
+				
 				   
 				  @endforeach
 
