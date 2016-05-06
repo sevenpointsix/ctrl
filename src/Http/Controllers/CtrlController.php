@@ -32,6 +32,25 @@ class CtrlController extends Controller
 	public function __construct() {
 		// Note that we don't need to call the parent __construct() here
 
+		// Build the menu
+		$ctrl_classes = CtrlClass::where('menu_title','!=','')
+					 	->orderBy('menu_title', 'ASC') // Standalone items first
+					 	->orderBy('order')
+					 	->get();
+			// The ordering here will need work, this is purely a quick solution while bootstrapping the site
+		$menu_links        = [];
+		foreach ($ctrl_classes as $ctrl_class) {
+
+			$menu_links[$ctrl_class->menu_title][] = [
+				'id'    => $ctrl_class->id,
+				'title' => ucwords($ctrl_class->get_plural()),
+				'icon'  => ($icon = $ctrl_class->get_icon()) ? '<i class="'.$icon.'"></i> ' : '',
+			];		
+		}
+
+		View::share ( 'menu_links', $menu_links );
+
+
 		$this->_check_login(); // Check that the user is logged in, if necessary
 	}
 
@@ -59,37 +78,7 @@ class CtrlController extends Controller
 	 */
 	public function dashboard()
 	{
-		
-		$ctrl_classes = CtrlClass::where('menu_title','!=','')
-					 	->orderBy('menu_title', 'ASC') // Standalone items first
-					 	->orderBy('order')
-					 	->get();
-			// The ordering here will need work, this is purely a quick solution while bootstrapping the site
-		$menu_links        = [];
-		foreach ($ctrl_classes as $ctrl_class) {
-
-			if ($ctrl_class->plural) {
-				$item_title = $ctrl_class->plural;
-			}
-			else if ($ctrl_class->singular) {
-				$item_title = str_plural($ctrl_class->singular);
-			}
-			else {
-				$item_title = str_plural(strtolower($ctrl_class->name));
-			}
-
-				
-				$menu_links[$ctrl_class->menu_title][] = [
-					'id'    => $ctrl_class->id,
-					'title' => ucwords($item_title),
-				];
-			
-		
-		}
-
-	
-		return view('ctrl::dashboard',[
-			'menu_links'=>$menu_links
+		return view('ctrl::dashboard',[			
 		]);
 	}
 

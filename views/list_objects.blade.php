@@ -96,6 +96,9 @@
 	}
 	/* this needs code adding to actually clear the field */
 
+	th:focus { /* It's possible to "select" the <th> for some reason, which is confusing */
+		outline: none;
+	}
 </style>
 
 @stop
@@ -135,7 +138,7 @@ $(function() {
     	var column_searchable = $(this).attr('data-search-text');                    	
         var column_title = $(this).text();
         if (column_searchable === 'true') {
-        	$(this).html('<div class="input-group"><span class="input-group-addon"><i class="fa fa-search"></i></span><input type="text" class="form-control" placeholder="'+column_title+'" onclick="stopPropagation(event);" /><span class="input-group-addon clear-search"><i class="fa fa-times-circle-o"></i></span></div>');
+        	$(this).html('<div class="input-group"><span class="input-group-addon"><i class="fa fa-search"></i></span><input type="text" class="form-control" placeholder="'+column_title+'" onclick="stopPropagation(event);" /><span class="input-group-addon clear-search" onclick="stopPropagation(event);"><i class="fa fa-times-circle-o"></i></span></div>');
         }
     } );
 
@@ -234,6 +237,14 @@ $(function() {
 		});
     }).draw(); // Is the redraw actually necessary?
 
+   	// Allow the search field to be cleared:
+   	$('span.clear-search').on('click',function() {
+   		// console.log('clear');
+   		$(this).prev('input').val('');
+   		table.columns().search( '' ) // See https://www.datatables.net/plug-ins/api/fnFilterClear
+ 		.draw();
+   	});
+
     // Add custom buttons
      
     // $('div.dataTables_custom_buttons').html('<a href="#" class="btn btn-success"><i class="fa fa-plus"></i> Add</a>');
@@ -266,15 +277,18 @@ $(function() {
 	--}}
 
 	<div class="page-header">
-		<h1>@if ($ctrl_class->icon)<i class="fa fa-cog"></i>@endif
-		{{ $ctrl_class->name }} <small>Description goes here if necessary</small></h1>
+		<h1>@if ($icon = $ctrl_class->get_icon())<i class="{{ $icon }}"></i>@endif
+		{{ ucwords($ctrl_class->get_plural()) }} <small>Description goes here if necessary</small></h1>
 	</div>
 	
 	<table class="table table-bordered table-striped" id="data-table">
         <thead>
             <tr>
             	{!! $th_columns !!}
-                <th class="_empty_header" width="1"  data-orderable="false"  data-searchable="false"><!-- Split button --><div class="btn-group flex"><a href="{{ route('ctrl::edit_object',$ctrl_class->id) }}" class="btn btn-success"><i class="fa fa-plus"></i> Add</a></a><button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span><span class="sr-only">Toggle Dropdown</span></button><ul class="dropdown-menu dropdown-menu-right"><li><a href="#">Action</a></li></ul></div></th>
+                <th class="_empty_header" width="1"  data-orderable="false"  data-searchable="false">
+                <a href="{{ route('ctrl::edit_object',$ctrl_class->id) }}" class="btn btn-success pull-right"><i class="fa fa-plus"></i> Add</a>
+                {{-- Or use a split button if necessary --}}
+                {{-- <!-- Split button --><div class="btn-group flex"><a href="{{ route('ctrl::edit_object',$ctrl_class->id) }}" class="btn btn-success"><i class="fa fa-plus"></i> Add</a><button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span><span class="sr-only">Toggle Dropdown</span></button><ul class="dropdown-menu dropdown-menu-right"><li><a href="#">Action</a></li></ul></div></th> --}}
             </tr>
         </thead>        
     </table>

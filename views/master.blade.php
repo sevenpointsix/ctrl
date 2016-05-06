@@ -68,6 +68,22 @@
             {{-- Don't think we need a "home" link
             <li class="active"><a href="{{ route('ctrl::dashboard') }}">Dashboard</a></li>
             --}}
+            @foreach ($menu_links as $menu_title=>$links)
+            
+              @if (count($links) == 1) 
+              <li><a href="{{ route('ctrl::list_objects',$links[0]['id']) }}">{!! $links[0]['icon'] !!}{{ $links[0]['title'] }}{{-- OR, $menu_title? --}}</a></li>
+              @else
+              
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ $menu_title }} <span class="caret"></span></a>
+                  <ul class="dropdown-menu">
+                  @foreach ($links as $link)
+                  <li><a href="{{ route('ctrl::list_objects',$link['id']) }}">{!! $link['icon'] !!}{{ $link['title'] }}</a></li>
+                  @endforeach
+                  </ul>
+                </li>
+              @endif       
+            @endforeach            
           </ul>
         </div><!--/.nav-collapse -->
       </div>
@@ -82,7 +98,7 @@
 
     <footer class="footer">
       <div class="container">
-        <p class="text-muted"><a href="{{ route('ctrl::logout') }}'"><i class="fa fa-power-off"></i> Logout</a></p>
+        <p class="text-muted"><a href="{{ route('ctrl::logout') }}"><i class="fa fa-power-off"></i> Logout</a></p>
       </div>
     </footer>
 
