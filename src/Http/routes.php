@@ -42,6 +42,12 @@ Route::group(['as' => 'ctrl::','prefix'=>'admin','middleware' => ['web']], funct
 		'uses'=>'CtrlController@reorder_objects'
 	]);
 
+	// Remote data sources for typeahead
+	Route::get('typeahead/{ctrl_class_id}',[
+		'as'=>'get_typeahead',
+		'uses'=>'CtrlController@get_typeahead'
+	]);
+
 	// Testing...
 	Route::get('test',[
 		'as'=>'test',

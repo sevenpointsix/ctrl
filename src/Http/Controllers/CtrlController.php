@@ -683,6 +683,26 @@ class CtrlController extends Controller
 	}
 	
 	/**
+	 * Return JSON data to the typehead search (used on the dashboard for now)
+	 * @param  int $ctrl_class_id The ID of the Ctrl Class of the objects we're searching for
+	 * @return Response
+	 */
+	
+	public function get_typeahead(Request $request, $ctrl_class_id) {		
+		
+		$json = [];
+
+		$temp = new \StdClass;
+        $temp->ctrl_class_name = 'Test';
+        $temp->object_id       = 1;
+        $json[]            = $temp;
+
+		$status = 200;
+
+        return \Response::json($json, $status);
+	}	
+
+	/**
 	 * Handle the posted data when we reorder items in the datatable
 	 * @param  int $ctrl_class_id The ID of the Ctrl Class of the objects we're reordering
 	 * @return Response
