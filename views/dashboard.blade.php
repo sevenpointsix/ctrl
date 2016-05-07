@@ -1,7 +1,7 @@
 @extends('ctrl::master')
 
 @section('js')
-<script src="{{ asset('assets/vendor/ctrl/assets/vendor/corejs-typeahead/typeahead.bundle.min.js') }}"></script>
+<script src="{{ asset('assets/vendor/ctrl/vendor/corejs-typeahead/typeahead.bundle.min.js') }}"></script>
 @stop
 
 @section('content')
