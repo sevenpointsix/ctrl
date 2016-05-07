@@ -110,6 +110,9 @@
     <script src="{{ asset('assets/vendor/ctrl/vendor/bootstrap/js/bootstrap.min.js') }}"></script>
 
     <script src="{{ asset('assets/vendor/ctrl/vendor/bootstrap-notify/bootstrap-notify.min.js') }}"></script>
+    <script src="{{ asset('assets/vendor/ctrl/vendor/bootbox/bootbox.min.js') }}"></script>
+
+    <script src="{{ asset('assets/vendor/ctrl/js/main.js') }}"></script>
     
     @yield('js')
     @stack('js') {{-- Individual form fields push to the stack --}}

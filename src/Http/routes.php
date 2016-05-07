@@ -18,6 +18,11 @@ Route::group(['as' => 'ctrl::','prefix'=>'admin','middleware' => ['web']], funct
 		'uses'=>'CtrlController@edit_object'
 	]);
 
+	Route::post('delete/{ctrl_class_id}/{object_id}',[
+		'as'=>'delete_object',
+		'uses'=>'CtrlController@delete_object'
+	]);
+
 	Route::post('save/{ctrl_class_id}/{object_id?}',[
 		'as'=>'save_object',
 		'uses'=>'CtrlController@save_object'
@@ -43,7 +48,7 @@ Route::group(['as' => 'ctrl::','prefix'=>'admin','middleware' => ['web']], funct
 	]);
 
 	// Remote data sources for typeahead
-	Route::get('typeahead/{ctrl_class_id}',[
+	Route::get('typeahead/{search_term?}',[
 		'as'=>'get_typeahead',
 		'uses'=>'CtrlController@get_typeahead'
 	]);

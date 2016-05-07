@@ -99,6 +99,11 @@
 	th:focus { /* It's possible to "select" the <th> for some reason, which is confusing */
 		outline: none;
 	}
+
+	/* Allow us to use .text-danger on the "delete" link in a dropdown menu */
+	.dropdown-menu>li>a.text-danger {
+		color: #a94442;
+	}
 </style>
 
 @stop
@@ -114,7 +119,7 @@
 
 // Attempting to allow filters in column headers, which don't then sort the column when clicked
 // See http://jsfiddle.net/s8F9V/1/ and https://www.datatables.net/forums/discussion/20272/how-to-put-individual-column-filter-inputs-at-top-of-columns
-	function stopPropagation(evt) {
+function stopPropagation(evt) {
 	if (evt.stopPropagation !== undefined) {
 		evt.stopPropagation();
 	} else {
@@ -138,7 +143,7 @@ $(function() {
     	var column_searchable = $(this).attr('data-search-text');                    	
         var column_title = $(this).text();
         if (column_searchable === 'true') {
-        	$(this).html('<div class="input-group"><span class="input-group-addon"><i class="fa fa-search"></i></span><input type="text" class="form-control" placeholder="'+column_title+'" onclick="stopPropagation(event);" /><span class="input-group-addon clear-search" onclick="stopPropagation(event);"><i class="fa fa-times-circle-o"></i></span></div>');
+        	$(this).html('<div class="input-group"><span class="input-group-addon"><i class="fa fa-search"></i></span><input type="text" class="form-control" placeholder="'+column_title+'" onclick="stopPropagation(event);" /><span class="input-group-addon clear-search" onclick="stopPropagation(event);"><i class="fa fa-remove"></i></span></div>');
         }
     } );
 
@@ -158,6 +163,7 @@ $(function() {
         rowReorder: { update: false }, // Prevents the data from being redrawn after we've reordered; is this what we want? Depends if we get the Ajax saving sorted
         drawCallback: function( settings ) {
         	$('.dropdown-toggle').dropdown(); // Refresh Bootstrap dropdowns
+        	init_table_buttons();
     	},
     	/* No longer necessary, we've removed the main search input
     	language: { 'searchPlaceholder': 'Search...','sSearch':'' }, // Remove the "Search:" label, and add a placeholder
@@ -185,10 +191,46 @@ $(function() {
                 	/* OMIT empty values as we can't yet search for "missing" relationships; see notes in CtrlController */
                     select.append( '<option value="'+d+'">'+d+'</option>' )
                 } );
-            } );
-        }
-        
+            } );            
+        }        
     });
+
+    // Set up some click events on the table buttons, "delete" only for now
+    function init_table_buttons() {    	
+        // Add the "delete" option
+	   	$('ul.dropdown-menu').on('click','a.delete-item',function() {
+	   		var that = this; // Nicked this idea from Datatables; see below. Preserve $this for the bootbox callback
+	   		bootbox.confirm("Are you sure you want to delete this item?", function(result) {
+	   			if (result) {
+	   				var delete_link = $(that).attr('rel');
+			   		var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
+					$.ajax({
+					    url: delete_link,
+					    type: 'POST',
+					    data: {_token: CSRF_TOKEN },
+					    dataType: 'JSON',
+					    success: function (data) {
+					       $.notify({
+								icon: 'fa fa-check-square-o fa-fw',				
+								message: 'Item deleted',					
+							},{
+								type: "success",
+								newest_on_top: true,
+								delay: 2500,					
+							});
+							table.draw(); // Redraw the table (to reflect fact that a row has been removed/deleted)
+					    }
+					});
+	   			}	
+	   			else {
+	   				console.log("no");
+	   				// $('.dropdown.open .dropdown-toggle').dropdown('toggle');
+	   				$(that).parents('ul.dropdown-menu').dropdown('toggle'); // Close the "delete" dropdown
+	   			}		  
+			});
+			return false;
+	   	});
+    }
 
     // Apply the search (again, see https://datatables.net/examples/api/multi_filter.html)
     table.columns().every( function () {
@@ -244,6 +286,9 @@ $(function() {
    		table.columns().search( '' ) // See https://www.datatables.net/plug-ins/api/fnFilterClear
  		.draw();
    	});
+
+   	
+
 
     // Add custom buttons
      

@@ -34,10 +34,10 @@ class CtrlController extends Controller
 
 		// Build the menu
 		$ctrl_classes = CtrlClass::where('menu_title','!=','')
-					 	->orderBy('menu_title', 'ASC') // Standalone items first
+					 	->orderBy('menu_title', 'ASC')
 					 	->orderBy('order')
 					 	->get();
-			// The ordering here will need work, this is purely a quick solution while bootstrapping the site
+			
 		$menu_links        = [];
 		foreach ($ctrl_classes as $ctrl_class) {
 
@@ -218,25 +218,26 @@ class CtrlController extends Controller
         return Datatables::of($objects)  
         	->setRowId('id') // For reordering
             ->addColumn('action', function ($object) use ($ctrl_class) {
-            	$edit_link = route('ctrl::edit_object',[$ctrl_class->id,$object->id]);
-            	$buttons = '
+            	$edit_link   = route('ctrl::edit_object',[$ctrl_class->id,$object->id]);
+            	$delete_link = route('ctrl::delete_object',[$ctrl_class->id,$object->id]);
+            	$buttons     = '
             	<!-- Split button -->
-<div class="btn-group flex">
-  <a class="btn btn-sm btn-info" href="'.$edit_link.'"><i class="fa fa-pencil"></i> Edit</a>
-  <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-    <i class="fa fa-caret-down"></i>
-    <span class="sr-only">Toggle Dropdown</span>
-  </button>
-  <ul class="dropdown-menu dropdown-menu-right">
-    <li><a href="#"><i class="fa fa-trash"></i> Delete</a></li>
-    <!--
-    <li><a href="#">Delete</a></li>
-    <li><a href="#">Delete</a></li>
-    <li role="separator" class="divider"></li>
-    <li><a href="#">Separated link</a></li>
-    -->
-  </ul>
-</div>';
+				<div class="btn-group flex">
+				  <a class="btn btn-sm btn-info" href="'.$edit_link.'"><i class="fa fa-pencil"></i> Edit</a>
+				  <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+				    <i class="fa fa-caret-down"></i>
+				    <span class="sr-only">Toggle Dropdown</span>
+				  </button>
+				  <ul class="dropdown-menu dropdown-menu-right">
+				    <li><a href="#" rel="'.$delete_link.'" class="delete-item text-danger"><i class="fa fa-trash"></i> Delete</a></li>
+				    <!--
+				    <li><a href="#">Delete</a></li>
+				    <li><a href="#">Delete</a></li>
+				    <li role="separator" class="divider"></li>
+				    <li><a href="#">Separated link</a></li>
+				    -->
+				  </ul>
+				</div>';
 				/*
             	$buttons = [
             		'<a href="'.$edit_link.'" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-edit"></i> Edit</a>'
@@ -248,6 +249,24 @@ class CtrlController extends Controller
             ->make(true);
 
 		// return Datatables::of($objects)->make(true);
+	}
+
+	/**
+	 * Delete the specifed object of the stated CtrlClass
+	 * @return Response
+	 */
+	public function delete_object($ctrl_class_id, $object_id) {	
+		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();				
+		$class  = $ctrl_class->get_class();
+		$object = $class::where('id',$object_id)->firstOrFail();
+		$object->delete();
+		
+		$response = 'Item deleted';
+		$status = 200;
+		$json = [
+			'response'      => $response,			
+        ];
+        return \Response::json($json, $status);
 	}
 
 	/**
@@ -688,14 +707,57 @@ class CtrlController extends Controller
 	 * @return Response
 	 */
 	
-	public function get_typeahead(Request $request, $ctrl_class_id) {		
-		
+	public function get_typeahead(Request $request, $search_term = NULL) {		
+
 		$json = [];
 
-		$temp = new \StdClass;
-        $temp->ctrl_class_name = 'Test';
-        $temp->object_id       = 1;
-        $json[]            = $temp;
+		// OK, so. I don't think prefetch will work here, unless we use multiple lists and load the ten most recent items into each one...? Pointless. We'll always use $query.
+
+		if ($search_term) {
+
+			// Loop through all classes that we can edit			
+			$ctrl_classes = CtrlClass::whereRaw(
+			   '(find_in_set(?, permissions))',
+			   ['edit']		   
+			)->get();
+			foreach ($ctrl_classes as $ctrl_class) {
+				$class   = $ctrl_class->get_class();
+				
+				// What are the searchable columns?
+				$searchable_properties = $ctrl_class->ctrl_properties()->whereRaw(
+				   '(find_in_set(?, flags))',
+				   ['search']		   
+				)->whereNull('relationship_type')->get();
+					// I have no idea how to include searchable related columns in the query builder below...
+				
+
+				if (!$searchable_properties->isEmpty()) {
+					$query = $class::query(); // From http://laravel.io/forum/04-13-2015-combine-foreach-loop-and-eloquent-to-perform-a-search
+					foreach ($searchable_properties as $searchable_property) {
+						/* not needed
+						if ($loop++ == 1) {							
+							$class::where($searchable_property->name,'LIKE',"%$query%");
+						}
+						else {
+							$objects::orWhere($searchable_property->name,'LIKE',"%$query%");
+						}
+						*/
+						$query->orWhere($searchable_property->name,'LIKE',"%$search_term%");
+					}
+					$objects = $query->get();	
+					if (!$objects->isEmpty()) {
+					    foreach ($objects as $object) {
+					    	$result        		= new \StdClass;
+					    	$result->title 		= $object->title; // This needs to be flexible, to find the title property; we won't necessarily have a "title" property. Should this be a method of CtrlClass?
+					    	$result->edit_link   = route('ctrl::edit_object',[$ctrl_class->id,$object->id]);							
+					    	$result->icon  		= $ctrl_class->get_icon() ? $ctrl_class->get_icon() : 'fa fa-toggle-right';
+					    	$json[]        		= $result;
+					    }
+					}
+				}
+			}
+				
+		}
 
 		$status = 200;
 

@@ -2,58 +2,48 @@
 
 @section('js')
 <script src="{{ asset('assets/vendor/ctrl/vendor/corejs-typeahead/typeahead.bundle.min.js') }}"></script>
+<script src="{{ asset('assets/vendor/ctrl/vendor/handlebars/handlebars-v4.0.5.js') }}"></script>
 
 <script>
-var dashboard_search_tests = new Bloodhound({
-  datumTokenizer: Bloodhound.tokenizers.obj.whitespace('ctrl_class_name'),
-  queryTokenizer: Bloodhound.tokenizers.whitespace,
-  prefetch: {
-  	url: '{!! route('ctrl::get_typeahead',4) !!}',
-  	cache: false // Also from http://stackoverflow.com/questions/21998700/twitter-jquery-typeahead-how-to-remove-the-cache
-  }
-  	// 'ttl': 1 // Disable caching while testing, from http://stackoverflow.com/questions/21998700/twitter-jquery-typeahead-how-to-remove-the-cache
-});
+	var dashboard_search = new Bloodhound({
+	  datumTokenizer: Bloodhound.tokenizers.obj.whitespace('title'),
+	  queryTokenizer: Bloodhound.tokenizers.whitespace,
+	  /* I don't think prefetch is valid when we're searching through all known items; what would we prefetch?
+	  prefetch: {
+	  	url: '{!! route('ctrl::get_typeahead') !!}',
+	  	cache: false // While testing, from http://stackoverflow.com/questions/21998700/twitter-jquery-typeahead-how-to-remove-the-cache
+	  },
+	  */
+	  remote: {
+	    url: '{!! route('ctrl::get_typeahead','%QUERY') !!}',
+	    wildcard: '%QUERY',
+	    cache: false // While testing, from http://stackoverflow.com/questions/21998700/twitter-jquery-typeahead-how-to-remove-the-cache
+	  }
+	});
 
-var dashboard_search_ones = new Bloodhound({
-  datumTokenizer: Bloodhound.tokenizers.obj.whitespace('ctrl_class_name'),
-  queryTokenizer: Bloodhound.tokenizers.whitespace,
-   prefetch: {
-  	url: '{!! route('ctrl::get_typeahead',2) !!}',
-  	cache: false // Also from http://stackoverflow.com/questions/21998700/twitter-jquery-typeahead-how-to-remove-the-cache
-  }
-});
 
-$('#dashboard-search .typeahead').typeahead({
-  highlight: true
-},
-{
-  name: 'tests',
-  display: 'ctrl_class_name',
-  source: dashboard_search_tests,
-  templates: {
-    header: '<h3 class="ctrl-class-name">Tests</h3>'
-  }
-},
-{
-  name: 'ones',
-  display: 'ctrl_class_name',
-  source: dashboard_search_ones,
-  templates: {
-    header: '<h3 class="ctrl-class-name">Ones</h3>'
-  }
-});
+	$('#dashboard-search .typeahead').typeahead({
+	  highlight: true,
+	  hint: false
+	},
+	{
+	  name: 'tests',
+	  display: 'title',
+	  source: dashboard_search,  
+	  templates: {
+		suggestion: Handlebars.compile('<div><i class="\{\{icon\}\}"></i> \{\{title\}\}</div>')
+	  }
+
+	}).bind("typeahead:select", function(obj, datum, name) {
+		document.location = datum.edit_link; // Jump to the "Edit" link		
+	});;
 </script>
 @stop
 
 @section('css')
 <style>
-#dashboard-search .ctrl-class-name {
-  margin: 0 20px 5px 20px;
-  padding: 3px 0;
-  border-bottom: 1px solid #ccc;
-}
 
-/* Style typeahead for Bootstrap, from https://gist.github.com/joelhaasnoot/c7f3358726c22d489566 */
+/* Style typeahead for Bootstrap, from https://gist.github.com/mixisLv/f7872a90a8a31157e80364f08c955102 */
 .twitter-typeahead .tt-query,
 .twitter-typeahead .tt-hint {
 	margin-bottom: 0;
@@ -90,9 +80,12 @@ $('#dashboard-search .typeahead').typeahead({
 }
 .tt-suggestion {
 	display: block;
-	padding: 3px 20px;
+	/* padding: 3px 20px; */
+		/* Custom: */
+		padding: 3px 10px;
 }
-tt-suggestion:hover {
+.tt-suggestion.tt-cursor,
+.tt-suggestion:hover {
 	color: #fff;
 	background-color: #428bca;
 }
@@ -101,6 +94,21 @@ tt-suggestion:hover {
 }
 .tt-suggestion p {
 	margin: 0;
+}
+/* Full width from http://stackoverflow.com/questions/17957513/extending-the-width-of-bootstrap-typeahead-to-match-input-field */
+.twitter-typeahead, .tt-hint, .tt-input, .tt-menu { width: 100%; }	
+
+
+/* HIghlight current item */
+.tt-cursor {
+	background-color: #f00;
+}
+/* Adjust borders of the main text input to fit with the addon */
+span.input-group-addon+span.twitter-typeahead input.tt-input {
+	border-top-left-radius: 0px;
+	border-bottom-left-radius: 0px;
+	border-top-right-radius: 4px;
+	border-bottom-right-radius: 4px;
 }
 
 </style>
@@ -121,8 +129,9 @@ tt-suggestion:hover {
 				  <div class="form-group">
 				    <label class="sr-only" for="exampleInputAmount">Amount (in dollars)</label>
 				    <div class="input-group">
-				      <div class="input-group-addon"><i class="fa fa-search"></i></div>
-				      <input class="typeahead form-control" type="text" id="exampleInputAmount" placeholder="Search">			      
+				      <span class="input-group-addon"><i class="fa fa-search"></i></span>
+				      <input class="typeahead form-control" type="text" id="exampleInputAmount" placeholder="Search" style="float: none;">		
+				      {{-- float: none aligns the addon in Chrome but apparently not IE? https://github.com/twitter/typeahead.js/issues/847 --}}	      
 				    </div>
 				  </div>			  
 				</form>
@@ -140,7 +149,7 @@ tt-suggestion:hover {
 							<a href="{{ route('ctrl::list_objects',$link['id']) }}" class="list-group-item">							
 								{{-- Not keen on this <span class="badge">14</span> --}}
 								{{-- I would like to add an "add" button here though. How? --}}							
-								<button class="btn btn-xs btn-success pull-right"><i class="fa fa-plus" onclick="document.location = '{{ route('ctrl::edit_object',$link['id']) }}'; return false"></i></button>
+								<button class="btn btn-xs btn-success pull-right"  onclick="document.location = '{{ route('ctrl::edit_object',$link['id']) }}'; return false"><i class="fa fa-plus"></i></button>
 								{{ $link['title'] }}
 							</a>
 							

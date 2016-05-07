@@ -135,8 +135,14 @@ class CtrlSynch extends Command
                 $model_name = studly_case(str_singular($standard_table));           
                 $ctrl_class = \Sevenpointsix\Ctrl\Models\CtrlClass::firstOrNew(['name' => $model_name]);
                 $ctrl_class->table_name = $standard_table; 
+
+                // Set some default permissions, icons and menu items (?) here
+                $ctrl_class->permissions = implode(',',array('list','add','edit','delete'));
+                $ctrl_class->icon        = 'fa-toggle-right';
+                // Let's leave menu_title for now
+
                 $ctrl_class->save();
-                    // We could set default permissions, icons, menu items here, but let's KIS for now
+                    
 
                 $columns = DB::select("SHOW COLUMNS FROM {$standard_table}");
                 $column_order = 1;
