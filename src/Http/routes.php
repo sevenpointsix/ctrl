@@ -8,7 +8,7 @@ Route::group(['as' => 'ctrl::','prefix'=>'admin','middleware' => ['web']], funct
 		'uses'=>'CtrlController@dashboard'
 	]);
 
-	Route::get('list/{ctrl_class_id}',[
+	Route::get('list/{ctrl_class_id}/{filter_string?}',[
 		'as'=>'list_objects',
 		'uses'=>'CtrlController@list_objects'
 	]);
@@ -37,7 +37,7 @@ Route::group(['as' => 'ctrl::','prefix'=>'admin','middleware' => ['web']], funct
 		'uses'=>'CtrlController@krajee_upload'
 	]);
 
-	Route::match(['get', 'post'],'data/{ctrl_class_id}',[
+	Route::match(['get', 'post'],'data/{ctrl_class_id}/{filter_string?}',[
 		'as'=>'get_data',
 		'uses'=>'CtrlController@get_data'
 	]);

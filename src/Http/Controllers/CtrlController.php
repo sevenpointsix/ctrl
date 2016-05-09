@@ -54,6 +54,31 @@ class CtrlController extends Controller
 		$this->_check_login(); // Check that the user is logged in, if necessary
 	}
 
+	/**
+	 * Descrive the current $filter in human terms, to be used as the page title
+	 * @param  array $filter The filter arrray
+	 * @return string A description of the filter that makes sense
+	 */
+	public function describe_filter($filter_string = NULL) {
+		$return = '';
+		if (!empty($filter_string)) {
+			$description = array();
+			foreach ($filter_string as $filter) {
+				$ctrl_property = CtrlProperty::where('id',$filter['ctrl_property_id'])->firstOrFail(); // This throws a 404 if not found; not sure that's strictly what we want
+				// We only handle 'belongsTo' filters at the moment
+				if ($ctrl_property->relationship_type == 'belongsTo') {
+					$related_ctrl_class = CtrlClass::where('id',$ctrl_property->related_to_id)->firstOrFail(); // As above
+					$related_class      = $related_ctrl_class->get_class();
+					$related_object     = $related_class::where('id',$filter['value'])->firstOrFail();
+
+					$description[] = "belonging to the ".strtolower($related_ctrl_class->name) ." <strong><a href=".route('ctrl::edit_object',[$related_ctrl_class->id,$related_object->id]).">".$related_object->title."</a></strong>"; // Again, ->title here isn't right
+				}
+			}
+			$return = $this->comma_and($description);
+		}
+		return $return;
+	}
+
 	protected function _check_login() {
 		$public_routes = ['ctrl::login','ctrl::post_login'];
 		$user          = Auth::user();
@@ -86,11 +111,16 @@ class CtrlController extends Controller
 
 	/**
 	 * List all objects of a given CtrlClass
+	 * @param  integer $ctrl_class_id The ID of the class we're editing
+	 * @param  string $filter_string Are we filtering the list? Currently stored as a ~ delimited list of property=>id comma-separated pairs; see below
 	 *
 	 * @return Response
 	 */
-	public function list_objects($ctrl_class_id)
+	public function list_objects($ctrl_class_id, $filter_string = NULL)
 	{		
+		// Convert the the $filter parameter into one that makes sense
+		$filter_array = $this->convert_filter_string_to_array($filter_string);			
+		$filter_description = $this->describe_filter($filter_array);
 
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();		
 
@@ -115,6 +145,9 @@ class CtrlController extends Controller
         $th_columns = [];
 
         foreach ($headers as $header) {
+
+        	// We could exclude the column here if it's found in the $filter array; but really, we'd be unlikely to have a filterable column as a header anyway. Implement this if it becomes necessary.
+
         	$column = new \StdClass;
         	if ($header->relationship_type) {
         		// We need to identify the "string" column for this related class
@@ -148,7 +181,13 @@ class CtrlController extends Controller
         			// "Important! To avoid ambiguous column name error, it is advised to declare your column name as table.column just like on how you declare it when using a join statements."
         		if ($header->name == 'order') {
         			// A special case, we use this to allow the table to be reordered
-        			$th_columns[] = '<th width="1" data-order-rows="true">'.$header->label.'</th>';
+        			$th_columns[]           = '<th width="1" data-order-rows="true" data-orderable="false" >'.$header->label.'</th>';
+        				// I think it makes no sense to allow the "order" column to be reordered; it just confuses the user, as dragging and dropping items doesn't then have the expected results
+        				// (Reordering items just swaps the relevant items, so if you reorder the list to put the last item first, then swap two items in the middle of the list, the last item is still last when you reload the page. If that makes sense. We could potentially reorder ALL items when you reorder anything, but this seems inefficient).
+        			$column->className      = "reorder";
+        			// $column->defaultContent = '-'; // In case we don't have an order value set
+        			// Or, do we set the "value" to be an icon each time...?
+        			//$column->data      = 'X';
         		}
         		else {
         			$th_columns[] = '<th data-search-text="true">'.$header->label.'</th>';
@@ -166,21 +205,30 @@ class CtrlController extends Controller
         $js_columns[]        = $action_column;
 
 		return view('ctrl::list_objects',[
-			'ctrl_class' => $ctrl_class,
-			'th_columns' => implode("\n",$th_columns),
-			'js_columns' => json_encode($js_columns),
+			'ctrl_class'         => $ctrl_class,
+			'th_columns'         => implode("\n",$th_columns),
+			'js_columns'         => json_encode($js_columns),
+			'filter_description' => $filter_description,
+			'filter_string'      => $filter_string
 		]);
 	}
 
 	/**
 	 * Get data for datatables
-	 * @param  [type] $ctrl_class_id [description]
+	 * @param  integer $ctrl_class_id The ID of the class we're editing
+	 * @param  string $filter Optional list filter, passed in from the datatables Ajax call.
+	 * 
 	 * @return [type]                [description]
+	 * 
 	 */
-	public function get_data($ctrl_class_id) {
+	public function get_data($ctrl_class_id, $filter_string = NULL) {
+
+		$filter_array = $this->convert_filter_string_to_array($filter_string);			
 
 		//$objects = \App\Ctrl\Models\Test::query();
 		//$users = User::select(['id', 'name', 'email', 'password', 'created_at', 'updated_at']);
+
+		// if ($filter) dd($filter);
 
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();		
 		$class      = $ctrl_class->get_class();
@@ -217,35 +265,90 @@ class CtrlController extends Controller
 
         return Datatables::of($objects)  
         	->setRowId('id') // For reordering
+        	->editColumn('order', '<i class="fa fa-arrows-v"></i>') // Set the displayed value of the order column to just show the icon        	
             ->addColumn('action', function ($object) use ($ctrl_class) {
             	$edit_link   = route('ctrl::edit_object',[$ctrl_class->id,$object->id]);
             	$delete_link = route('ctrl::delete_object',[$ctrl_class->id,$object->id]);
-            	$buttons     = '
-            	<!-- Split button -->
-				<div class="btn-group flex">
-				  <a class="btn btn-sm btn-info" href="'.$edit_link.'"><i class="fa fa-pencil"></i> Edit</a>
-				  <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-				    <i class="fa fa-caret-down"></i>
-				    <span class="sr-only">Toggle Dropdown</span>
-				  </button>
-				  <ul class="dropdown-menu dropdown-menu-right">
-				    <li><a href="#" rel="'.$delete_link.'" class="delete-item text-danger"><i class="fa fa-trash"></i> Delete</a></li>
-				    <!--
-				    <li><a href="#">Delete</a></li>
-				    <li><a href="#">Delete</a></li>
-				    <li role="separator" class="divider"></li>
-				    <li><a href="#">Separated link</a></li>
-				    -->
-				  </ul>
-				</div>';
-				/*
-            	$buttons = [
-            		'<a href="'.$edit_link.'" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-edit"></i> Edit</a>'
-            	];
-                return implode("\n", $buttons);
-                */
+
+            	// Do we have any filtered lists?
+            	$filtered_list_links        = [];
+            	$filtered_list_properties = $ctrl_class->ctrl_properties()->whereRaw(
+				   '(find_in_set(?, flags))',
+				   ['filtered_list']		   
+				)->where('relationship_type','hasMany')->get(); // I think a filtered list will always be "hasMany"?           	            					
+            	foreach ($filtered_list_properties as $filter_ctrl_property) {
+            		// Build the filter string
+            		/*
+            		 Now, we need the INVERSE property here. That is:
+            		 	- If we're loading a Test record, with a "Many" property set to "filtered_list"
+            		 	- We need to find the "test" property of the "Many" object, so that we can show Many items where "test" is the value of this object
+            		 I believe we can do this by matching the foreign key
+            		 */
+            		$inverse_filter_ctrl_property = CtrlProperty::where('ctrl_class_id',$filter_ctrl_property->related_to_id)
+            														->where('related_to_id',$filter_ctrl_property->ctrl_class_id)
+            														->where('foreign_key',$filter_ctrl_property->foreign_key) // Necessary?
+            														->firstOrFail();
+            		
+            		$filtered_list_array    = [
+            			'ctrl_property_id'=>$inverse_filter_ctrl_property->id, // We don't use the keys here, they're for clarity only (as we use them elsewhere when handling filters)
+            			'value'=>$object->id
+            		];            		
+            		$filtered_list_string = implode(',', $filtered_list_array); // Add 1,2 to the array (ctrl_property_id,value). Discard keys as above
+            		
+            		// Establish the title and icon for the link; ie, the icon and title of the related class
+            		$filter_ctrl_class = CtrlClass::where('id',$filter_ctrl_property->related_to_id)->firstOrFail();
+					//$filter_related_class = $filter_ctrl_class->get_class();
+					
+	            	$filtered_list_links[]  = [
+	        			'icon'  => $filter_ctrl_class->get_icon(),
+	        			'title' => 'View '.$filter_ctrl_class->get_plural(),
+	        			'link'  => route('ctrl::list_objects',[$filter_ctrl_property->related_to_id,$filtered_list_string])
+	        		];
+
+            	}
+
+            	/*
+            	if ($filter_array) {
+	            	foreach ($filter_array as $filter) {
+	            		$filter_ctrl_property = CtrlProperty::where('id',$filter['ctrl_property_id'])->firstOrFail(); // This throws a 404 if not found; not sure that's strictly what we want
+						// We only handle 'belongsTo' filters at the moment
+						if ($filter_ctrl_property->relationship_type == 'belongsTo') {
+							// Lots of duplicated code around filters, sort this out
+							$related_ctrl_class = CtrlClass::where('id',$filter_ctrl_property->related_to_id)->firstOrFail(); // As above
+							$related_class      = $related_ctrl_class->get_class();
+							$related_object     = $related_class::where('id',$filter['value'])->firstOrFail();
+							$filter_link        = route('ctrl::list_objects',[$filter['ctrl_property_id'],$filter_array);
+							$query->where($filter_ctrl_property->foreign_key,$related_object->id);
+
+						}	
+	            	}
+	            }
+	            */
+            	$buttons = view('ctrl::tables.row-buttons', [
+            		'edit_link'           => $edit_link,
+            		'delete_link'         => $delete_link,
+            		'filtered_list_links' => $filtered_list_links
+            	]);            	
                	return $buttons;
             })
+            // Is this the best place to filter results if necessary?
+            // I think so. See: http://datatables.yajrabox.com/eloquent/custom-filter
+        	->filter(function ($query) use ($filter_array) {
+	            if ($filter_array) {
+	            	foreach ($filter_array as $filter) {
+						$filter_ctrl_property = CtrlProperty::where('id',$filter['ctrl_property_id'])->firstOrFail(); // This throws a 404 if not found; not sure that's strictly what we want
+						// We only handle 'belongsTo' filters at the moment
+						if ($filter_ctrl_property->relationship_type == 'belongsTo') {
+							// Duplication of code from @describe_filter here
+							$related_ctrl_class = CtrlClass::where('id',$filter_ctrl_property->related_to_id)->firstOrFail(); // As above
+							$related_class      = $related_ctrl_class->get_class();
+							$related_object     = $related_class::where('id',$filter['value'])->firstOrFail();
+							$query->where($filter_ctrl_property->foreign_key,$related_object->id);
+						}						
+	            	}
+	            	//$query->where('title','LIKE',"%related%");	                
+	            }	            
+	        })
             ->make(true);
 
 		// return Datatables::of($objects)->make(true);
@@ -773,7 +876,7 @@ class CtrlController extends Controller
 	public function reorder_objects(Request $request, $ctrl_class_id) {		
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();				
 		$class  = $ctrl_class->get_class();
-		if ($new_order = $request->input('new_order')) {
+		if ($new_order = $request->input('new_order')) {			
 			foreach ($new_order as $order) {
 				$object = $class::where('id',$order['id'])->firstOrFail();
 				$object->order = $order['order'];
@@ -782,10 +885,12 @@ class CtrlController extends Controller
 			$response = 'Items reordered';
 			$status = 200;
 		}
+		/* No, this might just mean we didn't actually change the order:
 		if (empty($response)) {
 			$response = 'An error has occurred';
 			$status = 400;
 		}
+		*/
 		$json = [
 			'response'      => $response,			
         ];
@@ -811,6 +916,74 @@ class CtrlController extends Controller
 	{		
 		return view('ctrl::ctrl');
 	}
+
+	protected function convert_filter_string_to_array($filter_string) {
+		$filter_array = [];
+		if (!empty($filter_string)) {
+			$filters = explode('~', $filter_string);
+			foreach ($filters as $filter) {
+				$filter_item = [];				
+				list($filter_item['ctrl_property_id'], $filter_item['value']) = explode(',', $filter);
+					// Take the two values from the comma-separated pair, and assign them to two array keys of $filter_array; ctrl_property_id and value
+				$filter_array[] = $filter_item;
+			}			
+		}
+		return $filter_array;
+	}
+	
+	/**
+	 * A function from the old CI CMS; Join a list of elements with commas and a final 'and'; 1) = '1', (1,2) = '1 and 2', (1,2,3) = '1, 2 and 3'
+	 Optionally, wrap each element in <$tag> with $properties
+	 * @param  array  $array      An array of values
+	 * @param  string $tag        An optional HTML tag
+	 * @param  array   $properties An array of properties for each HTML tag
+	 * @return string The formatted string
+	 */
+	protected function comma_and($array,$tag = '', $properties = array()) {
+		
+		if ($tag) {
+			foreach ($array as &$a) {
+				$a = $this->wrap_in_tag($a,$tag,$properties);
+			}
+		}
+
+		if (!$array) {
+			return '';
+		}
+		else if (count($array) == 1) {
+			if (isset($array[0])) { // This isn't always available!
+				return $array[0];
+			}
+			else {
+				reset($array);
+				return current($array);
+			}
+		}
+		else if (count($array) == 2) {
+			return implode(' and ',$array);
+		}
+		else {
+			$and = array_pop($array);
+			return implode(', ',$array). ' and '.$and;
+		}
+	}
+
+	/**
+	 * Another function from the CI CMS:; wraps $string in <$tag> with $properties
+	 * @param  string $string     the string to wrap
+	 * @param  string $tag        the HTML tag to wrap it in
+	 * @param  array  $properties Properties for the tag if necessary
+	 * @return string the wrapped string
+	 */
+	protected function wrap_in_tag($string,$tag,$properties = array()) {
+		$p = '';
+		foreach ($properties as $property=>$value) {
+			$p .= $property.'="'.$value.'" '; // Is there a better way of doing this?
+		}
+		$return = "<$tag $p>$string</$tag>";
+		return $return;
+	}
+
 
 	/****** Some archived function ******/
 	

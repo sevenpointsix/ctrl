@@ -9,9 +9,12 @@
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.1.1/css/rowReorder.bootstrap.min.css" />
 
 <style type="text/css">
+ 	/* Prevent button dropdowns from wrapping in table, see https://github.com/twbs/bootstrap/issues/9939 */
+ 	/* No longer needed:
 	.btn-group.flex {
-	  display: flex; /* Prevent button dropdowns from wrapping in table, see https://github.com/twbs/bootstrap/issues/9939 */
+	  display: flex;
 	}
+	*/
 	/* Not needed
 	div.dataTables_wrapper div.dataTables_filter { /* Put the search box on the left * /
 		text-align: left;
@@ -72,14 +75,10 @@
 		right: 14px;
 	}
 
-	/* I believe that the "reorder" column always has this class */
-	/* No, this is the column we're currently sorting on. How to identify the "order" column?
-	We can't do this in JS very easily because we have to wait for the table to be drawn first...
-	td.sorting_1 {
+	/* Format the "order" column to centre align values, looks neater */
+	td.reorder {
 		text-align: center;
-		cursor: row-resize;
 	}
-	*/
 	/* Add a "Clear search" button, from http://stackoverflow.com/questions/20062218/how-do-i-clear-a-search-box-with-an-x-in-bootstrap-3 */
 	span.input-group-addon.clear-search {
 		background-color: transparent;
@@ -100,10 +99,33 @@
 		outline: none;
 	}
 
+	.row-buttons {
+		white-space: nowrap; /* Don't wrap the add, delete, "more" buttons on each table row */
+	}
+
 	/* Allow us to use .text-danger on the "delete" link in a dropdown menu */
+	/* No longer used
 	.dropdown-menu>li>a.text-danger {
 		color: #a94442;
 	}
+	*/
+
+	h1 small {
+		/* Make the "subheading" a bit smaller than usual */
+	    font-size: 50%;
+	}
+
+	.navbar.page-header {
+		/* Put some space between the nav bar title and the top of the page; we use Bootstrap's .page-header for consistency, but then pretty much override it */
+		padding-bottom: inherit; /* Use the padding from the standard .navbar class */
+    	margin: 30px 0 30px;    	
+	}
+
+	/* Don't wrap tooltips, as per http://getbootstrap.com/javascript/#callout-tooltip-multiline */
+	.tooltip-inner {
+        max-width: none;
+        white-space: pre; /* Is this preferable to no-wrap? */
+    }
 </style>
 
 @stop
@@ -158,11 +180,12 @@ $(function() {
 			 "<'row'<'col-sm-5'i><'col-sm-7'p>>",
         processing: true,
         serverSide: true,
-        ajax: '{!! route('ctrl::get_data',array($ctrl_class->id)) !!}',
+        ajax: '{!! route('ctrl::get_data',[$ctrl_class->id,$filter_string]) !!}',
         columns: {!! $js_columns !!},
         rowReorder: { update: false }, // Prevents the data from being redrawn after we've reordered; is this what we want? Depends if we get the Ajax saving sorted
         drawCallback: function( settings ) {
-        	$('.dropdown-toggle').dropdown(); // Refresh Bootstrap dropdowns
+        	$('.dropdown-toggle').dropdown(); // Refresh Bootstrap tooltips
+        	$('[data-toggle="tooltip"]').tooltip(); // ... and tooltips
         	init_table_buttons();
     	},
     	/* No longer necessary, we've removed the main search input
@@ -198,7 +221,7 @@ $(function() {
     // Set up some click events on the table buttons, "delete" only for now
     function init_table_buttons() {    	
         // Add the "delete" option
-	   	$('ul.dropdown-menu').on('click','a.delete-item',function() {
+	   	$('div.row-buttons').on('click','a.delete-item',function() {
 	   		var that = this; // Nicked this idea from Datatables; see below. Preserve $this for the bootbox callback
 	   		bootbox.confirm("Are you sure you want to delete this item?", function(result) {
 	   			if (result) {
@@ -253,6 +276,7 @@ $(function() {
 	        var row = $(diff[i].node);
 	        var row_id = row.attr('id');       
    			// var row_old_order = diff[i].oldPosition + 1; // Not useful
+   			// console.log(diff[i].newPosition);
    			var row_new_order = diff[i].newPosition + 1;   
 	        new_order.push({ 
 		        "id" : row_id,		        
@@ -321,11 +345,72 @@ $(function() {
 	</ol>
 	--}}
 
+<?php /* Old version, let's use a navbar instead now that we sometimes have buttons in the header 
 	<div class="page-header">
-		<h1>@if ($icon = $ctrl_class->get_icon())<i class="{{ $icon }}"></i>@endif
-		{{ ucwords($ctrl_class->get_plural()) }} <small>Description goes here if necessary</small></h1>
-	</div>
 	
+		<h1>@if ($icon = $ctrl_class->get_icon())<i class="{{ $icon }}"></i> @endif
+		{{ ucwords($ctrl_class->get_plural()) }} 
+		@if ($filter_description)
+			<small>Showing all {{ $ctrl_class->get_plural() }} {!! $filter_description !!}.</small>
+		@endif
+
+		<div class="pull-right">			
+			@if ($filter_description)
+			<a href="{{ route('ctrl::list_objects',$ctrl_class->id) }}" class="btn btn-default">@if ($icon = $ctrl_class->get_icon())<i class="{{ $icon }}"></i> @endif Show all</a>
+			@endif			
+			<a href="#TBC" class="btn btn-default"><i class="fa fa-toggle-left"></i> Back</a>
+		</div>
+
+		</h1>
+		
+	</div>
+	*/ ?>
+	
+	<nav class="navbar navbar-default page-header">
+	  <div class="container-fluid">
+	    <!-- Brand and toggle get grouped for better mobile display -->
+	    <div class="navbar-header">
+	      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#list-options" aria-expanded="false">
+	        <span class="sr-only">Toggle options</span>
+	        <span class="icon-bar"></span>
+	        <span class="icon-bar"></span>
+	        <span class="icon-bar"></span>
+	      </button>   
+	      <a class="navbar-brand">@if ($icon = $ctrl_class->get_icon())<i class="{{ $icon }}"></i> @endif
+			{{ ucwords($ctrl_class->get_plural()) }}</a>   
+	    </div>
+
+	    <!-- Collect the nav links, forms, and other content for toggling -->
+	    <div class="collapse navbar-collapse" id="list-options">
+			@if ($filter_description)
+				<p class="navbar-text">Showing all {{ $ctrl_class->get_plural() }} {!! $filter_description !!}.</p>
+			@endif
+			 
+	      <ul class="nav navbar-nav navbar-right">
+
+	  		@if ($filter_description)
+			<li><a href="{{ route('ctrl::list_objects',$ctrl_class->id) }}" _class="btn btn-default navbar-btn">@if ($icon = $ctrl_class->get_icon())<i class="{{ $icon }}"></i> @endif Show all</a></li>
+			@endif			
+			<li><a href="#TBC" _class="btn btn-default navbar-btn"><i class="fa fa-toggle-left"></i> Back</a></li>
+			{{-- This may prove useful at some point?
+	        <li class="dropdown">
+	          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
+	          <ul class="dropdown-menu">
+	            <li><a href="#">Action</a></li>
+	            <li><a href="#">Another action</a></li>
+	            <li><a href="#">Something else here</a></li>
+	            <li role="separator" class="divider"></li>
+	            <li><a href="#">Separated link</a></li>
+	            <li role="separator" class="divider"></li>
+	            <li><a href="#">One more separated link</a></li>
+	          </ul>
+	        </li>
+	        --}}
+	      </ul>      
+	    </div><!-- /.navbar-collapse -->
+	  </div><!-- /.container-fluid -->
+	</nav>
+
 	<table class="table table-bordered table-striped" id="data-table">
         <thead>
             <tr>

@@ -159,6 +159,7 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 					</div>
 				   
 				  @endforeach
+				</div>
 
 
 		</div>
