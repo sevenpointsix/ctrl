@@ -339,6 +339,10 @@ class CtrlSynch extends Command
         if(!File::exists(app_path($model_folder))) {
             File::makeDirectory(app_path($model_folder),0777,true); // See http://laravel-recipes.com/recipes/147/creating-a-directory
         }
+        else {
+            // Otherwise, empty the folder:
+            File::cleanDirectory(app_path($model_folder));
+        }
 
         $ctrl_classes = \Sevenpointsix\Ctrl\Models\CtrlClass::get();
 

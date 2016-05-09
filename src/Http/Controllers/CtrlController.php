@@ -181,13 +181,12 @@ class CtrlController extends Controller
         			// "Important! To avoid ambiguous column name error, it is advised to declare your column name as table.column just like on how you declare it when using a join statements."
         		if ($header->name == 'order') {
         			// A special case, we use this to allow the table to be reordered
-        			$th_columns[]           = '<th width="1" data-order-rows="true" data-orderable="false" >'.$header->label.'</th>';
+        			$th_columns[]          = '<th width="1" data-order-rows="true" _data-orderable="false" >'.$header->label.'</th>';
+        			$column->orderSequence = ['asc'];
         				// I think it makes no sense to allow the "order" column to be reordered; it just confuses the user, as dragging and dropping items doesn't then have the expected results
         				// (Reordering items just swaps the relevant items, so if you reorder the list to put the last item first, then swap two items in the middle of the list, the last item is still last when you reload the page. If that makes sense. We could potentially reorder ALL items when you reorder anything, but this seems inefficient).
+        					// We still have a bug whereby the sort icon disappears from the order column when we sort by another column though...?
         			$column->className      = "reorder";
-        			// $column->defaultContent = '-'; // In case we don't have an order value set
-        			// Or, do we set the "value" to be an icon each time...?
-        			//$column->data      = 'X';
         		}
         		else {
         			$th_columns[] = '<th data-search-text="true">'.$header->label.'</th>';
@@ -298,10 +297,31 @@ class CtrlController extends Controller
             		// Establish the title and icon for the link; ie, the icon and title of the related class
             		$filter_ctrl_class = CtrlClass::where('id',$filter_ctrl_property->related_to_id)->firstOrFail();
 					//$filter_related_class = $filter_ctrl_class->get_class();
+
+					// Can we count the related items here?
+					// Duplication of get_data here:
+					$filter_class  = $filter_ctrl_class->get_class();
+					$filter_object = $filter_class::where('id',$filtered_list_array['value'])->firstOrFail();					
+					
+					$count_class   = $ctrl_class->get_class();
+					$count         = $count_class::where($inverse_filter_ctrl_property->foreign_key,$filter_object->id)->count();
+					//dd($count_objects);
+					/*
+					$filter_ctrl_property = CtrlProperty::where('id',$filter['ctrl_property_id'])->firstOrFail(); // This throws a 404 if not found; not sure that's strictly what we want
+						// We only handle 'belongsTo' filters at the moment
+						if ($filter_ctrl_property->relationship_type == 'belongsTo') {
+							// Duplication of code from @describe_filter here
+							$related_ctrl_class = CtrlClass::where('id',$filter_ctrl_property->related_to_id)->firstOrFail(); // As above
+							$related_class      = $related_ctrl_class->get_class();
+							$related_object     = $related_class::where('id',$filter['value'])->firstOrFail();
+							$query->where($filter_ctrl_property->foreign_key,$related_object->id);
+						}	
+					 */
 					
 	            	$filtered_list_links[]  = [
 	        			'icon'  => $filter_ctrl_class->get_icon(),
-	        			'title' => 'View '.$filter_ctrl_class->get_plural(),
+//	        			'count' => $count,
+	        			'title' => 'View '.$count.' '.$filter_ctrl_class->get_plural(),
 	        			'link'  => route('ctrl::list_objects',[$filter_ctrl_property->related_to_id,$filtered_list_string])
 	        		];
 

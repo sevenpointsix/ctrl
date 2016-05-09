@@ -126,6 +126,21 @@
         max-width: none;
         white-space: pre; /* Is this preferable to no-wrap? */
     }
+
+    /*
+    	This hacks in a solution to a possible bug in datatables, whereby the ordering icon vanishes from the "order" column when you order by another column.
+    	There's an argument to say that we shouldn't allow any column ordering if we're allowing the table to be reordered, but... that's another discussion.
+    */
+    table.dataTable thead .sorting_asc_disabled {
+    	padding-right: 30px;    	
+    }
+    table.dataTable thead .sorting_asc_disabled:after {	    
+	    content: "\e150";
+	    opacity: 0.2;
+	    bottom: 14px;
+    	right: 14px;
+    	color: #333;
+	}
 </style>
 
 @stop
@@ -415,7 +430,7 @@ $(function() {
         <thead>
             <tr>
             	{!! $th_columns !!}
-                <th class="_empty_header" width="1"  data-orderable="false"  data-searchable="false">
+                <th width="1"  data-orderable="false"  data-searchable="false">
                 <a href="{{ route('ctrl::edit_object',$ctrl_class->id) }}" class="btn btn-success pull-right"><i class="fa fa-plus"></i> Add</a>
                 {{-- Or use a split button if necessary --}}
                 {{-- <!-- Split button --><div class="btn-group flex"><a href="{{ route('ctrl::edit_object',$ctrl_class->id) }}" class="btn btn-success"><i class="fa fa-plus"></i> Add</a><button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span><span class="sr-only">Toggle Dropdown</span></button><ul class="dropdown-menu dropdown-menu-right"><li><a href="#">Action</a></li></ul></div></th> --}}
