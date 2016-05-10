@@ -298,52 +298,28 @@ class CtrlController extends Controller
             		$filter_ctrl_class = CtrlClass::where('id',$filter_ctrl_property->related_to_id)->firstOrFail();
 					//$filter_related_class = $filter_ctrl_class->get_class();
 
-					// Can we count the related items here?
-					// Duplication of get_data here:
-					$filter_class  = $filter_ctrl_class->get_class();
-					$filter_object = $filter_class::where('id',$filtered_list_array['value'])->firstOrFail();					
+					// Count the related items					
+					$count_ctrl_class = $filter_ctrl_class;
+					$count_class      = $count_ctrl_class->get_class();					
+					$count_objects    = $count_class::where($inverse_filter_ctrl_property->foreign_key,$filtered_list_array['value']);
+					$count            = $count_objects->count();
 					
-					$count_class   = $ctrl_class->get_class();
-					$count         = $count_class::where($inverse_filter_ctrl_property->foreign_key,$filter_object->id)->count();
-					//dd($count_objects);
-					/*
-					$filter_ctrl_property = CtrlProperty::where('id',$filter['ctrl_property_id'])->firstOrFail(); // This throws a 404 if not found; not sure that's strictly what we want
-						// We only handle 'belongsTo' filters at the moment
-						if ($filter_ctrl_property->relationship_type == 'belongsTo') {
-							// Duplication of code from @describe_filter here
-							$related_ctrl_class = CtrlClass::where('id',$filter_ctrl_property->related_to_id)->firstOrFail(); // As above
-							$related_class      = $related_ctrl_class->get_class();
-							$related_object     = $related_class::where('id',$filter['value'])->firstOrFail();
-							$query->where($filter_ctrl_property->foreign_key,$related_object->id);
-						}	
-					 */
-					
+					if ($count > 0) {
+						$filter_title = ucwords($filter_ctrl_class->get_plural()) .' ('.$count.')';
+					}
+					else {
+						$filter_title = 'No '.$filter_ctrl_class->get_plural();
+					}
+
 	            	$filtered_list_links[]  = [
 	        			'icon'  => $filter_ctrl_class->get_icon(),
-//	        			'count' => $count,
-	        			'title' => 'View '.$count.' '.$filter_ctrl_class->get_plural(),
+	        			'count' => $count,
+	        			'title' => $filter_title,
 	        			'link'  => route('ctrl::list_objects',[$filter_ctrl_property->related_to_id,$filtered_list_string])
 	        		];
 
             	}
-
-            	/*
-            	if ($filter_array) {
-	            	foreach ($filter_array as $filter) {
-	            		$filter_ctrl_property = CtrlProperty::where('id',$filter['ctrl_property_id'])->firstOrFail(); // This throws a 404 if not found; not sure that's strictly what we want
-						// We only handle 'belongsTo' filters at the moment
-						if ($filter_ctrl_property->relationship_type == 'belongsTo') {
-							// Lots of duplicated code around filters, sort this out
-							$related_ctrl_class = CtrlClass::where('id',$filter_ctrl_property->related_to_id)->firstOrFail(); // As above
-							$related_class      = $related_ctrl_class->get_class();
-							$related_object     = $related_class::where('id',$filter['value'])->firstOrFail();
-							$filter_link        = route('ctrl::list_objects',[$filter['ctrl_property_id'],$filter_array);
-							$query->where($filter_ctrl_property->foreign_key,$related_object->id);
-
-						}	
-	            	}
-	            }
-	            */
+            	
             	$buttons = view('ctrl::tables.row-buttons', [
             		'edit_link'           => $edit_link,
             		'delete_link'         => $delete_link,

@@ -141,6 +141,18 @@
     	right: 14px;
     	color: #333;
 	}
+
+	/* Hacking in disabled tooltips, from http://jsfiddle.net/cSSUA/209/ and http://stackoverflow.com/questions/13311574/how-to-enable-bootstrap-tooltip-on-disabled-button */
+	.tooltip-wrapper {
+	  display: inline-block; /* display: block works as well */
+
+	}
+
+	.tooltip-wrapper .btn[disabled] {
+	  /* don't let button block mouse events from reaching wrapper */
+	  pointer-events: none;
+	}
+
 </style>
 
 @stop
@@ -201,6 +213,7 @@ $(function() {
         drawCallback: function( settings ) {
         	$('.dropdown-toggle').dropdown(); // Refresh Bootstrap tooltips
         	$('[data-toggle="tooltip"]').tooltip(); // ... and tooltips
+        	//$('.tooltip-wrapper').tooltip({position: "bottom"});
         	init_table_buttons();
     	},
     	/* No longer necessary, we've removed the main search input

@@ -25,7 +25,14 @@
 	 
 	  @if ($filtered_list_links)
 	  	@if (count($filtered_list_links) == 1)
-	  		<a class="btn btn-sm btn-default" href="{!! $filtered_list_links[0]['link'] !!}"  data-toggle="tooltip" data-placement="right" title="{{ $filtered_list_links[0]['title'] }}">@if ($filtered_list_links[0]['icon'])<i class="{{ $filtered_list_links[0]['icon'] }}"></i>@else<i class="fa fa-bars"></i>@endif</a>
+	  		@if ($filtered_list_links[0]['count'] > 0) 
+	  			<a class="btn btn-sm btn-default" href="{!! $filtered_list_links[0]['link'] !!}"  data-toggle="tooltip" data-placement="top" title="{{ $filtered_list_links[0]['title'] }}">@if ($filtered_list_links[0]['icon'])<i class="{{ $filtered_list_links[0]['icon'] }}"></i>@else<i class="fa fa-bars"></i>@endif</a>
+	  		@else
+	  			<div class="tooltip-wrapper disabled" data-toggle="tooltip" data-placement="top" data-title="{{ $filtered_list_links[0]['title'] }}">					
+					<a class="btn btn-sm btn-default disabled">@if ($filtered_list_links[0]['icon'])<i class="{{ $filtered_list_links[0]['icon'] }}"></i>@else<i class="fa fa-bars"></i>@endif</a>
+				</div>
+	  			
+	  		@endif
 	  	@else 
 	  		{{-- To be honest, if there's just one related list, let's just use a button -- the code below will draw a dropdown if necessary --}}
 			{{--
