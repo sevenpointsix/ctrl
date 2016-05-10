@@ -44,7 +44,7 @@ class CtrlClass extends Model
             $icon = 'fa-toggle-right';
         }        
         if (strpos($icon,'fa') === 0) { // Identify Font Awesome icons automatically
-            $icon = "fa $icon fa-fw"; // Will we always want fa-fw?
+            $icon = "fa $icon";
         }
         return $icon;
     }
@@ -65,5 +65,21 @@ class CtrlClass extends Model
             $plural = str_plural($this->name);
         }
         return strtolower($plural);
+    }
+    /**
+     * Return the singular name of this class
+     * @return string
+     */
+    public function get_singular() {
+       
+        $singular = '';
+        if ($this->singular) {
+            $singular = $this->singular;
+        }
+        else {
+            $singular = $this->name;
+        }
+        return strtolower($singular);
+       
     }
 }

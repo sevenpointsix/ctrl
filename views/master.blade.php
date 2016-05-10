@@ -20,6 +20,8 @@
     @yield('css')
     @stack('css') {{-- Individual form fields push to the stack --}}
 
+    <link rel="stylesheet" href="{{ asset('assets/vendor/ctrl/css/main.css') }}">
+
     <!-- Fix header and footer -->
     <style>
     html {

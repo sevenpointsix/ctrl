@@ -41,10 +41,20 @@ class CtrlController extends Controller
 		$menu_links        = [];
 		foreach ($ctrl_classes as $ctrl_class) {
 
+			$add_link  = route('ctrl::edit_object',$ctrl_class->id);
+			$add_title = 'Add '.$this->a_an($ctrl_class->get_singular()).' '.$ctrl_class->get_singular();
+			$list_link  = route('ctrl::list_objects',$ctrl_class->id);
+			$list_title = 'View '.$ctrl_class->get_plural();
+
 			$menu_links[$ctrl_class->menu_title][] = [
-				'id'    => $ctrl_class->id,
-				'title' => ucwords($ctrl_class->get_plural()),
-				'icon'  => ($icon = $ctrl_class->get_icon()) ? '<i class="'.$icon.'"></i> ' : '',
+				'id'         => $ctrl_class->id,
+				'title'      => ucwords($ctrl_class->get_plural()),
+				'icon'       => ($icon = $ctrl_class->get_icon()) ? '<i class="'.$icon.' fa-fw"></i> ' : '',
+				'icon_only'    => ($icon = $ctrl_class->get_icon()) ? $icon : '',
+				'add_link'   => $add_link,
+				'add_title'  => $add_title,
+				'list_link'  => $list_link,
+				'list_title' => $list_title
 			];		
 		}
 
@@ -171,7 +181,7 @@ class CtrlController extends Controller
 
         		// Get around a problem with datatables if there's no relationship defined
         		// See https://datatables.net/manual/tech-notes/4
-        		$column->defaultContent = '';
+        		$column->defaultContent = 'None'; // We can't filter the list to show all "None" items though... not yet.
         		$th_columns[] = '<th data-search-dropdown="true">'.$header->label.'</th>';
         	}
         	else {
@@ -305,17 +315,23 @@ class CtrlController extends Controller
 					$count            = $count_objects->count();
 					
 					if ($count > 0) {
-						$filter_title = ucwords($filter_ctrl_class->get_plural()) .' ('.$count.')';
+						$filter_list_title = 'View '.$count . ' '.$filter_ctrl_class->get_plural() . ($filter_ctrl_class->get_plural() > 1 ? 's': '');
+						$filter_list_link  = route('ctrl::list_objects',[$filter_ctrl_property->related_to_id,$filtered_list_string]);
 					}
 					else {
-						$filter_title = 'No '.$filter_ctrl_class->get_plural();
+						$filter_list_title = 'No '.$filter_ctrl_class->get_plural();						
+						$filter_list_link  = false;
 					}
+					$filter_add_title = 'Add '.$this->a_an($filter_ctrl_class->get_singular()).' '.$filter_ctrl_class->get_singular();
+					$filter_add_link  = route('ctrl::edit_object',[$filter_ctrl_property->related_to_id]); // TODO check permissions here; can we add items?
 
 	            	$filtered_list_links[]  = [
-	        			'icon'  => $filter_ctrl_class->get_icon(),
-	        			'count' => $count,
-	        			'title' => $filter_title,
-	        			'link'  => route('ctrl::list_objects',[$filter_ctrl_property->related_to_id,$filtered_list_string])
+	        			'icon'       => $filter_ctrl_class->get_icon(),
+	        			'count'      => $count,
+	        			'list_title' => $filter_list_title,
+	        			'list_link'  => $filter_list_link,
+	        			'add_title'  => $filter_add_title,
+	        			'add_link'   => $filter_add_link,
 	        		];
 
             	}
@@ -462,8 +478,17 @@ class CtrlController extends Controller
 			];
 		}		
 
+		if ($object_id) {
+			$page_title = 'Edit this '.$ctrl_class->get_singular();
+		}
+		else {
+			$page_title = 'Add '.$this->a_an($ctrl_class->get_singular()) . ' ' .$ctrl_class->get_singular();			
+		}
+		// Add '<small>[FILTER]</small>' if we're filtering? Nah, probably not.
+		
 		return view('ctrl::edit_object',[
 			'ctrl_class'  => $ctrl_class,
+			'page_title'  => $page_title,
 			'object'      => $object,
 			'form_fields' => $form_fields,
 		]);
@@ -477,9 +502,7 @@ class CtrlController extends Controller
 	 */
 	public function save_object(Request $request, $ctrl_class_id, $object_id = NULL)
 	{		
-
-		// dd($_POST);
-
+		
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();				
 		$ctrl_properties = $ctrl_class->ctrl_properties()->where('fieldset','!=','')->get();
 
@@ -965,7 +988,7 @@ class CtrlController extends Controller
 	}
 
 	/**
-	 * Another function from the CI CMS:; wraps $string in <$tag> with $properties
+	 * Another function from the CI CMS; wraps $string in <$tag> with $properties
 	 * @param  string $string     the string to wrap
 	 * @param  string $tag        the HTML tag to wrap it in
 	 * @param  array  $properties Properties for the tag if necessary
@@ -978,6 +1001,26 @@ class CtrlController extends Controller
 		}
 		$return = "<$tag $p>$string</$tag>";
 		return $return;
+	}
+
+	/**
+	 * Another function from the CI CMS; Return 'a' or 'an', depending on whether $string starts with a vowel or not
+	 * Fairly basic for now, will almost certainly need tweaking:
+	 * @param  string $string The string that you need to prefix with 'a' or 'an'
+	 * @return string         'a' or 'an' accordinglt
+	 */
+	protected function a_an($string) {
+		
+		if (strpos($string,'use') === 0) {
+			// Catch "user" -- as I say, this is a very basic function!
+			return 'a';
+		}
+		else if (in_array($string{0},array('a','e','i','o','u'))) {
+			return 'an';
+		}
+		else {
+			return 'a';
+		}
 	}
 
 

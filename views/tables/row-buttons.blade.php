@@ -24,7 +24,7 @@
 	  {{-- Can we filter on any related items? --}}
 	 
 	  @if ($filtered_list_links)
-	  	@if (count($filtered_list_links) == 1)
+	  	@if (count($filtered_list_links) == 1 && false) {{-- I'm undecided whether to go for this approach, or the dropdown below; I think the latter. Suspend this for now. --}}
 	  		@if ($filtered_list_links[0]['count'] > 0) 
 	  			<a class="btn btn-sm btn-default" href="{!! $filtered_list_links[0]['link'] !!}"  data-toggle="tooltip" data-placement="top" title="{{ $filtered_list_links[0]['title'] }}">@if ($filtered_list_links[0]['icon'])<i class="{{ $filtered_list_links[0]['icon'] }}"></i>@else<i class="fa fa-bars"></i>@endif</a>
 	  		@else
@@ -34,21 +34,17 @@
 	  			
 	  		@endif
 	  	@else 
-	  		{{-- To be honest, if there's just one related list, let's just use a button -- the code below will draw a dropdown if necessary --}}
-			{{--
-			<div class="btn-group xflex">
-			  <a class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-			    <i class="fa fa-bars"></i>
+	  		@foreach ($filtered_list_links as $filtered_list_link)
+			<div class="btn-group">
+			  <a class="btn btn-sm @if ($filtered_list_link['count'] == 0) btn-default @else btn-warning @endif dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+			    @if ($filtered_list_link['icon'])<i class="{{ $filtered_list_link['icon'] }}"></i>@else<i class="fa fa-bars"></i>@endif
 			  </a>
-			  <ul class="dropdown-menu">
-			    <li><a href="#">Action</a></li>
-			    <li><a href="#">Another action</a></li>
-			    <li><a href="#">Something else here</a></li>
-			    <li role="separator" class="divider"></li>
-			    <li><a href="#">Separated link</a></li>
+			  <ul class="dropdown-menu dropdown-menu-right">
+			  	<li><a @if ($filtered_list_link['count'] == 0) class="disabled" @else href="{{ $filtered_list_link['list_link'] }}" @endif><i class="fa fa-list fa-fw"></i> {{ $filtered_list_link['list_title'] }}</a></li>			  	
+			    <li><a href="{{ $filtered_list_link['add_link'] }}"><i class="fa fa-plus fa-fw"></i> {{ $filtered_list_link['add_title'] }}</a></li>
 			  </ul>
 			</div>
-			--}}
+			@endforeach
 	  	@endif
 	  @endif
 	

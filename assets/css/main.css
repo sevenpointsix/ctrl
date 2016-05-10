@@ -1,0 +1,23 @@
+
+.navbar.page-header {
+	/* Put some space between the nav bar title and the top of the page; we use Bootstrap's .page-header for consistency, but then pretty much override it */
+	padding-bottom: inherit; /* Use the padding from the standard .navbar class */
+	margin: 30px 0 30px;    	
+}
+
+/* Don't wrap tooltips, as per http://getbootstrap.com/javascript/#callout-tooltip-multiline */
+.tooltip-inner {
+    max-width: none;
+    white-space: pre; /* Is this preferable to no-wrap? */
+}
+
+/* Bootstrap rows/columns with no gutter, from http://curabites.com/development/2015/06/14/how-to-remove-gutter-space-between-columns-in-bootstrap-3/ */
+.row.no-gutter {
+	margin-left: 0;
+	margin-right: 0;
+}
+.row.no-gutter [class*='col-']:not(:first-child),
+.row.no-gutter [class*='col-']:not(:last-child) {
+	padding-right: 0;
+	padding-left: 0;
+}

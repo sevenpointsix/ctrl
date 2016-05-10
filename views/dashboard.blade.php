@@ -111,33 +111,80 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 	border-bottom-right-radius: 4px;
 }
 
+/* very much WIP */
+/* Might not need any of this:;
+#dashboard-grid {
+	xoverflow: auto;
+}
+
+#dashboard-grid a {
+	display: inline-block;
+	text-align: center;
+	float: left;
+	xwidth: 100%;
+	padding: 10px 10px 8px;
+	border: 1px solid #eee;
+	color: #666;
+	cursor: pointer;	
+}
+#dashboard-grid a:hover, #dashboard-grid a:focus {
+	text-decoration: none;
+	background-color: #f0f0f0;	
+}
+*/
 </style>
 @stop
 
 @section('content')
 	
 	<div class="page-header">
-	  <h1>CTRL <small>This is your CMS</small></h1>
+	  <h1><img src="http://www.argos-support.co.uk/assets/img/design/argos-logo.png" alt="ARGOS" style="height: 50px"> <small>Content Management System</small></h1>
 	</div>
 
 	<div class="row">
 
 		<div class="col-md-6">
 			
-				<h4>Search for an existing item...</h4>
-				<form id="dashboard-search">
-				  <div class="form-group">
-				    <label class="sr-only" for="exampleInputAmount">Amount (in dollars)</label>
+			<div class="panel panel-default">
+			  <div class="panel-heading"><h3 class="panel-title"><i class="fa fa-list-alt fa-fw" style="font-weight: normal"></i> Dashboard</h3></div>
+			  <div class="panel-body">
+			    
+			  	<form id="dashboard-search">
+				  <div class="form-group">				    
 				    <div class="input-group">
 				      <span class="input-group-addon"><i class="fa fa-search"></i></span>
-				      <input class="typeahead form-control" type="text" id="exampleInputAmount" placeholder="Search" style="float: none;">		
+				      <input class="typeahead form-control input-lg" type="text" id="exampleInputAmount" placeholder="Search" style="float: none;">		
 				      {{-- float: none aligns the addon in Chrome but apparently not IE? https://github.com/twitter/typeahead.js/issues/847 --}}	      
 				    </div>
 				  </div>			  
 				</form>
-				<h4>... or choose from the list below.</h4>
-				
-				<div class="row">
+				<hr />
+
+				{{-- Just playing around with this --}}
+				<div id="dashboard-grid">
+					
+					@foreach ($menu_links as $menu_title=>$links)
+
+						@if (count($links) > 1) 
+							{{-- Could echo $menu_title here, but is it really necessary? I quite like the idea of just one big grid... --}}
+						@endif
+						@foreach ($links as $link)
+	  					<div class="btn-group">
+
+						  <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						    <i class="{{ $link['icon_only'] }} fa-3x"></i><br><span class="label label-primary">{{ $link['title'] }}</span>			  
+						  </a>
+						  <ul class="dropdown-menu">
+						  	<li><a href="{{ $link['list_link'] }}"><i class="fa fa-list fa-fw"></i> {{ $link['list_title'] }}</a></li>			  	
+						    <li><a href="{{ $link['add_link'] }}"><i class="fa fa-plus fa-fw"></i> {{ $link['add_title'] }}</a></li>
+						  </ul>
+						</div>
+						@endforeach
+					@endforeach
+
+				</div>
+				<?php /* Think the above is better:
+				<div class="row no-gutter">
 				@foreach ($menu_links as $menu_title=>$links)
 
 					<div class="col-md-6">
@@ -149,8 +196,8 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 							<a href="{{ route('ctrl::list_objects',$link['id']) }}" class="list-group-item">							
 								{{-- Not keen on this <span class="badge">14</span> --}}
 								{{-- I would like to add an "add" button here though. How? --}}							
-								<button class="btn btn-xs btn-success pull-right"  onclick="document.location = '{{ route('ctrl::edit_object',$link['id']) }}'; return false"><i class="fa fa-plus"></i></button>
-								{{ $link['title'] }}
+								<button class="btn btn-xs btn-success pull-right"  onclick="document.location = '{{ $link['add_link'] }}'; return false"  data-toggle="tooltip" data-placement="bottom" title="{{ $link['add_title'] }}"><i class="fa fa-plus"></i></button>
+								{!! $link['icon'] !!} {{ $link['title'] }}
 							</a>
 							
 
@@ -160,9 +207,13 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 				   
 				  @endforeach
 				</div>
+				*/ ?>
 
-
+			  </div>
+			</div>
 		</div>
+
 	</div>
 
+	
 @stop

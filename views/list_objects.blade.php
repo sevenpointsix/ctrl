@@ -36,7 +36,7 @@
 		border-left: none;
 	}
 	*/
-	table.dataTable>tbody>tr>td {
+	table.dataTable>tbody>tr>td, table.dataTable>thead>tr>th {
 		vertical-align: middle;
 	}
 	/* WIP */
@@ -79,6 +79,20 @@
 	td.reorder {
 		text-align: center;
 	}
+
+	/* Stretch the column search fields and dropdowns so that they're full-width */
+	table.dataTable thead th select.form-control, table.dataTable thead th .input-group {
+		width: 90%;
+	}
+	 table.dataTable thead th .input-group span.input-group-addon:first-child {
+	 	width: 1px; /* Otherwise the magnifying glass is stretched */
+	 }
+	table.dataTable thead th .input-group input.form-control {
+		border-top-right-radius: 4px !important; /* Override a Bootstrap issue; because we add the "clear" option as an add-on, Bootstrap attempts to straighten the right edge */
+		border-bottom-right-radius: 4px !important;
+	}
+
+
 	/* Add a "Clear search" button, from http://stackoverflow.com/questions/20062218/how-do-i-clear-a-search-box-with-an-x-in-bootstrap-3 */
 	span.input-group-addon.clear-search {
 		background-color: transparent;
@@ -103,29 +117,29 @@
 		white-space: nowrap; /* Don't wrap the add, delete, "more" buttons on each table row */
 	}
 
+	/* "Disable" links in the filtered list button dropdown: */
+	.row-buttons ul.dropdown-menu>li>a.disabled {
+		color: #aaa;
+		cursor: default;
+	}
+	.row-buttons ul.dropdown-menu>li>a.disabled:hover, .row-buttons ul.dropdown-menu>li>a.disabled:focus {
+	    color: #aaa;	    
+	    background-color: #fff;
+	}
+
 	/* Allow us to use .text-danger on the "delete" link in a dropdown menu */
 	/* No longer used
 	.dropdown-menu>li>a.text-danger {
 		color: #a94442;
 	}
 	*/
-
+	/* Not used any more
 	h1 small {
-		/* Make the "subheading" a bit smaller than usual */
+		/* Make the "subheading" a bit smaller than usual * /
 	    font-size: 50%;
 	}
+	*/
 
-	.navbar.page-header {
-		/* Put some space between the nav bar title and the top of the page; we use Bootstrap's .page-header for consistency, but then pretty much override it */
-		padding-bottom: inherit; /* Use the padding from the standard .navbar class */
-    	margin: 30px 0 30px;    	
-	}
-
-	/* Don't wrap tooltips, as per http://getbootstrap.com/javascript/#callout-tooltip-multiline */
-	.tooltip-inner {
-        max-width: none;
-        white-space: pre; /* Is this preferable to no-wrap? */
-    }
 
     /*
     	This hacks in a solution to a possible bug in datatables, whereby the ordering icon vanishes from the "order" column when you order by another column.
@@ -142,17 +156,26 @@
     	color: #333;
 	}
 
-	/* Hacking in disabled tooltips, from http://jsfiddle.net/cSSUA/209/ and http://stackoverflow.com/questions/13311574/how-to-enable-bootstrap-tooltip-on-disabled-button */
+	/* We display a Font Awesome spinner for the processing message, so adjust the width of the panel */
+	div.dataTables_wrapper div.dataTables_processing {
+		width: auto;
+		margin-left: 0;
+		padding: 0.5em 0;
+	}
+
+    <?php /* Not using this any more:
+
+	/* Hacking in disabled tooltips, from http://jsfiddle.net/cSSUA/209/ and http://stackoverflow.com/questions/13311574/how-to-enable-bootstrap-tooltip-on-disabled-button * /
 	.tooltip-wrapper {
-	  display: inline-block; /* display: block works as well */
+	  display: inline-block; /* display: block works as well * /
 
 	}
 
 	.tooltip-wrapper .btn[disabled] {
-	  /* don't let button block mouse events from reaching wrapper */
+	  /* don't let button block mouse events from reaching wrapper * /
 	  pointer-events: none;
 	}
-
+	*/ ?>
 </style>
 
 @stop
@@ -205,15 +228,16 @@ $(function() {
 		"orderCellsTop": true, // Is this required? It's designed to prevent the click on a search box propagating to the reorder button, but I think we handle this using stopPropagation above
 		dom: "<'row'<'col-sm-12'tr>>" +
 			 "<'row'<'col-sm-5'i><'col-sm-7'p>>",
+	 	"language": { // Customise the processing message
+    		 "processing": '<i class="fa fa-cog fa-spin fa-3x fa-fw margin-bottom"></i>'
+  		},
         processing: true,
         serverSide: true,
         ajax: '{!! route('ctrl::get_data',[$ctrl_class->id,$filter_string]) !!}',
         columns: {!! $js_columns !!},
         rowReorder: { update: false }, // Prevents the data from being redrawn after we've reordered; is this what we want? Depends if we get the Ajax saving sorted
         drawCallback: function( settings ) {
-        	$('.dropdown-toggle').dropdown(); // Refresh Bootstrap tooltips
-        	$('[data-toggle="tooltip"]').tooltip(); // ... and tooltips
-        	//$('.tooltip-wrapper').tooltip({position: "bottom"});
+        	$('.dropdown-toggle').dropdown(); // Refresh Bootstrap dropdowna        	
         	init_table_buttons();
     	},
     	/* No longer necessary, we've removed the main search input
@@ -222,12 +246,17 @@ $(function() {
     	initComplete: function () { // Add column filters; see https://datatables.net/examples/api/multi_filter_select.html
     		var total_columns = this.api().columns().indexes().length;
             this.api().columns().every( function () {
-                var column = this;         
+                var column = this; 
+                
                 // Only draw a dropdown for fields marked as such (usually, relationship fields, possibly ENUM?)
                 var column_searchable = $(column.header()).attr('data-search-dropdown');                
                 var column_title = $(column.header()).text();
-                if (column_searchable !== 'true') return false;                        		
-                var select = $('<select class="form-control" style="width: 90%;" onclick="stopPropagation(event);"><option value="">'+column_title+'</option></select>')
+                if (column_searchable !== 'true') return false; // Ignore columns not marked as searcahble                  		
+                if (column.data().unique().length == 1) {
+                	column.orderable = false; // Attempting to remove the "order" option on this column, but this doesn't work...
+                	return false; // Ignore columns with only one unique value
+                }
+                var select = $('<select class="form-control" onclick="stopPropagation(event);"><option value="">'+column_title+'</option></select>')
                     .appendTo( $(column.header()).empty() )
                     .on( 'change', function () {
                         var val = $.fn.dataTable.util.escapeRegex(
@@ -238,8 +267,7 @@ $(function() {
                             .draw();
                     } );
                 column.data().unique().sort().each( function ( d, j ) {
-                	if (!d) return false;
-                	/* OMIT empty values as we can't yet search for "missing" relationships; see notes in CtrlController */
+                	if (!d || d == 'None') return false; /* OMIT empty values as we can't yet search for "missing" relationships; see notes in CtrlController. Is 'None' always going to represent a missing relationship...? */                	
                     select.append( '<option value="'+d+'">'+d+'</option>' )
                 } );
             } );            
@@ -273,8 +301,7 @@ $(function() {
 					    }
 					});
 	   			}	
-	   			else {
-	   				console.log("no");
+	   			else {	   				
 	   				// $('.dropdown.open .dropdown-toggle').dropdown('toggle');
 	   				$(that).parents('ul.dropdown-menu').dropdown('toggle'); // Close the "delete" dropdown
 	   			}		  
@@ -404,7 +431,7 @@ $(function() {
 	        <span class="icon-bar"></span>
 	        <span class="icon-bar"></span>
 	      </button>   
-	      <a class="navbar-brand">@if ($icon = $ctrl_class->get_icon())<i class="{{ $icon }}"></i> @endif
+	      <a class="navbar-brand">@if ($icon = $ctrl_class->get_icon())<i class="{{ $icon }} fa-fw"></i> @endif
 			{{ ucwords($ctrl_class->get_plural()) }}</a>   
 	    </div>
 

@@ -127,7 +127,7 @@ class CtrlSynch extends Command
 
         $tables_processed  = 0;
         $columns_processed = 0; // Could track added/updated counts here, and possibly even 'deleted'
-        $ignore_columns = ['id','created_at','updated_at','deleted_at','remember_token']; // Do we ever want to see these fields?
+        $ignore_columns = ['id','remember_token']; // Do we ever want to see these fields?
 
         for ($pass = 1; $pass <= 2; $pass++) { // Properties on pass 1, relationships on pass 2
             foreach ($standard_tables as $standard_table) {
@@ -210,7 +210,12 @@ class CtrlSynch extends Command
                         $ctrl_property->order = $column_order++;
 
                         $ctrl_property->label    = ucfirst(str_replace('_',' ',$ctrl_property->name));
-                        $ctrl_property->fieldset = 'Content';
+
+                        // There are some columns we rarely want to display as editable fields
+                        $exclude_fields_from_form = ['created_at','updated_at','deleted_at','url','uri'];
+                        if (!in_array($ctrl_property->name, $exclude_fields_from_form)) {
+                            $ctrl_property->fieldset = 'Content';
+                        }
 
                         $ctrl_property->save();             
                     }
@@ -365,8 +370,8 @@ class CtrlSynch extends Command
                                                     $query->whereNull('relationship_type')
                                                           ->orWhere('relationship_type','belongsTo');
                                                 })
-                                              ->get();            
-
+                                              ->get();      
+                                              
                 // We can only fill relationships if they're belongsTo (ie, have a specific local key, such as one_id)
             foreach ($fillable_properties as $fillable_property) {
                 $view_data['fillable'][] = $fillable_property->get_field_name();
