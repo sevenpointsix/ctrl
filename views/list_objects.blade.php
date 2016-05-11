@@ -447,8 +447,8 @@ $(function() {
 			<li><a href="{{ route('ctrl::list_objects',$ctrl_class->id) }}" _class="btn btn-default navbar-btn">@if ($icon = $ctrl_class->get_icon())<i class="{{ $icon }}"></i> @endif Show all</a></li>
 			@endif	
 
-			@if ($last_list_link)		
-				<li><a href="{{ $last_list_link }}" _class="btn btn-default navbar-btn"><i class="fa fa-toggle-left"></i> Back</a></li>
+			@if ($unfiltered_list_link) {{-- Can we link "back" to an unfiltered list? --}}
+				<li><a href="{{ $unfiltered_list_link }}" _class="btn btn-default navbar-btn"><i class="fa fa-toggle-left"></i> Back</a></li>			
 			@endif
 			{{-- This may prove useful at some point?
 	        <li class="dropdown">

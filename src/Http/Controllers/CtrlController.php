@@ -114,9 +114,6 @@ class CtrlController extends Controller
 	public function dashboard()
 	{
 
-		// Set this as a "previous list", so that we can return to it if we view a list directly from the dashboard
-		session(['last_list_link' => route('ctrl::dashboard')]);
-
 		return view('ctrl::dashboard',[			
 		]);
 	}
@@ -218,22 +215,22 @@ class CtrlController extends Controller
         $action_column->name = 'action';
         $js_columns[]        = $action_column;
 
-        // Add the "Back" button:        
-        $last_list_link = session('last_list_link');		        
-		if ($last_list_link == $request->fullUrl()) { // Same list as previously
-			$last_list_link = false;
-		}
-		else {
-			session(['last_list_link' => $request->fullUrl()]);
-		}
+        // Do we have an unfiltered list we can link back to?
+        if ($filter_array) {
+        	// dd($filter_array);
+        	// $filter_array[0]['ctrl_property_id'] is now the ID of the property that links back to the "parent" list, so:
+        	$unfiltered_ctrl_property = CtrlProperty::where('id',$filter_array[0]['ctrl_property_id'])->firstOrFail();
+        	$unfiltered_ctrl_class    = CtrlClass::where('id',$unfiltered_ctrl_property->related_to_id)->firstOrFail();
+        	$unfiltered_list_link     = route('ctrl::list_objects',[$unfiltered_ctrl_class->id]);
+        }
 
 		return view('ctrl::list_objects',[
-			'ctrl_class'         => $ctrl_class,
-			'th_columns'         => implode("\n",$th_columns),
-			'js_columns'         => json_encode($js_columns),
-			'filter_description' => $filter_description,
-			'filter_string'      => $filter_string,
-			'last_list_link'     => $last_list_link
+			'ctrl_class'           => $ctrl_class,
+			'th_columns'           => implode("\n",$th_columns),
+			'js_columns'           => json_encode($js_columns),
+			'filter_description'   => $filter_description,
+			'filter_string'        => $filter_string,
+			'unfiltered_list_link' => (!empty($unfiltered_list_link) ? $unfiltered_list_link : false)
 		]);
 	}
 
