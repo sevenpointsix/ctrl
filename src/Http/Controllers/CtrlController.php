@@ -113,6 +113,10 @@ class CtrlController extends Controller
 	 */
 	public function dashboard()
 	{
+
+		// Set this as a "previous list", so that we can return to it if we view a list directly from the dashboard
+		session(['last_list_link' => route('ctrl::dashboard')]);
+
 		return view('ctrl::dashboard',[			
 		]);
 	}
@@ -126,8 +130,9 @@ class CtrlController extends Controller
 	 *
 	 * @return Response
 	 */
-	public function list_objects($ctrl_class_id, $filter_string = NULL)
+	public function list_objects(Request $request, $ctrl_class_id, $filter_string = NULL)
 	{		
+
 		// Convert the the $filter parameter into one that makes sense
 		$filter_array = $this->convert_filter_string_to_array($filter_string);			
 		$filter_description = $this->describe_filter($filter_array);
@@ -213,12 +218,22 @@ class CtrlController extends Controller
         $action_column->name = 'action';
         $js_columns[]        = $action_column;
 
+        // Add the "Back" button:        
+        $last_list_link = session('last_list_link');		        
+		if ($last_list_link == $request->fullUrl()) { // Same list as previously
+			$last_list_link = false;
+		}
+		else {
+			session(['last_list_link' => $request->fullUrl()]);
+		}
+
 		return view('ctrl::list_objects',[
 			'ctrl_class'         => $ctrl_class,
 			'th_columns'         => implode("\n",$th_columns),
 			'js_columns'         => json_encode($js_columns),
 			'filter_description' => $filter_description,
-			'filter_string'      => $filter_string
+			'filter_string'      => $filter_string,
+			'last_list_link'     => $last_list_link
 		]);
 	}
 
@@ -485,6 +500,7 @@ class CtrlController extends Controller
 			$page_title = 'Add '.$this->a_an($ctrl_class->get_singular()) . ' ' .$ctrl_class->get_singular();			
 		}
 		// Add '<small>[FILTER]</small>' if we're filtering? Nah, probably not.
+
 		
 		return view('ctrl::edit_object',[
 			'ctrl_class'  => $ctrl_class,

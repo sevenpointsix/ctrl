@@ -445,8 +445,11 @@ $(function() {
 
 	  		@if ($filter_description)
 			<li><a href="{{ route('ctrl::list_objects',$ctrl_class->id) }}" _class="btn btn-default navbar-btn">@if ($icon = $ctrl_class->get_icon())<i class="{{ $icon }}"></i> @endif Show all</a></li>
-			@endif			
-			<li><a href="#TBC" _class="btn btn-default navbar-btn"><i class="fa fa-toggle-left"></i> Back</a></li>
+			@endif	
+
+			@if ($last_list_link)		
+				<li><a href="{{ $last_list_link }}" _class="btn btn-default navbar-btn"><i class="fa fa-toggle-left"></i> Back</a></li>
+			@endif
 			{{-- This may prove useful at some point?
 	        <li class="dropdown">
 	          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
