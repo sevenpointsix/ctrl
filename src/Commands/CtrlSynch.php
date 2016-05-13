@@ -23,7 +23,7 @@ class CtrlSynch extends Command
      *
      * @var string
      */
-    protected $description = 'This command updates the ctrl_ table to reflect the current database';
+    protected $description = 'This command updates the ctrl_ tables to reflect the current database';
 
     /**
      * Create a new command instance.
@@ -66,7 +66,7 @@ class CtrlSynch extends Command
      */
     protected function populate_ctrl_tables() {
 
-        $wipe_all_existing_tables = true; // While testing, it's easier to start from scratch each time
+        $wipe_all_existing_tables = false; // While testing, it's easier to start from scratch each time; set this to true if that's what you want
 
         if ($wipe_all_existing_tables) {
             DB::table('ctrl_classes')->truncate();
@@ -145,7 +145,7 @@ class CtrlSynch extends Command
                     
 
                 $columns = DB::select("SHOW COLUMNS FROM {$standard_table}");
-                $column_order = 1;
+                if ($pass == 1) $column_order = 1; // Don't reset this for pass 2, otherwise we end up with two products with order 1, two with order 2, etc.
                 foreach ($columns as $column) {
 
                     $column_name = $column->Field;
@@ -238,11 +238,10 @@ class CtrlSynch extends Command
                             'name'              => str_replace('_id', '', $column_name),
                             'relationship_type' => 'belongsTo',
                             'foreign_key'       => $column_name,
-                            'local_key'         => 'id',
-                            // Assume we always want to include simple "belongsTo" relationships on the form
-                            'field_type' => 'dropdown',
-                            'label'      => ucfirst($column_name),
-                            'fieldset'   => 'Content'
+                            'local_key'         => 'id',                            
+                            'field_type'        => 'dropdown',
+                            'label'             => ucfirst(str_replace('_id', '', $column_name)),
+                            'fieldset'          => 'Content' // Assume we always want to include simple "belongsTo" relationships on the form
                         ]); 
 
                         $ctrl_property->order = $column_order++; // Do we leave this out of the firstOrNew, as order is something we'd tweak manually?                
@@ -364,6 +363,9 @@ class CtrlSynch extends Command
 
             ];
             
+            // NOTE: this may need to include properties that we set using a filter in the URL
+            // ie, if we want to add a course to a client, but "client" isn't directly visible in the form;
+            // instead, we get to the list of courses by clicking the filtered_list "courses" when listing clients.
             $fillable_properties = $ctrl_class->ctrl_properties()
                                               ->where('fieldset','!=','')
                                               ->where(function ($query) {

@@ -12,7 +12,7 @@ class CtrlProperty extends Model
      *
      * @var array
      */
-    protected $fillable = ['name','ctrl_class_id','related_to_id','relationship_type','foreign_key','local_key','pivot_table'];
+    protected $fillable = ['name','ctrl_class_id','related_to_id','relationship_type','foreign_key','local_key','pivot_table','field_type','label','fieldset'];
 
     /**
      * Get the class for this property

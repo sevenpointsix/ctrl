@@ -41,10 +41,21 @@ class CtrlController extends Controller
 		$menu_links        = [];
 		foreach ($ctrl_classes as $ctrl_class) {
 
+			$count_ctrl_class = $ctrl_class->get_class();
+			$count = $count_ctrl_class::count();
+
 			$add_link  = route('ctrl::edit_object',$ctrl_class->id);
 			$add_title = 'Add '.$this->a_an($ctrl_class->get_singular()).' '.$ctrl_class->get_singular();
-			$list_link  = route('ctrl::list_objects',$ctrl_class->id);
-			$list_title = 'View '.$ctrl_class->get_plural();
+
+			if ($count > 0) {
+				$list_link  = route('ctrl::list_objects',$ctrl_class->id);
+				$list_title = 'View '.$count.' '.$ctrl_class->get_plural();	
+			}
+			else {
+				$list_link  = false;
+				$list_title = 'No '.$ctrl_class->get_plural();	
+			}
+			
 
 			$menu_links[$ctrl_class->menu_title][] = [
 				'id'         => $ctrl_class->id,
@@ -97,7 +108,7 @@ class CtrlController extends Controller
 		$logged_in       = $user && $user->ctrl_group != '';
 
 		if (!$is_public_route && !$logged_in) {
-			// The user is required to log in to see this page				
+			// The user is required to log in to see this page					
 			Redirect::to(route('ctrl::login'))->send();
 		}
 		else {
@@ -115,6 +126,7 @@ class CtrlController extends Controller
 	{
 
 		return view('ctrl::dashboard',[			
+			'logo' => config('ctrl.logo')
 		]);
 	}
 
@@ -215,6 +227,14 @@ class CtrlController extends Controller
         $action_column->name = 'action';
         $js_columns[]        = $action_column;
 
+        // Can we reorder this list?
+        if (property_exists($ctrl_class,'order')) {
+        	$can_reorder = true;
+        }
+        else {
+        	$can_reorder = false;	
+        }
+
         // Do we have an unfiltered list we can link back to?
         if ($filter_array) {
         	// dd($filter_array);
@@ -230,7 +250,8 @@ class CtrlController extends Controller
 			'js_columns'           => json_encode($js_columns),
 			'filter_description'   => $filter_description,
 			'filter_string'        => $filter_string,
-			'unfiltered_list_link' => (!empty($unfiltered_list_link) ? $unfiltered_list_link : false)
+			'unfiltered_list_link' => (!empty($unfiltered_list_link) ? $unfiltered_list_link : false),
+			'can_reorder'          => $can_reorder
 		]);
 	}
 
@@ -286,7 +307,13 @@ class CtrlController extends Controller
 
         return Datatables::of($objects)  
         	->setRowId('id') // For reordering
-        	->editColumn('order', '<i class="fa fa-arrows-v"></i>') // Set the displayed value of the order column to just show the icon        	
+        	->editColumn('order', '<i class="fa fa-reorder"></i>') // Set the displayed value of the order column to just show the icon        	        	
+        	// ->editColumn('src', '<div class="media"><div class="media-left"><a href="{{$src}}" data-toggle="lightbox" data-title="{{$src}}"><img class="media-object" src="{{$src}}" height="30"></a></div><div class="media-body" style="vertical-align: middle">{{$src}}</div></div>') // Draw the actual image, if this is an image field
+        	->editColumn('src', function($object) {
+	    		if ($src = $object->src) { // If we have a "src" column, assume (for now!) that we render it as an image. We could probably load the corresponding ctrlproperty here and confirm this:
+					return sprintf('<div class="media"><div class="media-left"><a href="%1$s" data-toggle="lightbox" data-title="%1$s"><img class="media-object" src="%1$s" height="30"></a></div><div class="media-body" style="vertical-align: middle">%s</div></div>',$src);
+				}
+        	}) // Draw the actual image, if this is an image field
             ->addColumn('action', function ($object) use ($ctrl_class) {
             	$edit_link   = route('ctrl::edit_object',[$ctrl_class->id,$object->id]);
             	$delete_link = route('ctrl::delete_object',[$ctrl_class->id,$object->id]);
@@ -568,9 +595,8 @@ class CtrlController extends Controller
         $related_ctrl_properties = $ctrl_class->ctrl_properties()
                                               ->where('fieldset','!=','')
                                               ->where(function ($query) {
-                                                    $query->where('relationship_type','hasMany');
-                                                          // ->orWhere('relationship_type','belongsToMany');
-                                                    // Not tested belongsToMany yet
+                                                    $query->where('relationship_type','hasMany')
+                                                          ->orWhere('relationship_type','belongsToMany');                                                    
                                                 })
                                               ->get();  
 
@@ -578,7 +604,7 @@ class CtrlController extends Controller
 			$related_field_name = $related_ctrl_property->get_field_name();
 
 	        if ($request->input($related_field_name)) {
-
+				// $request->input($related_field_name) is always an array here, I think?
 	        	$related_ctrl_class = \Sevenpointsix\Ctrl\Models\CtrlClass::find($related_ctrl_property->related_to_id);
 	            	// NOTE: we need some standard functions for the following:
 	            	/*
@@ -590,7 +616,10 @@ class CtrlController extends Controller
 	            $related_class = $related_ctrl_class->get_class();
 	            $related_objects = $related_class::find($request->input($related_field_name));	
 	            
-	            if ($related_ctrl_property->relationship_type == 'hasMany') {
+	            if ($related_ctrl_property->relationship_type == 'hasMany'
+	            	|| $related_ctrl_property->relationship_type == 'belongsToMany'
+	            		// I initially thought we'd have to treat these differently, but it seems to work at the moment. Could break in more advanced cases though.
+	            	) {
 
 		            // A hasMany relationship needs saveMany
 		            // belongsToMany might need attach, or synch -- TBC
@@ -613,7 +642,7 @@ class CtrlController extends Controller
 		            $object->$related_field_name()->saveMany($related_objects);
 		            //$object->save();
 		            // This is ALMOST working but glitches; we seem to save the relationship then overwrite it when we try to remove it, even though we try to remove it first. Do we need to lock the tables here?
-		        }
+		        }		        
 			}
 		}
 		
@@ -736,7 +765,10 @@ class CtrlController extends Controller
 	 */
 	public function login()
 	{
-		if (Auth::check()) {
+		$user          = Auth::user();
+		$logged_in     = $user && $user->ctrl_group != '';
+		// if (Auth::check()) { // This skips the ctrl_group bit, which can lead to an inifinte redirect loop
+		if ($logged_in) {
 			return redirect(route('ctrl::dashboard'));
 		}
 		return view('ctrl::login');

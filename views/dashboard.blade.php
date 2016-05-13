@@ -111,6 +111,9 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 	border-bottom-right-radius: 4px;
 }
 
+.page-header img {
+	vertical-align: baseline;
+}
 /* very much WIP */
 /* Might not need any of this:;
 #dashboard-grid {
@@ -138,7 +141,7 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 @section('content')
 	
 	<div class="page-header">
-	  <h1><img src="http://www.argos-support.co.uk/assets/img/design/argos-logo.png" alt="ARGOS" style="height: 50px"> <small>Content Management System</small></h1>
+	  <h1>@if ($logo)<img src="{{ $logo }}" style="height: 50px"> @endif<small>Content Management System</small></h1>
 	</div>
 
 	<div class="row">
@@ -153,7 +156,7 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 				  <div class="form-group">				    
 				    <div class="input-group">
 				      <span class="input-group-addon"><i class="fa fa-search"></i></span>
-				      <input class="typeahead form-control input-lg" type="text" id="exampleInputAmount" placeholder="Search" style="float: none;">		
+				      <input class="typeahead form-control input-lg" type="text" id="exampleInputAmount" placeholder="Search for an item here" style="float: none;">		
 				      {{-- float: none aligns the addon in Chrome but apparently not IE? https://github.com/twitter/typeahead.js/issues/847 --}}	      
 				    </div>
 				  </div>			  
@@ -175,7 +178,7 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 						    <i class="{{ $link['icon_only'] }} fa-3x"></i><br><span class="label label-primary">{{ $link['title'] }}</span>			  
 						  </a>
 						  <ul class="dropdown-menu">
-						  	<li><a href="{{ $link['list_link'] }}"><i class="fa fa-list fa-fw"></i> {{ $link['list_title'] }}</a></li>			  	
+						  	<li><a @if ($link['list_link']) href="{{ $link['list_link'] }}" @else class="disabled" @endif><i class="fa fa-list fa-fw"></i> {{ $link['list_title'] }}</a></li>			  	
 						    <li><a href="{{ $link['add_link'] }}"><i class="fa fa-plus fa-fw"></i> {{ $link['add_title'] }}</a></li>
 						  </ul>
 						</div>

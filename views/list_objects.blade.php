@@ -8,6 +8,9 @@
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.1.1/css/rowReorder.dataTables.min.css" />
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.1.1/css/rowReorder.bootstrap.min.css" />
 
+<!-- WIP: might use this lightbox for opening images from table rows, and likely elsewhere. TBC -->
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/ekko-lightbox/4.0.1/ekko-lightbox.min.css" />
+
 <style type="text/css">
  	/* Prevent button dropdowns from wrapping in table, see https://github.com/twbs/bootstrap/issues/9939 */
  	/* No longer needed:
@@ -75,9 +78,10 @@
 		right: 14px;
 	}
 
-	/* Format the "order" column to centre align values, looks neater */
-	td.reorder {
+	/* Format the "order" column to centre align values, looks neater. Also add a vertical "move" cursor */
+	table.dataTable td.reorder {
 		text-align: center;
+		cursor: ns-resize;
 	}
 
 	/* Stretch the column search fields and dropdowns so that they're full-width */
@@ -115,16 +119,6 @@
 
 	.row-buttons {
 		white-space: nowrap; /* Don't wrap the add, delete, "more" buttons on each table row */
-	}
-
-	/* "Disable" links in the filtered list button dropdown: */
-	.row-buttons ul.dropdown-menu>li>a.disabled {
-		color: #aaa;
-		cursor: default;
-	}
-	.row-buttons ul.dropdown-menu>li>a.disabled:hover, .row-buttons ul.dropdown-menu>li>a.disabled:focus {
-	    color: #aaa;	    
-	    background-color: #fff;
 	}
 
 	/* Allow us to use .text-danger on the "delete" link in a dropdown menu */
@@ -185,6 +179,9 @@
 <script type="text/javascript" src="https://cdn.datatables.net/t/bs-3.3.6/dt-1.10.11,b-1.1.2,r-2.0.2/datatables.min.js"></script>
 <!-- Row reorder -->
 <script type="text/javascript" src="https://cdn.datatables.net/rowreorder/1.1.1/js/dataTables.rowReorder.min.js"></script>
+<!-- WIP: might use this lightbox for opening images from table rows, and likely elsewhere. TBC -->
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/ekko-lightbox/4.0.1/ekko-lightbox.min.js"></script>
+
 
 <script>
 
@@ -235,7 +232,9 @@ $(function() {
         serverSide: true,
         ajax: '{!! route('ctrl::get_data',[$ctrl_class->id,$filter_string]) !!}',
         columns: {!! $js_columns !!},
+        @if ($can_reorder)
         rowReorder: { update: false }, // Prevents the data from being redrawn after we've reordered; is this what we want? Depends if we get the Ajax saving sorted
+        @endif
         drawCallback: function( settings ) {
         	$('.dropdown-toggle').dropdown(); // Refresh Bootstrap dropdowna        	
         	init_table_buttons();

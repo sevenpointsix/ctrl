@@ -21,3 +21,15 @@
 	padding-right: 0;
 	padding-left: 0;
 }
+
+/* "Disable" links in the filtered list button dropdown, and on the dashboard buttons: */
+ul.dropdown-menu>li>a.disabled
+{
+	color: #aaa;
+	cursor: default;
+}
+ul.dropdown-menu>li>a.disabled:hover, ul.dropdown-menu>li>a.disabled:focus
+ {
+    color: #aaa;	    
+    background-color: #fff;
+}
