@@ -85,7 +85,7 @@
                         <div class="row">
                           <div class="col-xs-12 text-center">
                             <i class="fa fa-unlock-alt"></i>
-                            <a href="#password_recovery" id="forgot">Forgotten your password?</a>
+                            <a href="#password_recovery" id="forgot">Forgotten your password? DEV</a>
                           </div>
                           <!--
                           <div class="col-xs-5">
