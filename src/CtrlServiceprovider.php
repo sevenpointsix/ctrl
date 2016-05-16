@@ -9,7 +9,7 @@
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\Router;
 
-class CtrlServiceprovider extends ServiceProvider{
+class CtrlServiceProvider extends ServiceProvider{
 
 
 	/**
