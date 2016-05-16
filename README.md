@@ -1,5 +1,9 @@
 A very early version of a CMS. Not intended for public or general use.
 
+`composer require sevenpointsix/ctrl:dev-master`
+
+WIP: not sure how to get this working as a proper package yet. For some help, see: https://laracasts.com/discuss/channels/laravel/service-provider-not-found?page=3
+
 You'll need to add this to the 'providers' array in config/app.php:
 
 `Sevenpointsix\Ctrl\CtrlServiceProvider::class`
