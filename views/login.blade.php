@@ -17,7 +17,10 @@
     <link href="{{ asset('assets/vendor/ctrl/login/css/authenty.css') }}" rel="stylesheet">
     <style>
     .authenty.signin-main .wrap {
-      padding-top: 40px;
+        padding-top: 20px;
+    }
+    .authenty.signin-main .title {
+      margin-bottom: 40px;
     }
     .authenty.signin-main input[type="email"] {
       background-color: #404040;
@@ -27,7 +30,7 @@
       margin-bottom: 10px;
       color: #ccc;
       height: 43px;
-  }
+    }
     </style>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
@@ -54,7 +57,7 @@
                 <div class="row">
                  @if ($logo)
                   <div class="title" data-animation="fadeInDown" data-animation-delay=".8s">
-                      <img src="{{ $logo }}" style="height: 50px">
+                      <img src="{{ $logo }}" style="height: 100px">
                     <!--<h1>CMS</h1>-->
                     <!--<h5>Please log in below.</h5>-->
                   </div>
@@ -117,7 +120,7 @@
                       <h2>Authenty</h2>
                       <p>Authentication made beautiful</p>
                       -->
-                      <img src="{{ $logo }}" style="height: 50px">
+                      <img src="{{ $logo }}"  class="img-responsive">
                   </div>
                   @endif
                   <div class="col-sm-1 hidden-xs">

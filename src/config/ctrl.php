@@ -1,6 +1,6 @@
 <?php
 
 
-	return [
-			"message" => "This is a dummy package"
-	];
+return [
+	"logo" => '', // The path or full URL of a suitable client logo
+];
