@@ -771,7 +771,9 @@ class CtrlController extends Controller
 		if ($logged_in) {
 			return redirect(route('ctrl::dashboard'));
 		}
-		return view('ctrl::login');
+		return view('ctrl::login',[
+			'logo' => config('ctrl.logo')
+		]);
 	}
 
 	/**

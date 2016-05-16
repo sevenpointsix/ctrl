@@ -52,11 +52,13 @@
             <div class="container">   
               <div class="form-wrap">
                 <div class="row">
+                 @if ($logo)
                   <div class="title" data-animation="fadeInDown" data-animation-delay=".8s">
-                      <img src="http://www.argos-support.co.uk/assets/img/design/argos-logo.png" alt="ARGOS">
+                      <img src="{{ $logo }}" style="height: 50px">
                     <!--<h1>CMS</h1>-->
                     <!--<h5>Please log in below.</h5>-->
                   </div>
+                  @endif
 
                   {{-- This is only used for logins where the Ajax post fails, which is hopefully never --}}
                    @include('ctrl::form_errors')
