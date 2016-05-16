@@ -111,13 +111,15 @@
             <div class="container">
               <div class="form-wrap">
                 <div class="row">
-                  <div class="col-xs-12 col-sm-3 brand" data-animation="fadeInUp">
-                    <!--
-                    <h2>Authenty</h2>
-                    <p>Authentication made beautiful</p>
-                    -->
-                    <img src="http://www.argos-support.co.uk/assets/img/design/argos-logo.png" alt="ARGOS">
+                  @if ($logo)
+                  <div class="col-xs-12 col-sm-3 brand" data-animation="fadeInUp">                      
+                      <!--
+                      <h2>Authenty</h2>
+                      <p>Authentication made beautiful</p>
+                      -->
+                      <img src="{{ $logo }}" style="height: 50px">
                   </div>
+                  @endif
                   <div class="col-sm-1 hidden-xs">
                     <div class="horizontal-divider"></div>
                   </div>
