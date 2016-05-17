@@ -238,13 +238,16 @@ class CtrlSynch extends Command
                             'name'              => str_replace('_id', '', $column_name),
                             'relationship_type' => 'belongsTo',
                             'foreign_key'       => $column_name,
-                            'local_key'         => 'id',                            
-                            'field_type'        => 'dropdown',
-                            'label'             => ucfirst(str_replace('_id', '', $column_name)),
-                            'fieldset'          => 'Content' // Assume we always want to include simple "belongsTo" relationships on the form
+                            'local_key'         => 'id'                            
                         ]); 
 
-                        $ctrl_property->order = $column_order++; // Do we leave this out of the firstOrNew, as order is something we'd tweak manually?                
+                        // Only set these if they're not already set, otherwise we'll overwrite custom settings:
+                        if (!$ctrl_property->exists) {
+                            $ctrl_property->order      = $column_order++;
+                            $ctrl_property->field_type = 'dropdown';
+                            $ctrl_property->label      = ucfirst(str_replace('_id', '', $column_name));
+                            $ctrl_property->fieldset   = 'Content'; // Assume we always want to include simple "belongsTo" relationships on the form
+                        }
 
                         $ctrl_property->save(); // As above, no need to explicitly save relationship                            
                             
@@ -261,6 +264,8 @@ class CtrlSynch extends Command
                             'foreign_key'       => $column_name,
                             'local_key'         => 'id'
                         ]);
+
+                        $inverse_ctrl_property->order      = $column_order++; // Useful not to create these with NULL orders
                         $inverse_ctrl_property->save();  // As above, no need to explicitly save relationship
                     }
                     if ($pass == 1) $columns_processed++;   
@@ -320,6 +325,8 @@ class CtrlSynch extends Command
                     'local_key'         => $pivot_one,
                     'pivot_table'       => $pivot_table
                 ]);
+
+                $ctrl_property->order = $column_order++; // Useful not to create these with NULL orders
 
                 $ctrl_property->save();
                 

@@ -20,6 +20,7 @@ use View;
 use File;
 use Storage;
 use Log;
+use Schema;
 
 use Datatables;
 
@@ -228,7 +229,9 @@ class CtrlController extends Controller
         $js_columns[]        = $action_column;
 
         // Can we reorder this list?
-        if (property_exists($ctrl_class,'order')) {
+        // if (property_exists($ctrl_class,'order')) {
+        // From https://laracasts.com/discuss/channels/eloquent/test-attributescolumns-existence
+        if (Schema::hasColumn($ctrl_class->getTable(), 'order')) {
         	$can_reorder = true;
         }
         else {
@@ -419,6 +422,15 @@ class CtrlController extends Controller
     		];
 
     	}
+
+    	
+    	// Add a "reorder" button to the key
+    	if (Schema::hasColumn($ctrl_class->getTable(), 'order')) {
+        	$can_reorder = true;
+        }
+        else {
+        	$can_reorder = false;	
+        }
     	
     	if ($key) {
     		$template = 'ctrl::tables.row-buttons-key';
@@ -427,10 +439,12 @@ class CtrlController extends Controller
     		$template = 'ctrl::tables.row-buttons';	
     	}
 
+
     	$buttons = view($template, [
     		'edit_link'           => $edit_link,
     		'delete_link'         => $delete_link,
-    		'filtered_list_links' => $filtered_list_links
+    		'filtered_list_links' => $filtered_list_links,
+    		'can_reorder'         => $can_reorder
     	]);            	
        	return $buttons;
 	}
@@ -1028,17 +1042,19 @@ class CtrlController extends Controller
 			}		
 			$response = 'Items reordered';
 			$status = 200;
-		}
+		}		
 		/* No, this might just mean we didn't actually change the order:
 		if (empty($response)) {
 			$response = 'An error has occurred';
 			$status = 400;
 		}
 		*/
-		$json = [
-			'response'      => $response,			
-        ];
-        return \Response::json($json, $status);
+		if (!empty($response)) {
+			$json = [
+				'response'      => $response,			
+	        ];
+	        return \Response::json($json, $status);
+	    }
 	}	
 
 	/**

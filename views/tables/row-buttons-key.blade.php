@@ -19,6 +19,9 @@
 */ ?>
 <div class="row-buttons">
 	<strong>Key: </strong>
+		@if ($can_reorder)
+			<a class="btn btn-xs btn-default"><i class="fa fa-reorder"></i> Reorder</a>
+		@endif
 	  <a class="btn btn-xs btn-info"><i class="fa fa-pencil"></i> Edit</a>
 	  <a class="btn btn-xs btn-danger"><i class="fa fa-trash"></i> Delete</a>
 	  {{-- Can we filter on any related items? --}}
