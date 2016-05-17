@@ -246,6 +246,8 @@ class CtrlController extends Controller
 
         $add_link = route('ctrl::edit_object',[$ctrl_class->id,0,$filter_string]);
 
+        $key = 		$key = $this->get_row_buttons($ctrl_class,0,true);
+
 		return view('ctrl::list_objects',[
 			'ctrl_class'           => $ctrl_class,
 			'th_columns'           => implode("\n",$th_columns),
@@ -254,7 +256,8 @@ class CtrlController extends Controller
 			'filter_string'        => $filter_string,
 			'unfiltered_list_link' => (!empty($unfiltered_list_link) ? $unfiltered_list_link : false),
 			'can_reorder'          => $can_reorder,
-			'add_link'             => $add_link
+			'add_link'             => $add_link,
+			'key'                  => $key
 		]);
 	}
 
@@ -318,72 +321,9 @@ class CtrlController extends Controller
 				}
         	}) // Draw the actual image, if this is an image field
             ->addColumn('action', function ($object) use ($ctrl_class) {
-            	$edit_link   = route('ctrl::edit_object',[$ctrl_class->id,$object->id]); 
-            	$delete_link = route('ctrl::delete_object',[$ctrl_class->id,$object->id]);
 
-            	// Do we have any filtered lists?
-            	$filtered_list_links        = [];
-            	$filtered_list_properties = $ctrl_class->ctrl_properties()->whereRaw(
-				   '(find_in_set(?, flags))',
-				   ['filtered_list']		   
-				)->where('relationship_type','hasMany')->get(); // I think a filtered list will always be "hasMany"?           	            					
-            	foreach ($filtered_list_properties as $filter_ctrl_property) {
-            		// Build the filter string
-            		/*
-            		 Now, we need the INVERSE property here. That is:
-            		 	- If we're loading a Test record, with a "Many" property set to "filtered_list"
-            		 	- We need to find the "test" property of the "Many" object, so that we can show Many items where "test" is the value of this object
-            		 I believe we can do this by matching the foreign key
-            		 */
-            		$inverse_filter_ctrl_property = CtrlProperty::where('ctrl_class_id',$filter_ctrl_property->related_to_id)
-            														->where('related_to_id',$filter_ctrl_property->ctrl_class_id)
-            														->where('foreign_key',$filter_ctrl_property->foreign_key) // Necessary?
-            														->firstOrFail();
-            		
-            		$filtered_list_array    = [
-            			'ctrl_property_id'=>$inverse_filter_ctrl_property->id, // We don't use the keys here, they're for clarity only (as we use them elsewhere when handling filters)
-            			'value'=>$object->id
-            		];            		
-            		$filtered_list_string = implode(',', $filtered_list_array); // Add 1,2 to the array (ctrl_property_id,value). Discard keys as above
-            		
-            		// Establish the title and icon for the link; ie, the icon and title of the related class
-            		$filter_ctrl_class = CtrlClass::where('id',$filter_ctrl_property->related_to_id)->firstOrFail();
-					//$filter_related_class = $filter_ctrl_class->get_class();
+            	return $this->get_row_buttons($ctrl_class, $object->id);
 
-					// Count the related items					
-					$count_ctrl_class = $filter_ctrl_class;
-					$count_class      = $count_ctrl_class->get_class();					
-					$count_objects    = $count_class::where($inverse_filter_ctrl_property->foreign_key,$filtered_list_array['value']);
-					$count            = $count_objects->count();
-					
-					if ($count > 0) {
-						$filter_list_title = 'View '.$count . ' '.$filter_ctrl_class->get_plural() . ($filter_ctrl_class->get_plural() > 1 ? 's': '');
-						$filter_list_link  = route('ctrl::list_objects',[$filter_ctrl_property->related_to_id,$filtered_list_string]);
-					}
-					else {
-						$filter_list_title = 'No '.$filter_ctrl_class->get_plural();						
-						$filter_list_link  = false;
-					}
-					$filter_add_title = 'Add '.$this->a_an($filter_ctrl_class->get_singular()).' '.$filter_ctrl_class->get_singular();
-					$filter_add_link  = route('ctrl::edit_object',[$filter_ctrl_property->related_to_id,0,$filtered_list_string]); // TODO check permissions here; can we add items?
-
-	            	$filtered_list_links[]  = [
-	        			'icon'       => $filter_ctrl_class->get_icon(),
-	        			'count'      => $count,
-	        			'list_title' => $filter_list_title,
-	        			'list_link'  => $filter_list_link,
-	        			'add_title'  => $filter_add_title,
-	        			'add_link'   => $filter_add_link,
-	        		];
-
-            	}
-            	
-            	$buttons = view('ctrl::tables.row-buttons', [
-            		'edit_link'           => $edit_link,
-            		'delete_link'         => $delete_link,
-            		'filtered_list_links' => $filtered_list_links
-            	]);            	
-               	return $buttons;
             })
             // Is this the best place to filter results if necessary?
             // I think so. See: http://datatables.yajrabox.com/eloquent/custom-filter
@@ -406,6 +346,93 @@ class CtrlController extends Controller
             ->make(true);
 
 		// return Datatables::of($objects)->make(true);
+	}
+
+	/**
+	 * Return the row buttons for the row that holds object $object_id of ctrl_class $ctrl_class
+	 * @param  object $ctrl_class
+	 * @param  integer $object_id
+	 * @param  $key Are we drawing a key, or returning actual buttons?
+	 * @return string HTML
+	 */
+	protected function get_row_buttons($ctrl_class,$object_id, $key = false) {
+
+    	$edit_link   = route('ctrl::edit_object',[$ctrl_class->id,$object_id]); 
+    	$delete_link = route('ctrl::delete_object',[$ctrl_class->id,$object_id]);
+
+    	// Do we have any filtered lists?
+    	$filtered_list_links        = [];
+    	$filtered_list_properties = $ctrl_class->ctrl_properties()->whereRaw(
+		   '(find_in_set(?, flags))',
+		   ['filtered_list']		   
+		)->where('relationship_type','hasMany')->get(); // I think a filtered list will always be "hasMany"?           	            					
+    	foreach ($filtered_list_properties as $filter_ctrl_property) {
+    		// Build the filter string
+    		/*
+    		 Now, we need the INVERSE property here. That is:
+    		 	- If we're loading a Test record, with a "Many" property set to "filtered_list"
+    		 	- We need to find the "test" property of the "Many" object, so that we can show Many items where "test" is the value of this object
+    		 I believe we can do this by matching the foreign key
+    		 */
+    		$inverse_filter_ctrl_property = CtrlProperty::where('ctrl_class_id',$filter_ctrl_property->related_to_id)
+    														->where('related_to_id',$filter_ctrl_property->ctrl_class_id)
+    														->where('foreign_key',$filter_ctrl_property->foreign_key) // Necessary?
+    														->firstOrFail();
+    		
+    		$filtered_list_array    = [
+    			'ctrl_property_id'=>$inverse_filter_ctrl_property->id, // We don't use the keys here, they're for clarity only (as we use them elsewhere when handling filters)
+    			'value'=>$object_id
+    		];            		
+    		$filtered_list_string = implode(',', $filtered_list_array); // Add 1,2 to the array (ctrl_property_id,value). Discard keys as above
+    		
+    		// Establish the title and icon for the link; ie, the icon and title of the related class
+    		$filter_ctrl_class = CtrlClass::where('id',$filter_ctrl_property->related_to_id)->firstOrFail();
+			//$filter_related_class = $filter_ctrl_class->get_class();
+
+			// Count the related items					
+			$count_ctrl_class = $filter_ctrl_class;
+			$count_class      = $count_ctrl_class->get_class();					
+			$count_objects    = $count_class::where($inverse_filter_ctrl_property->foreign_key,$filtered_list_array['value']);
+			$count            = $count_objects->count();
+			
+			if ($count > 0) {
+				$filter_list_title = 'View '.$count . ' '.$filter_ctrl_class->get_plural() . ($filter_ctrl_class->get_plural() > 1 ? 's': '');
+				$filter_list_link  = route('ctrl::list_objects',[$filter_ctrl_property->related_to_id,$filtered_list_string]);
+			}
+			else {
+				$filter_list_title = 'No '.$filter_ctrl_class->get_plural();						
+				$filter_list_link  = false;
+			}
+			$filter_add_title = 'Add '.$this->a_an($filter_ctrl_class->get_singular()).' '.$filter_ctrl_class->get_singular();
+			$filter_add_link  = route('ctrl::edit_object',[$filter_ctrl_property->related_to_id,0,$filtered_list_string]); // TODO check permissions here; can we add items?
+
+			$title = ucwords($filter_ctrl_class->get_plural());
+
+        	$filtered_list_links[]  = [
+    			'icon'       => $filter_ctrl_class->get_icon(),
+    			'count'      => $count,
+    			'title'      => $title, // A generic title, only used by the key at the moment
+    			'list_title' => $filter_list_title,
+    			'list_link'  => $filter_list_link,
+    			'add_title'  => $filter_add_title,
+    			'add_link'   => $filter_add_link,
+    		];
+
+    	}
+    	
+    	if ($key) {
+    		$template = 'ctrl::tables.row-buttons-key';
+    	}
+    	else {
+    		$template = 'ctrl::tables.row-buttons';	
+    	}
+
+    	$buttons = view($template, [
+    		'edit_link'           => $edit_link,
+    		'delete_link'         => $delete_link,
+    		'filtered_list_links' => $filtered_list_links
+    	]);            	
+       	return $buttons;
 	}
 
 	/**
@@ -539,42 +566,6 @@ class CtrlController extends Controller
 		}		
 
 		// Add any filter properties as hidden fields
-		// This is slightly convoluted; we have to find any filter properties that link to this list, then check we have the inverse...?		
-
-		/* SCRAP THIS; if we have a valid filter property (set as default_values), draw a hidden field; if not, don't bother. We don't need to worry about which fields could potentially be filters etc etc:
-		if ($default_values) {
-			$filtered_list_properties = CtrlProperty::whereRaw(
-					   '(find_in_set(?, flags))',
-					   ['filtered_list']		   
-					)->where('related_to_id',$ctrl_class->id)->get();
-			if (!$filtered_list_properties->isEmpty()) {
-				foreach ($filtered_list_properties as $filtered_list_property) {
-					$default_properties = $ctrl_class->ctrl_properties()->
-											where('relationship_type','belongsTo')->
-											where('related_to_id',$filtered_list_property->ctrl_class_id)->get();
-					if (!$default_properties->isEmpty()) {
-						foreach ($default_properties as $default_property) {
-
-							// Now, have we set a value in the URL for this field?
-							// If not, there's no point adding it
-							if ($default_property->id == $default_values[0]['ctrl_property_id']) { // Still not handling multiple filters, yet...
-								$default_field_name = $default_property->get_field_name();
-
-								
-								$form_fields[] = [
-									'id'       => 'form_id_'.$default_field_name,
-									'name'     => $default_field_name,							
-									'value'    => $object->$default_field_name,							
-									'template' => 'hidden',							
-									// Don't need $values, $tip, $type or $label.
-								];
-							}
-						}
-					}
-				}
-			}
-		}
-		*/
 		if ($default_values) { // Set HIDDEN fields here; we can default known fields in the main loop above
 
 			foreach ($default_values as $default_value) {
@@ -591,8 +582,7 @@ class CtrlController extends Controller
 						// Don't need $values, $tip, $type or $label.
 					];			
 				}
-			}
-			
+			}			
 		}
 
 		if ($object_id) {

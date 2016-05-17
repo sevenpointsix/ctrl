@@ -479,7 +479,12 @@ $(function() {
             </tr>
         </thead>        
     </table>
+
+    @if ($key)
     <hr />
+    	{!! $key !!}
+    @endif
+    
 
 @stop
 
