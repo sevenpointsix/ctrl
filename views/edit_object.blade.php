@@ -69,22 +69,6 @@
 
 @section('content')
 
-	{{-- The navbar approach is better, as per the list objects page  --}}
-	{{--
-	<div class="page-header">
-		<h1>@if ($ctrl_class->icon)<i class="fa fa-cog"></i>@endif
-		{{ ($object->id)?'Edit':'Add' }} a {{ $ctrl_class->name }} <small>Description if necessary</small>
-		<div class="pull-right">
-			<a href="{{ route('ctrl::list_objects',$ctrl_class->id) }}" class="btn btn-default"><i class="fa fa-toggle-left"></i> Back</a>
-			@if ($object->id)
-			<a href="#" rel="{{ route('ctrl::delete_object',[$ctrl_class->id,$object->id]) }}" class="btn btn-danger delete-item"><i class="fa fa-trash"></i> Delete</a>
-			@endif
-			
-		</div>
-		</h1>
-	</div>
-	--}}
-
 	<nav class="navbar navbar-default page-header">
 	  <div class="container-fluid">
 	    <!-- Brand and toggle get grouped for better mobile display -->
@@ -101,13 +85,13 @@
 
 	    <!-- Collect the nav links, forms, and other content for toggling -->
 	    <div class="collapse navbar-collapse" id="list-options">
-			 @if ($object->id)
-				<p class="navbar-text">&ldquo;{{ $object->title }}&rdquo;</p>
+			@if ($page_description)
+				<p class="navbar-text">{!! $page_description !!}</p>
 			@endif
 	      <ul class="nav navbar-nav navbar-right">
-			<li><a href="{{ route('ctrl::list_objects',$ctrl_class->id) }}"><i class="fa fa-toggle-left"></i> Back</a></li>
-			@if ($object->id)
-			<li><a href="#" rel="{{ route('ctrl::delete_object',[$ctrl_class->id,$object->id]) }}" class="delete-item"><i class="fa fa-trash"></i> Delete</a></li>
+			<li><a href="{{ $back_link }}"><i class="fa fa-toggle-left"></i> Back</a></li>
+			@if ($delete_link)
+			<li><a href="#" rel="{{ $delete_link }}" class="delete-item"><i class="fa fa-trash"></i> Delete</a></li>
 			@endif
 	      </ul>      
 	    </div><!-- /.navbar-collapse -->

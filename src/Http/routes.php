@@ -13,7 +13,7 @@ Route::group(['as' => 'ctrl::','prefix'=>'admin','middleware' => ['web']], funct
 		'uses'=>'CtrlController@list_objects'
 	]);
 
-	Route::get('edit/{ctrl_class_id}/{object_id?}',[
+	Route::get('edit/{ctrl_class_id}/{object_id?}/{default_properties?}',[
 		'as'=>'edit_object',
 		'uses'=>'CtrlController@edit_object'
 	]);

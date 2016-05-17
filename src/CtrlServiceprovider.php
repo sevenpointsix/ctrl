@@ -31,7 +31,7 @@ class CtrlServiceProvider extends ServiceProvider{
 		$this->setupRoutes($this->app->router);
 
 
-		// I believe this allows the config file to be published using artisan vendor:publish
+		// This allows the config file to be published using artisan vendor:publish
 		$this->publishes([
 				__DIR__.'/config/ctrl.php' => config_path('ctrl.php'),
 		]);
@@ -77,8 +77,6 @@ class CtrlServiceProvider extends ServiceProvider{
 		$this->app->bind('ctrl',function($app){
 			return new Ctrl($app);
 		});
-
-
 
 	}
 }

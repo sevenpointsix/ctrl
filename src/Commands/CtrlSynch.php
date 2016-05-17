@@ -379,7 +379,26 @@ class CtrlSynch extends Command
                 $view_data['fillable'][] = $fillable_property->get_field_name();
                     // Does Laravel/Eloquent give us a quick way of extracting all ->name properties into an array?
                     // I think it does.
-            }          
+            } 
+            // Which properties can be automatically filled via a filtered list? ie, clicking to add a related page to a pagesection, should set the pagesection variable.
+            // This is a bit complex as we have to look at properties of other classes, linking to this class...            
+            $filtered_list_properties = \Sevenpointsix\Ctrl\Models\CtrlProperty::whereRaw(
+                                           '(find_in_set(?, flags))',
+                                           ['filtered_list']           
+                                        )->where('related_to_id',$ctrl_class->id)->get();
+            if (!$filtered_list_properties->isEmpty()) {
+
+                foreach ($filtered_list_properties as $filtered_list_property) {
+                    $default_properties = $ctrl_class->ctrl_properties()->
+                                            where('relationship_type','belongsTo')->
+                                            where('related_to_id',$filtered_list_property->ctrl_class_id)->get();
+                    if (!$default_properties->isEmpty()) {
+                        foreach ($default_properties as $default_property) {
+                            $view_data['fillable'][] = $default_property->get_field_name();                            
+                        }
+                    }
+                }
+            }
             
             $relationship_properties = $ctrl_class->ctrl_properties()->whereNotNull('related_to_id')->get();
             foreach ($relationship_properties as $relationship_property) {

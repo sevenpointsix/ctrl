@@ -244,6 +244,8 @@ class CtrlController extends Controller
         	$unfiltered_list_link     = route('ctrl::list_objects',[$unfiltered_ctrl_class->id]);
         }
 
+        $add_link = route('ctrl::edit_object',[$ctrl_class->id,0,$filter_string]);
+
 		return view('ctrl::list_objects',[
 			'ctrl_class'           => $ctrl_class,
 			'th_columns'           => implode("\n",$th_columns),
@@ -251,7 +253,8 @@ class CtrlController extends Controller
 			'filter_description'   => $filter_description,
 			'filter_string'        => $filter_string,
 			'unfiltered_list_link' => (!empty($unfiltered_list_link) ? $unfiltered_list_link : false),
-			'can_reorder'          => $can_reorder
+			'can_reorder'          => $can_reorder,
+			'add_link'             => $add_link
 		]);
 	}
 
@@ -315,7 +318,7 @@ class CtrlController extends Controller
 				}
         	}) // Draw the actual image, if this is an image field
             ->addColumn('action', function ($object) use ($ctrl_class) {
-            	$edit_link   = route('ctrl::edit_object',[$ctrl_class->id,$object->id]);
+            	$edit_link   = route('ctrl::edit_object',[$ctrl_class->id,$object->id]); 
             	$delete_link = route('ctrl::delete_object',[$ctrl_class->id,$object->id]);
 
             	// Do we have any filtered lists?
@@ -362,7 +365,7 @@ class CtrlController extends Controller
 						$filter_list_link  = false;
 					}
 					$filter_add_title = 'Add '.$this->a_an($filter_ctrl_class->get_singular()).' '.$filter_ctrl_class->get_singular();
-					$filter_add_link  = route('ctrl::edit_object',[$filter_ctrl_property->related_to_id]); // TODO check permissions here; can we add items?
+					$filter_add_link  = route('ctrl::edit_object',[$filter_ctrl_property->related_to_id,0,$filtered_list_string]); // TODO check permissions here; can we add items?
 
 	            	$filtered_list_links[]  = [
 	        			'icon'       => $filter_ctrl_class->get_icon(),
@@ -427,11 +430,18 @@ class CtrlController extends Controller
 	 * Edit an objects of a given CtrlClass, if an ID is given
 	 * Or renders a blank form if not
 	 * This essentially renders a form for the object
+	 * @param  integer $ctrl_class_id The ID of the class we're editing
+	 * @param  integer $object_id The ID of the object we're editing (zero to create a new one)
+	 * @param  string $filter_string Optional list filter; such as 43,1, which will set the value of the ctrl_property 43 to 1 when we save the form
 	 *
 	 * @return Response
 	 */
-	public function edit_object($ctrl_class_id, $object_id = NULL)
+	public function edit_object($ctrl_class_id, $object_id = NULL, $filter_string = NULL)
 	{		
+
+		$default_values      = $this->convert_filter_string_to_array($filter_string); // Note that we use this to set default values, not filter the list
+		$default_description = $this->describe_filter($default_values);
+		
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();				
 		
 		$class  = $ctrl_class->get_class();
@@ -502,41 +512,119 @@ class CtrlController extends Controller
 				}
 			}
 			else {
-				$value      = $object->$field_name;	
+				// Do we have a default value set in the querystring?
+				if ($default_values && !$object_id) { // We're adding a new object
+					foreach ($default_values as $default_value) {
+						if ($ctrl_property->id == $default_value['ctrl_property_id']) {
+							$value = $default_value['value'];
+						}
+					}
+				}
+				if (!isset($value)) { // No default value, so pull it from the existing object
+					$value      = $object->$field_name;		
+				}
+				
 			}
 
 			$form_fields[] = [
 				'id'       => 'form_id_'.$ctrl_property->name,
 				'name'     => $field_name,
-				'values'   => $values,
+				'values'   => $values, // A range of possible values
 				'value'    => $value, // Remember that $value can be an array, for relationships / multiple selects etc
-				'type'     => $ctrl_property->field_type,
+				'type'     => $ctrl_property->field_type, // This is used to modify some templates; date.blade.php can handle date or datetime types
 				'template' => $ctrl_property->template,
 				'label'    => $ctrl_property->label,
 				'tip'      => $ctrl_property->tip,
 			];
 		}		
 
+		// Add any filter properties as hidden fields
+		// This is slightly convoluted; we have to find any filter properties that link to this list, then check we have the inverse...?		
+
+		/* SCRAP THIS; if we have a valid filter property (set as default_values), draw a hidden field; if not, don't bother. We don't need to worry about which fields could potentially be filters etc etc:
+		if ($default_values) {
+			$filtered_list_properties = CtrlProperty::whereRaw(
+					   '(find_in_set(?, flags))',
+					   ['filtered_list']		   
+					)->where('related_to_id',$ctrl_class->id)->get();
+			if (!$filtered_list_properties->isEmpty()) {
+				foreach ($filtered_list_properties as $filtered_list_property) {
+					$default_properties = $ctrl_class->ctrl_properties()->
+											where('relationship_type','belongsTo')->
+											where('related_to_id',$filtered_list_property->ctrl_class_id)->get();
+					if (!$default_properties->isEmpty()) {
+						foreach ($default_properties as $default_property) {
+
+							// Now, have we set a value in the URL for this field?
+							// If not, there's no point adding it
+							if ($default_property->id == $default_values[0]['ctrl_property_id']) { // Still not handling multiple filters, yet...
+								$default_field_name = $default_property->get_field_name();
+
+								
+								$form_fields[] = [
+									'id'       => 'form_id_'.$default_field_name,
+									'name'     => $default_field_name,							
+									'value'    => $object->$default_field_name,							
+									'template' => 'hidden',							
+									// Don't need $values, $tip, $type or $label.
+								];
+							}
+						}
+					}
+				}
+			}
+		}
+		*/
+		if ($default_values) { // Set HIDDEN fields here; we can default known fields in the main loop above
+
+			foreach ($default_values as $default_value) {
+				$default_property = $ctrl_class->ctrl_properties()->
+									where('fieldset','')->
+									where('id',$default_value['ctrl_property_id'])->first();										
+				if ($default_property !== null) {
+					$default_field_name = $default_property->get_field_name();
+					$form_fields[] = [
+						'id'       => 'form_id_'.$default_field_name,
+						'name'     => $default_field_name,							
+						'value'    => $default_value['value'],				
+						'template' => 'hidden',							
+						// Don't need $values, $tip, $type or $label.
+					];			
+				}
+			}
+			
+		}
+
 		if ($object_id) {
-			$page_title = 'Edit this '.$ctrl_class->get_singular();
+			$page_title       = 'Edit this '.$ctrl_class->get_singular();
+			$page_description = '&ldquo;'.$object->title.'&rdquo;';
+			$delete_link      = route('ctrl::delete_object',[$ctrl_class->id,$object->id]);
 		}
 		else {
 			$page_title = 'Add '.$this->a_an($ctrl_class->get_singular()) . ' ' .$ctrl_class->get_singular();			
-		}
-		// Add '<small>[FILTER]</small>' if we're filtering? Nah, probably not.
-
+			$page_description = $default_description ? '&hellip;'.$default_description : ''; 
+			$delete_link = '';
+		}		
+		// If we've set default values here, then that implies that we came through a filtered list; and we want to go back to THAT list, not a list of all these items
+		// Or do we...? Hmmm. It might make more sense to return to a filtered list of *these* items... TBC.
+		$back_link        = route('ctrl::list_objects',[$ctrl_class->id,$filter_string]);
 		
 		return view('ctrl::edit_object',[
-			'ctrl_class'  => $ctrl_class,
-			'page_title'  => $page_title,
-			'object'      => $object,
-			'form_fields' => $form_fields,
+			'ctrl_class'       => $ctrl_class,
+			'page_title'       => $page_title,
+			'page_description' => $page_description,
+			'back_link'        => $back_link,
+			'delete_link'	   => $delete_link,
+			'object'           => $object,
+			'form_fields'      => $form_fields,
 		]);
 	}
 
 	/**
 	 * Update an object a given CtrlClass, if an ID is given
 	 * Or create a new object if not
+	 * @param  integer $ctrl_class_id The ID of the class we're editing
+	 * @param  integer $object_id The ID of the object we're editing (zero to create a new one)
 	 *
 	 * @return Response
 	 */
