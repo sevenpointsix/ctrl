@@ -157,6 +157,10 @@
 		padding: 0.5em 0;
 	}
 
+	#key {
+
+	}
+
     <?php /* Not using this any more:
 
 	/* Hacking in disabled tooltips, from http://jsfiddle.net/cSSUA/209/ and http://stackoverflow.com/questions/13311574/how-to-enable-bootstrap-tooltip-on-disabled-button * /
@@ -468,6 +472,8 @@ $(function() {
 	  </div><!-- /.container-fluid -->
 	</nav>
 
+
+
 	<table class="table table-bordered table-striped" id="data-table">
         <thead>
             <tr>
@@ -480,9 +486,11 @@ $(function() {
         </thead>        
     </table>
 
-    @if ($key)
     <hr />
+    	@if ($key)    	
+		<div id="key">
     	{!! $key !!}
+    	</div>
     @endif
     
 
