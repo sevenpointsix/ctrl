@@ -23,7 +23,7 @@ Route::group(['as' => 'ctrl::','prefix'=>'admin','middleware' => ['web']], funct
 		'uses'=>'CtrlController@delete_object'
 	]);
 
-	Route::post('save/{ctrl_class_id}/{object_id?}',[
+	Route::post('save/{ctrl_class_id}/{object_id?}/{filter_string?}',[
 		'as'=>'save_object',
 		'uses'=>'CtrlController@save_object'
 	]);

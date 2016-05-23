@@ -105,7 +105,7 @@
 	    <li role="presentation" class="active"><a href="#details" aria-controls="details" role="tab" data-toggle="tab"><i class="fa fa-th-list"></i> Details</a></li>
 	  </ul>
 
-	  <form class="ajax" method="post" action="{{ route('ctrl::save_object',[$ctrl_class->id,$object->id])}}">
+	  <form class="ajax" method="post" action="{{ $save_link }}">
 
 		  <!-- Tab panes -->
 		  <div class="tab-content">

@@ -598,13 +598,17 @@ class CtrlController extends Controller
 		// If we've set default values here, then that implies that we came through a filtered list; and we want to go back to THAT list, not a list of all these items
 		// Or do we...? Hmmm. It might make more sense to return to a filtered list of *these* items... TBC.
 		$back_link        = route('ctrl::list_objects',[$ctrl_class->id,$filter_string]);
+
+		// Similarly... once we've saved a filtered object, we want to bounce back to a filtered list. This enables it:
+		$save_link        = route('ctrl::save_object',[$ctrl_class->id,$object_id,$filter_string]);
 		
 		return view('ctrl::edit_object',[
 			'ctrl_class'       => $ctrl_class,
 			'page_title'       => $page_title,
 			'page_description' => $page_description,
 			'back_link'        => $back_link,
-			'delete_link'	   => $delete_link,
+			'delete_link'      => $delete_link,
+			'save_link'        => $save_link,
 			'object'           => $object,
 			'form_fields'      => $form_fields,
 		]);
@@ -615,10 +619,11 @@ class CtrlController extends Controller
 	 * Or create a new object if not
 	 * @param  integer $ctrl_class_id The ID of the class we're editing
 	 * @param  integer $object_id The ID of the object we're editing (zero to create a new one)
+	 * @param  string $filter_string This tracks whether we're adding a filtered object -- so we can bounce back to the filtered list..
 	 *
 	 * @return Response
 	 */
-	public function save_object(Request $request, $ctrl_class_id, $object_id = NULL)
+	public function save_object(Request $request, $ctrl_class_id, $object_id = NULL, $filter_string = NULL)
 	{		
 		
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();				
@@ -727,7 +732,7 @@ class CtrlController extends Controller
 
         $object->save();
         
-        $redirect = route('ctrl::list_objects',$ctrl_class->id);
+        $redirect = route('ctrl::list_objects',[$ctrl_class->id,$filter_string]);
 
         if ($request->ajax()) {
             return json_encode([
