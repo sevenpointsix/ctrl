@@ -231,7 +231,12 @@ class CtrlController extends Controller
         // Can we reorder this list?
         // if (property_exists($ctrl_class,'order')) {
         // From https://laracasts.com/discuss/channels/eloquent/test-attributescolumns-existence
-        if (Schema::hasColumn($ctrl_class->getTable(), 'order')) {
+
+        // see: https://github.com/laravel/framework/issues/1436
+    	$class  = $ctrl_class->get_class();
+    	$table = with(new $class)->getTable();    	
+    	if (Schema::hasColumn($table, 'order')) {
+        // if (Schema::hasColumn($ctrl_class->getTable(), 'order')) {
         	$can_reorder = true;
         }
         else {
