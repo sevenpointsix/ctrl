@@ -33,3 +33,17 @@ ul.dropdown-menu>li>a.disabled:hover, ul.dropdown-menu>li>a.disabled:focus
     color: #aaa;	    
     background-color: #fff;
 }
+
+/* Allow us to use the Bootstrap colours anywhere; the default .text-[colour] classes don't exactly match the buttons */
+.true-text-success {
+	color: #5cb85c;
+}
+.true-text-info{
+	color: #5bc0de;
+}
+.true-text-warning {
+	color: #f0ad4e;
+}
+.true-text-danger {
+	color: #d9534f;
+}

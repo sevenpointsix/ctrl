@@ -247,9 +247,14 @@ class CtrlController extends Controller
         	$unfiltered_list_link     = route('ctrl::list_objects',[$unfiltered_ctrl_class->id]);
         }
 
+        // Should we display a "View all" link? ie, is this list filtered, and are we allowed to list ALL items?
+        if ($filter_array && $ctrl_class->menu_title) { // A crude way to test if we can list items; are we actually going to use the 'list' permission?
+        	$show_all_link = route('ctrl::list_objects',$ctrl_class->id);
+        }
+
         $add_link = route('ctrl::edit_object',[$ctrl_class->id,0,$filter_string]);
 
-        $key = 		$key = $this->get_row_buttons($ctrl_class,0,true);
+        $key = 		$key = $this->get_row_buttons($ctrl_class->id,0,true);
 
 		return view('ctrl::list_objects',[
 			'ctrl_class'           => $ctrl_class,
@@ -258,6 +263,7 @@ class CtrlController extends Controller
 			'filter_description'   => $filter_description,
 			'filter_string'        => $filter_string,
 			'unfiltered_list_link' => (!empty($unfiltered_list_link) ? $unfiltered_list_link : false),
+			'show_all_link'        => (!empty($show_all_link) ? $show_all_link : false),
 			'can_reorder'          => $can_reorder,
 			'add_link'             => $add_link,
 			'key'                  => $key
@@ -325,7 +331,7 @@ class CtrlController extends Controller
         	}) // Draw the actual image, if this is an image field
             ->addColumn('action', function ($object) use ($ctrl_class) {
 
-            	return $this->get_row_buttons($ctrl_class, $object->id);
+            	return $this->get_row_buttons($ctrl_class->id, $object->id);
 
             })
             // Is this the best place to filter results if necessary?
@@ -352,13 +358,15 @@ class CtrlController extends Controller
 	}
 
 	/**
-	 * Return the row buttons for the row that holds object $object_id of ctrl_class $ctrl_class
-	 * @param  object $ctrl_class
+	 * Return the row buttons for the row that holds object $object_id of ctrl_class $ctrl_class_id
+	 * @param  integer $ctrl_class+id
 	 * @param  integer $object_id
 	 * @param  $key Are we drawing a key, or returning actual buttons?
 	 * @return string HTML
 	 */
-	protected function get_row_buttons($ctrl_class,$object_id, $key = false) {
+	protected function get_row_buttons($ctrl_class_id,$object_id, $key = false) {
+
+		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();	
 
     	$edit_link   = route('ctrl::edit_object',[$ctrl_class->id,$object_id]); 
     	$delete_link = route('ctrl::delete_object',[$ctrl_class->id,$object_id]);
@@ -425,7 +433,10 @@ class CtrlController extends Controller
 
     	
     	// Add a "reorder" button to the key
-    	if (Schema::hasColumn($ctrl_class->getTable(), 'order')) {
+    	// see: https://github.com/laravel/framework/issues/1436
+    	$class  = $ctrl_class->get_class();
+    	$table = with(new $class)->getTable();    	
+    	if (Schema::hasColumn($table, 'order')) {
         	$can_reorder = true;
         }
         else {
@@ -513,7 +524,8 @@ class CtrlController extends Controller
 				trigger_error("Cannot load view for field type ".$ctrl_property->field_type);
 			}
 
-			// Do we have a range of values for this field? For example, an ENUM or relationship field
+			unset($value); // Reset $value 
+			// Do we have a range of values for this field? For example, an ENUM or relationship field			
 			$values = [];
 			if ($ctrl_property->related_to_id) {
 				$related_ctrl_class = \Sevenpointsix\Ctrl\Models\CtrlClass::find($ctrl_property->related_to_id);
@@ -566,7 +578,7 @@ class CtrlController extends Controller
 				}
 				
 			}
-
+			
 			$form_fields[] = [
 				'id'       => 'form_id_'.$ctrl_property->name,
 				'name'     => $field_name,
@@ -687,6 +699,8 @@ class CtrlController extends Controller
 		}
 		
         $object->fill($_POST);
+
+        $object->save(); // Save the new object, otherwise we can't save any relationships...
        
         // Now load any related fields (excluding belongsTo, as this indicates the presence of an _id field)
         $related_ctrl_properties = $ctrl_class->ctrl_properties()
@@ -696,12 +710,13 @@ class CtrlController extends Controller
                                                           ->orWhere('relationship_type','belongsToMany');                                                    
                                                 })
                                               ->get();  
-
+        
 		foreach ($related_ctrl_properties as $related_ctrl_property) {
 			$related_field_name = $related_ctrl_property->get_field_name();
 
 	        if ($request->input($related_field_name)) {
 				// $request->input($related_field_name) is always an array here, I think?
+
 	        	$related_ctrl_class = \Sevenpointsix\Ctrl\Models\CtrlClass::find($related_ctrl_property->related_to_id);
 	            	// NOTE: we need some standard functions for the following:
 	            	/*
@@ -718,28 +733,62 @@ class CtrlController extends Controller
 	            		// I initially thought we'd have to treat these differently, but it seems to work at the moment. Could break in more advanced cases though.
 	            	) {
 
+	            	// OK, I think we can use synch here; or does this break for hasMany?	            		            
+	            	$object->$related_field_name()->sync($related_objects);
+					
+					/*
 		            // A hasMany relationship needs saveMany
 		            // belongsToMany might need attach, or synch -- TBC
 
-		          	$existing_related_objects = $object->$related_field_name;
+
+	            	
+	            	dump ("Loading existing_related_objects with $related_field_name");
+		          	$existing_related_objects = $object->$related_field_name();
 		          	$inverse_property = CtrlProperty::where('ctrl_class_id',$related_ctrl_class->id)
 		            								  ->where('foreign_key',$related_ctrl_property->foreign_key)
 		            								  ->first(); // Does this always hold true?
 					$inverse_field_name = $inverse_property->name;
 
-		          	foreach ($existing_related_objects as $existing_related_object) {		          		
+		          	foreach ($existing_related_objects as $existing_related_object) {	
+		          		dump('$existing_related_object'. $existing_related_object);
 		          		$existing_related_object->$inverse_field_name()->dissociate();
+		          		dump("Removing relationship to $related_field_name");
 		          		$existing_related_object->save(); 
 		          			// This seems unnecessarily complicated; review this.
 		          			// Is there no equivalent of synch() for hasMany/belongsTo relationships?
 		          			// Something like, $object->related_field_name()->sync($related_objects);
 		          			// That doesn't work though...
 		          	}
+		          	// dd($related_objects->toArray());
+		          	dump("Saving $related_field_name");
+		          	// dump($related_objects->lists('id'));
+		          	foreach ($related_objects as $r) {
+		          		// dump("Saving $related_field_name with ID $r->id to object ".get_class($object));
+		          		// $object->$related_field_name()->save($r);
+		          	}
+		          	// Why wouldn't this work?
+		          	// $object->$related_field_name()->sync($related_objects);
+		          	// Gives same error as below:
+		            // $object->$related_field_name()->saveMany($related_objects);
+		            
+		          	// Maybe...
 
-		            $object->$related_field_name()->saveMany($related_objects);
+		          	if ($related_ctrl_property->relationship_type == 'hasMany') {
+		          		$object->$related_field_name()->saveMany($related_objects);
+		          	}
+	            	else if ($related_ctrl_property->relationship_type == 'belongsToMany') {
+
+	            		// $object->$related_field_name()->attach($related_objects);
+	            		foreach      ($related_objects as $r) {
+		          			dump("Saving $related_field_name with ID $r->id to object ".get_class($object));
+			          		$object->$related_field_name()->attach($r->id);
+			          	}
+	            	}
 		            //$object->save();
 		            // This is ALMOST working but glitches; we seem to save the relationship then overwrite it when we try to remove it, even though we try to remove it first. Do we need to lock the tables here?
-		        }		        
+		            */
+		            
+		        }	
 			}
 		}
 		

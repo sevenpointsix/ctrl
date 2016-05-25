@@ -3,10 +3,15 @@
 
 @section('css')
 <!-- DataTables --> 
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/t/bs-3.3.6/dt-1.10.11,b-1.1.2,r-2.0.2/datatables.min.css"/>
+{{-- <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/t/bs-3.3.6/dt-1.10.11,b-1.1.2,r-2.0.2/datatables.min.css"/> --}}
+{{-- This should prevent bootstrap being loaded twice --}}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/u/bs/dt-1.10.12,b-1.2.0,r-2.1.0,rr-1.1.2/datatables.min.css"/>
+
 <!-- Row reorder -->
+{{--  No longer required? 
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.1.1/css/rowReorder.dataTables.min.css" />
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.1.1/css/rowReorder.bootstrap.min.css" />
+--}}
 
 <!-- WIP: might use this lightbox for opening images from table rows, and likely elsewhere. TBC -->
 <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/ekko-lightbox/4.0.1/ekko-lightbox.min.css" />
@@ -117,7 +122,7 @@
 		outline: none;
 	}
 
-	.row-buttons {
+	td div.row-buttons {
 		white-space: nowrap; /* Don't wrap the add, delete, "more" buttons on each table row */
 	}
 
@@ -180,9 +185,14 @@
 
 @section('js')
 <!-- DataTables --> 
+{{--
 <script type="text/javascript" src="https://cdn.datatables.net/t/bs-3.3.6/dt-1.10.11,b-1.1.2,r-2.0.2/datatables.min.js"></script>
 <!-- Row reorder -->
 <script type="text/javascript" src="https://cdn.datatables.net/rowreorder/1.1.1/js/dataTables.rowReorder.min.js"></script>
+--}}
+{{-- This version should include row reorder as well --}}
+<script type="text/javascript" src="https://cdn.datatables.net/u/bs/dt-1.10.12,b-1.2.0,r-2.1.0,rr-1.1.2/datatables.min.js"></script>
+
 <!-- WIP: might use this lightbox for opening images from table rows, and likely elsewhere. TBC -->
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/ekko-lightbox/4.0.1/ekko-lightbox.min.js"></script>
 
@@ -443,16 +453,21 @@ $(function() {
 			@if ($filter_description)
 				<p class="navbar-text">Showing all {{ $ctrl_class->get_plural() }} {!! $filter_description !!}.</p>
 			@endif
+			<a data-toggle="modal" data-target="#help" class="btn btn-default navbar-btn navbar-right"><i class="fa fa-question"></i> Help</a>
 			 
 	      <ul class="nav navbar-nav navbar-right">
 
-	  		@if ($filter_description)
-			<li><a href="{{ route('ctrl::list_objects',$ctrl_class->id) }}" _class="btn btn-default navbar-btn">@if ($icon = $ctrl_class->get_icon())<i class="{{ $icon }}"></i> @endif Show all</a></li>
+	  		@if ($show_all_link)
+			<li><a href="{{ $show_all_link }}" _class="btn btn-default navbar-btn">@if ($icon = $ctrl_class->get_icon())<i class="{{ $icon }}"></i> @endif Show all</a></li>
 			@endif	
 
 			@if ($unfiltered_list_link) {{-- Can we link "back" to an unfiltered list? --}}
-				<li><a href="{{ $unfiltered_list_link }}" _class="btn btn-default navbar-btn"><i class="fa fa-toggle-left"></i> Back</a></li>			
+				<li><a href="{{ $unfiltered_list_link }}" _class="btn btn-default navbar-btn"><i class="fa fa-toggle-left"></i> Back</a></li>	
 			@endif
+
+			
+
+
 			{{-- This may prove useful at some point?
 	        <li class="dropdown">
 	          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
@@ -467,11 +482,12 @@ $(function() {
 	          </ul>
 	        </li>
 	        --}}
+
 	      </ul>      
+
 	    </div><!-- /.navbar-collapse -->
 	  </div><!-- /.container-fluid -->
 	</nav>
-
 
 
 	<table class="table table-bordered table-striped" id="data-table">

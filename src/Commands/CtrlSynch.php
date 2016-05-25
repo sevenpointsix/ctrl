@@ -381,7 +381,8 @@ class CtrlSynch extends Command
                                                 })
                                               ->get();      
                                               
-                // We can only fill relationships if they're belongsTo (ie, have a specific local key, such as one_id)
+            // We can only fill relationships if they're belongsTo (ie, have a specific local key, such as one_id)
+            // OR if they're belongsToMany, in which case we have a pivot table (I think?)
             foreach ($fillable_properties as $fillable_property) {
                 $view_data['fillable'][] = $fillable_property->get_field_name();
                     // Does Laravel/Eloquent give us a quick way of extracting all ->name properties into an array?

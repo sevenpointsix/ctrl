@@ -68,7 +68,7 @@ class {{ $model_name }} extends Model
      */
     public function {{ $relationship['name'] }}()
     {
-        return $this->belongsToMany('App\Ctrl\Models\{{ $relationship['model'] }}','{{ $relationship['pivot_table'] }}','{{ $relationship['foreign_key'] }}', '{{ $relationship['local_key'] }}');
+        return $this->belongsToMany('App\Ctrl\Models\{{ $relationship['model'] }}','{{ $relationship['pivot_table'] }}', '{{ $relationship['local_key'] }}','{{ $relationship['foreign_key'] }}');
     }
     @endforeach    
 
