@@ -134,15 +134,17 @@ class CtrlSynch extends Command
 
                 $model_name = studly_case(str_singular($standard_table));           
                 $ctrl_class = \Sevenpointsix\Ctrl\Models\CtrlClass::firstOrNew(['name' => $model_name]);
-                $ctrl_class->table_name = $standard_table; 
 
-                // Set some default permissions, icons and menu items (?) here
-                $ctrl_class->permissions = implode(',',array('list','add','edit','delete'));
-                $ctrl_class->icon        = 'fa-toggle-right';
-                // Let's leave menu_title for now
+                if (!$ctrl_class->exists) {
+                    // This is a new model, so set some default values:
+                    $ctrl_class->table_name = $standard_table; 
+                    // Set some default permissions, icons and menu items (?) here
+                    $ctrl_class->permissions = implode(',',array('list','add','edit','delete'));
+                    $ctrl_class->icon        = 'fa-toggle-right';
+                    // Let's leave menu_title for now
+                } 
 
                 $ctrl_class->save();
-                    
 
                 $columns = DB::select("SHOW COLUMNS FROM {$standard_table}");
                 if ($pass == 1) $column_order = 1; // Don't reset this for pass 2, otherwise we end up with two products with order 1, two with order 2, etc.
@@ -170,51 +172,55 @@ class CtrlSynch extends Command
                         // $ctrl_property->ctrl_class()->save($ctrl_class);
                         // I think we can omit this, as we've already set ctrl_class_id when calling firstOrNew():
 
-                        if ($ctrl_property->name == 'order') {
-                            // Set this as a header, so that we can reorder the table, then skip the rest
-                            $ctrl_property->add_to_set('flags','header');
-                            $ctrl_property->order = -1; // To force this to be the first column on the left of the table
-                            $ctrl_property->save(); 
-                            continue; // Is this correct? Or break?
-                        }
+                        if (!$ctrl_property->exists) {
+                            // This is a new model, so set some default values:
 
-                         // Set some default flags, labels, field_types and so on:
-                        switch ($ctrl_property->name) {
-                            case 'title':
-                            case 'name':
+                            if ($ctrl_property->name == 'order') {
+                                // Set this as a header, so that we can reorder the table, then skip the rest
                                 $ctrl_property->add_to_set('flags','header');
-                                $ctrl_property->add_to_set('flags','string');
-                                $ctrl_property->add_to_set('flags','required');
-                                $ctrl_property->add_to_set('flags','search');
-                                break;
-                            case 'image':
-                            case 'photo':
-                                $ctrl_property->field_type = 'image';
-                                break;
-                            case 'file':                            
-                                $ctrl_property->field_type = 'file';
-                                break;
-                            case 'email':
-                            case 'email_address':
-                                $ctrl_property->field_type = 'email';
-                                break;
-                            case 'content':                            
-                                $ctrl_property->field_type = 'froala';
-                                break;
-                        }
+                                $ctrl_property->order = -1; // To force this to be the first column on the left of the table
+                                $ctrl_property->save(); 
+                                continue; // Is this correct? Or break?
+                            }
 
-                        if (!$ctrl_property->field_type) {
-                            $ctrl_property->field_type    = $ctrl_property->get_field_type_from_column($column->Type);
-                        }
+                             // Set some default flags, labels, field_types and so on:
+                            switch ($ctrl_property->name) {
+                                case 'title':
+                                case 'name':
+                                    $ctrl_property->add_to_set('flags','header');
+                                    $ctrl_property->add_to_set('flags','string');
+                                    $ctrl_property->add_to_set('flags','required');
+                                    $ctrl_property->add_to_set('flags','search');
+                                    break;
+                                case 'image':
+                                case 'photo':
+                                    $ctrl_property->field_type = 'image';
+                                    break;
+                                case 'file':                            
+                                    $ctrl_property->field_type = 'file';
+                                    break;
+                                case 'email':
+                                case 'email_address':
+                                    $ctrl_property->field_type = 'email';
+                                    break;
+                                case 'content':                            
+                                    $ctrl_property->field_type = 'froala';
+                                    break;
+                            }
 
-                        $ctrl_property->order = $column_order++;
+                            if (!$ctrl_property->field_type) {
+                                $ctrl_property->field_type    = $ctrl_property->get_field_type_from_column($column->Type);
+                            }
 
-                        $ctrl_property->label    = ucfirst(str_replace('_',' ',$ctrl_property->name));
+                            $ctrl_property->order = $column_order++;
 
-                        // There are some columns we rarely want to display as editable fields
-                        $exclude_fields_from_form = ['created_at','updated_at','deleted_at','url','uri'];
-                        if (!in_array($ctrl_property->name, $exclude_fields_from_form)) {
-                            $ctrl_property->fieldset = 'Content';
+                            $ctrl_property->label    = ucfirst(str_replace('_',' ',$ctrl_property->name));
+
+                            // There are some columns we rarely want to display as editable fields
+                            $exclude_fields_from_form = ['created_at','updated_at','deleted_at','url','uri'];
+                            if (!in_array($ctrl_property->name, $exclude_fields_from_form)) {
+                                $ctrl_property->fieldset = 'Content';
+                            }
                         }
 
                         $ctrl_property->save();             
