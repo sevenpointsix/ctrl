@@ -31,20 +31,20 @@
 			@if ($can_reorder)
 			<li class="list-group-item">
 			    <h4 class="list-group-item-heading">
-			    	<a class="btn btn-xs btn-default"><i class="fa fa-reorder"></i></a> Reorder items
+			    	<a class="btn btn-xs btn-default"><i class="fa fa-fw fa-reorder"></i></a> Reorder items
 			    </h4>
 			    <p class="list-group-item-text">Click to drag and drop items into a new order. The new order will be saved immediately.</p>
 			</li>
 		  	@endif
 		  	<li class="list-group-item">
 			    <h4 class="list-group-item-heading">
-			    	<a class="btn btn-xs btn-info"><i class="fa fa-pencil"></i></a>  Edit item
+			    	<a class="btn btn-xs btn-info"><i class="fa fa-fw fa-pencil"></i></a>  Edit item
 			    </h4>
 			    <p class="list-group-item-text">Click to edit an item in the list.</p>
 			</li>
 			<li class="list-group-item">
 			    <h4 class="list-group-item-heading">
-			    	<a class="btn btn-xs btn-danger"><i class="fa fa-trash"></i></a>  Delete item
+			    	<a class="btn btn-xs btn-danger"><i class="fa fa-fw fa-trash"></i></a>  Delete item
 			    </h4>
 			    <p class="list-group-item-text">Click to delete an item in the list.</p>
 			</li>
@@ -53,7 +53,7 @@
 		  		@foreach ($filtered_list_links as $filtered_list_link)
 			<li class="list-group-item">
 			    <h4 class="list-group-item-heading">
-			    	<a class="btn btn-xs btn-warning"><i class="fa fa-{{ $filtered_list_link['icon'] }}"></i></a> Manage {{ $filtered_list_link['title'] }}
+			    	<a class="btn btn-xs btn-warning"><i class="fa fa-fw {{ $filtered_list_link['icon'] }}"></i></a> Manage {{ $filtered_list_link['title'] }}
 			    </h4>
 			    <p class="list-group-item-text">List the {{ strtolower($filtered_list_link['title']) }} for this item, or add a new one.</p>
 			</li>

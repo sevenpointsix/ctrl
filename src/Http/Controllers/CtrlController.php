@@ -584,7 +584,7 @@ class CtrlController extends Controller
 				
 			}
 			
-			$form_fields[] = [
+			$form_fields['form_id_'.$ctrl_property->name] = [ // Use array keys so that we can more easily manipulate the resulting array of fields later
 				'id'       => 'form_id_'.$ctrl_property->name,
 				'name'     => $field_name,
 				'values'   => $values, // A range of possible values
@@ -595,6 +595,11 @@ class CtrlController extends Controller
 				'tip'      => $ctrl_property->tip,
 			];
 		}		
+
+		// TODO: right, we need to add something here that allows us to customise the list of form fields
+		// I think we need to use a serviceprovider and inject it into this main controlller
+		// See the comment on this page re. ReportingService: http://stackoverflow.com/questions/30365169/access-controller-method-from-another-controller-in-laravel-5
+
 
 		// Add any filter properties as hidden fields
 		if ($default_values) { // Set HIDDEN fields here; we can default known fields in the main loop above

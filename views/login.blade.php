@@ -57,7 +57,7 @@
                 <div class="row">
                  @if ($logo)
                   <div class="title" data-animation="fadeInDown" data-animation-delay=".8s">
-                      <img src="{{ $logo }}" style="height: 100px">
+                      <img src="{{ $logo }}" style="max-height: 100px">
                     <!--<h1>CMS</h1>-->
                     <!--<h5>Please log in below.</h5>-->
                   </div>

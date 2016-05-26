@@ -16,7 +16,10 @@ class CtrlSynch extends Command
      *
      * @var string
      */
-    protected $signature = 'ctrl:synch {action?}';
+    //protected $signature = 'ctrl:synch {action?}';
+    protected $signature = 'ctrl:synch
+                        {action? : Whether to update files, data or everything}
+                        {--wipe : Whether the database should be wiped first}';
 
     /**
      * The console command description.
@@ -43,15 +46,16 @@ class CtrlSynch extends Command
     public function handle()
     {
         $action = $this->argument('action');
-        
+        $wipe   = $this->option('wipe'); 
+
         if ($action == 'files') {            
             $this->generate_model_files();
         }
         else if ($action == 'data') {
-            $this->populate_ctrl_tables();            
+            $this->populate_ctrl_tables($wipe);            
         }
         else if ($action == 'all') {
-            $this->populate_ctrl_tables();
+            $this->populate_ctrl_tables($wipe);
             $this->generate_model_files();
         }
         else {
@@ -64,10 +68,9 @@ class CtrlSynch extends Command
      * Loop through all database tables, and create the necessary records in ctrl_classes and ctrl_properties
      * @return Response
      */
-    protected function populate_ctrl_tables() {
+    protected function populate_ctrl_tables($wipe_all_existing_tables = false) {
 
-        $wipe_all_existing_tables = false; // While testing, it's easier to start from scratch each time; set this to true if that's what you want
-
+        // While testing, it's easier to start from scratch each time
         if ($wipe_all_existing_tables) {
             DB::table('ctrl_classes')->truncate();
             DB::table('ctrl_properties')->truncate();
@@ -98,20 +101,23 @@ class CtrlSynch extends Command
             if (in_array($table_name, $ignore_tables) || starts_with($table_name,'_')) continue;
 
             // We now need to identify whether the table we're looking at is a pivot table or not
-            /*
-                The assumption at this stage will be that if the table consists purely of *_id columns, with an optional 'id' or 'order' column, it's a pivot table. Realistically, I rarely use extra attributes on a pivot table; 'order' would be the only one, and even that is rarely used.
-             */
+            // We assume a table is a pivot if it has two or three columns, with two "_id" columns
             $table_columns = DB::select("SHOW COLUMNS FROM {$table_name}"); // Bindings fail here for some reason
-            $pivot_table   = true;
-            $pivot_columns = ['id','order'];
-            foreach ($table_columns as $table_column) {
-                $column_name = $table_column->Field;
-                if (!in_array($column_name,$pivot_columns) && !ends_with($column_name,'_id')) {
-                    $pivot_table = false;
-                    continue;
+            $pivot_table   = false;            
+            $non_id_count  = 0;
+            if (count($table_columns) == 2 || count($table_columns) == 3) {
+                $pivot_table   = true; 
+                foreach ($table_columns as $table_column) {
+                    $column_name = $table_column->Field;
+                    if (!ends_with($column_name,'_id')) {                        
+                        if (++$non_id_count > 1) { // Is this our second "non_id" column? 
+                            $pivot_table = false;
+                            break;
+                        }
+                    }
                 }
             }
-
+      
             if ($pivot_table) {
                 // $table_name is a pivot table
                 $pivot_tables[] = $table_name;

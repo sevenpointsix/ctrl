@@ -1,4 +1,6 @@
-<?php namespace	Sevenpointsix\Ctrl;
+<?php
+
+namespace	Sevenpointsix\Ctrl;
 
 /**
  * 

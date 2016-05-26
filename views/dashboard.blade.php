@@ -33,6 +33,7 @@
 	  templates: {
 		suggestion: Handlebars.compile('<div><i class="\{\{icon\}\}"></i> \{\{title\}\}</div>')
 	  }
+	  // Could add <span class=\"label label-default pull-right\">Test</span> here
 
 	}).bind("typeahead:select", function(obj, datum, name) {
 		document.location = datum.edit_link; // Jump to the "Edit" link		
