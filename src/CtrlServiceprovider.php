@@ -11,6 +11,8 @@ namespace	Sevenpointsix\Ctrl;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\Router;
 
+use File;
+
 class CtrlServiceProvider extends ServiceProvider{
 
 
@@ -29,9 +31,14 @@ class CtrlServiceProvider extends ServiceProvider{
 	public function boot()
 	{
 
+		/* Can I put this here? Just check that we have a Ctrl folder, for models and Modules */
+		$ctrl_folder = app_path('Ctrl/');
+        if(!File::exists($ctrl_folder)) {
+            File::makeDirectory($ctrl_folder,0777,true); // See http://laravel-recipes.com/recipes/147/creating-a-directory
+        }
+
 		$this->loadViewsFrom(realpath(__DIR__.'/../views'), 'ctrl');
 		$this->setupRoutes($this->app->router);
-
 
 		// This allows the config file to be published using artisan vendor:publish
 		$this->publishes([
@@ -43,6 +50,11 @@ class CtrlServiceProvider extends ServiceProvider{
 	        realpath(__DIR__.'/../assets') => public_path('assets/vendor/ctrl'),
 	        	// We could potentially just use 'vendor/ctrl'; check best practice here.
 	    ], 'public');
+
+		// Make sure we have a CtrlModules file:
+		$this->publishes([
+	        __DIR__.'/Modules/CtrlModules.php' => $ctrl_folder.'/CtrlModules.php',
+	    ]);
 
 	}
 
@@ -70,6 +82,11 @@ class CtrlServiceProvider extends ServiceProvider{
 
 		// Register the DataTables service like this (saves having to add it to config/app.php)
 		\App::register('Yajra\Datatables\DatatablesServiceProvider');
+
+		// Can we create a custom Service Provider here to drive "modules"?
+		/* Don't think so
+		\App::register('App\Ctrl\Providers\CtrlModuleServiceProvider');
+		*/
 
 	}
 

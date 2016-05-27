@@ -24,14 +24,25 @@ use Schema;
 
 use Datatables;
 
+use \App\Ctrl\CtrlModules;
 use \Sevenpointsix\Ctrl\Models\CtrlClass;
 use \Sevenpointsix\Ctrl\Models\CtrlProperty;
 
 class CtrlController extends Controller
 {
 
-	public function __construct() {
+	protected $ctrlModules; // Based on http://stackoverflow.com/a/30373386/1463965
+	
+	public function __construct(CtrlModules $ctrlModules) {
 		// Note that we don't need to call the parent __construct() here
+
+		$this->module = $ctrlModules;
+		/* We can now run modules:
+			dd($this->modules->run('test',[
+				'string' => 'Hello world!'
+			]));
+		}
+		*/
 
 		// Build the menu
 		$ctrl_classes = CtrlClass::where('menu_title','!=','')
@@ -125,7 +136,11 @@ class CtrlController extends Controller
 	 */
 	public function dashboard()
 	{
-
+		/*
+		dd($this->module->run('test',[
+			'hello'
+		]));
+		*/
 		return view('ctrl::dashboard',[			
 			'logo' => config('ctrl.logo')
 		]);
@@ -484,6 +499,27 @@ class CtrlController extends Controller
 	}
 
 	/**
+	 * A function used by the "test" module, as a demonstration of how to call functions from the parent controller
+	 * @return string A test string
+	 */
+	public function testing() {
+		return 'test';
+	}
+
+	/**
+	 * Return the object defined by the ctrl_class $ctrl_class_id, with the ID $object_id (if present)
+	 * @param  integer $ctrl_class_id the ctrl_class ID
+	 * @param  integer $object_id  The ID of the object
+	 * @return object The resulting obkect
+	 */
+	public function get_object_from_ctrl_class_id($ctrl_class_id,$object_id = NULL) {		
+		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
+		$class      = $ctrl_class->get_class();
+		$object     = ($object_id) ? $class::where('id',$object_id)->firstOrFail() : new $class;		
+		return $object;
+	}
+
+	/**
 	 * Edit an objects of a given CtrlClass, if an ID is given
 	 * Or renders a blank form if not
 	 * This essentially renders a form for the object
@@ -499,11 +535,10 @@ class CtrlController extends Controller
 		$default_values      = $this->convert_filter_string_to_array($filter_string); // Note that we use this to set default values, not filter the list
 		$default_description = $this->describe_filter($default_values);
 		
-		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();				
-		
-		$class  = $ctrl_class->get_class();
-		$object = ($object_id) ? $class::where('id',$object_id)->firstOrFail() : new $class;		
+		$object = $this->get_object_from_ctrl_class_id($ctrl_class_id,$object_id);
 
+		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
+		
 		$form_fields = [];
 		$ctrl_properties = $ctrl_class->ctrl_properties()->where('fieldset','!=','')->get();	
 		foreach ($ctrl_properties as $ctrl_property) {
@@ -599,7 +634,14 @@ class CtrlController extends Controller
 		// TODO: right, we need to add something here that allows us to customise the list of form fields
 		// I think we need to use a serviceprovider and inject it into this main controlller
 		// See the comment on this page re. ReportingService: http://stackoverflow.com/questions/30365169/access-controller-method-from-another-controller-in-laravel-5
-
+		if ($this->module->enabled('manipulate_form_fields')) {
+			$form_fields = $this->module->run('manipulate_form_fields',[
+				$form_fields,
+				$ctrl_class_id,
+				$object_id,
+				$filter_string
+			]);
+		}
 
 		// Add any filter properties as hidden fields
 		if ($default_values) { // Set HIDDEN fields here; we can default known fields in the main loop above
