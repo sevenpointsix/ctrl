@@ -2,6 +2,9 @@
 
 	namespace App\Ctrl;
 
+	use \Sevenpointsix\Ctrl\Models\CtrlClass;
+	use \Sevenpointsix\Ctrl\Models\CtrlProperty;
+
 	class CtrlModules {
 		
 		protected $enabled_modules = [
@@ -40,6 +43,31 @@
 			return call_user_func_array(array($this,$module_name),$arguments);
 		}
 
+		// Is this the best place to store "empty" functions?
+		// This is all TBC, I'd like to enable/disable modules using an artisan command really
+		
+		/**
+		 * Allow the form fields array to be manipulated; this should allow us to add, remove or modify fields
+		 * @param  array The existing $form_fields array
+		 * @param  integer $ctrl_class_id The ID of the class we're editing
+		 * @param  integer $object_id The ID of the object we're editing (zero if we're creating a new one)
+		 * @param  string $filter_string Optional list filter; such as 43,1, which will set the value of the ctrl_property 43 to 1 when we save the form
+		 * @return array The new form_fields array
+		 */
+		protected function manipulate_form_fields($form_fields, $ctrl_class_id, $object_id, $filter_string) {
+			return $form_fields;
+		}
+
+		/**
+		 * Manipulate an object once it's been saved	
+		 * @param  Request  $request	 
+		 * @param  integer $object The object we're saving
+		 * @param  string $filter_string Optional list filter; such as 43,1, which will set the value of the ctrl_property 43 to 1 when we save the object
+		 * @return
+		 */
+		protected function post_save($request, $object, $filter_string) {
+
+		}
 
 
 	}

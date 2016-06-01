@@ -102,14 +102,16 @@
 
 	  <!-- Nav tabs -->
 	  <ul class="nav nav-tabs" role="tablist">
-	    <li role="presentation" class="active"><a href="#details" aria-controls="details" role="tab" data-toggle="tab"><i class="fa fa-th-list"></i> Details</a></li>
+	    <li role="presentation" class="active"><a href="#tab-1" aria-controls="tab-1" role="tab" data-toggle="tab"><i class="fa fa-th-list"></i> Details</a></li>
+
+	    <li role="presentation"><a href="#tab-2" aria-controls="tab-2" role="tab" data-toggle="tab"><i class="fa fa-star-o"></i> Testt</a></li>
 	  </ul>
 
 	  <form class="ajax" method="post" action="{{ $save_link }}">
 
 		  <!-- Tab panes -->
 		  <div class="tab-content">
-		    <div role="tabpanel" class="tab-pane fade in active" id="details">
+		    <div role="tabpanel" class="tab-pane fade in active" id="tab-1">
 		    	
 				{!! csrf_field() !!}	
 
@@ -121,6 +123,12 @@
 
 				@endforeach
 				
+			</div>
+			<div role="tabpanel" class="tab-pane fade in" id="tab-2">
+				<div class="form-group">
+				     <label for="form_id_test">A TEST FIELD</label>
+				    	<input type="text" class="form-control" id="form_id_test" name="test" value="" placeholder="">
+				</div>
 			</div>
 		  </div>
 		  <hr />

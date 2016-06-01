@@ -1,4 +1,10 @@
 
+.page-header h1 img {
+	/* Line-up the header on the dashboad */
+	height: 50px;
+	vertical-align: middle;
+}
+
 .navbar.page-header {
 	/* Put some space between the nav bar title and the top of the page; we use Bootstrap's .page-header for consistency, but then pretty much override it */
 	padding-bottom: inherit; /* Use the padding from the standard .navbar class */

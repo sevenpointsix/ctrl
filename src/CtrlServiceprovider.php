@@ -43,7 +43,12 @@ class CtrlServiceProvider extends ServiceProvider{
 		// This allows the config file to be published using artisan vendor:publish
 		$this->publishes([
 				__DIR__.'/config/ctrl.php' => config_path('ctrl.php'),
-		]);
+		], 'config'); // See https://laravel.com/docs/5.0/packages#publishing-file-groups
+
+		// Make sure we have a CtrlModules file:
+		$this->publishes([
+	        __DIR__.'/Modules/CtrlModules.php' => $ctrl_folder.'/CtrlModules.php',
+	    ],'config');
 
 		// This copies our assets folder into the public folder for easy access, again using artisan vendor:publish
 		$this->publishes([
@@ -51,10 +56,7 @@ class CtrlServiceProvider extends ServiceProvider{
 	        	// We could potentially just use 'vendor/ctrl'; check best practice here.
 	    ], 'public');
 
-		// Make sure we have a CtrlModules file:
-		$this->publishes([
-	        __DIR__.'/Modules/CtrlModules.php' => $ctrl_folder.'/CtrlModules.php',
-	    ]);
+
 
 	}
 

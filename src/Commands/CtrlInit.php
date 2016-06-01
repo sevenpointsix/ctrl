@@ -66,6 +66,14 @@ class CtrlInit extends Command
             '--path' => 'packages/sevenpointsix/Ctrl/database'
         ]);
         */
+       
+       /* Update: no! We should copy database migrations when we publish assets:
+       // Something like...
+        $this->publishes([
+            __DIR__.'/../database/migrations/' => database_path('/migrations')
+        ], 'migrations');
+        // See https://laravel.com/docs/5.0/packages#publishing-file-groups
+        */
          
 
     }

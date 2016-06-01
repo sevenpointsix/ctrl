@@ -695,6 +695,7 @@ class CtrlController extends Controller
 	/**
 	 * Update an object a given CtrlClass, if an ID is given
 	 * Or create a new object if not
+	 * @param  Request  $request
 	 * @param  integer $ctrl_class_id The ID of the class we're editing
 	 * @param  integer $object_id The ID of the object we're editing (zero to create a new one)
 	 * @param  string $filter_string This tracks whether we're adding a filtered object -- so we can bounce back to the filtered list..
@@ -844,8 +845,17 @@ class CtrlController extends Controller
 			}
 		}
 		
-
         $object->save();
+
+        // Add a custom post_save module
+        if ($this->module->enabled('post_save')) {
+        	// We may eventually need to patch this into the validation...? Or would that imply the need for a validation (or pre_save) module?
+			$this->module->run('post_save',[				
+				$request,
+				$object,
+				$filter_string
+			]);
+		}
         
         $redirect = route('ctrl::list_objects',[$ctrl_class->id,$filter_string]);
 

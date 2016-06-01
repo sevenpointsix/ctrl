@@ -142,7 +142,7 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 @section('content')
 	
 	<div class="page-header">
-	  <h1>@if ($logo)<img src="{{ $logo }}" style="height: 50px"> @endif<small>Content Management System</small></h1>
+	  <h1>@if ($logo)<img src="{{ $logo }}"> @endif<small>Content Management System</small></h1>
 	</div>
 
 	<div class="row">
@@ -176,7 +176,7 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 	  					<div class="btn-group">
 
 						  <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-						    <i class="{{ $link['icon_only'] }} fa-3x"></i><br><span class="label label-primary">{{ $link['title'] }}</span>			  
+						    <i class="{{ $link['icon_only'] }} fa-3x fa-fw"></i><br><span class="label label-primary">{{ $link['title'] }}</span>			  
 						  </a>
 						  <ul class="dropdown-menu">
 						  	<li><a @if ($link['list_link']) href="{{ $link['list_link'] }}" @else class="disabled" @endif><i class="fa fa-list fa-fw"></i> {{ $link['list_title'] }}</a></li>			  	
