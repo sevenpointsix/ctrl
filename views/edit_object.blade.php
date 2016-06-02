@@ -111,7 +111,7 @@
 	  <form class="ajax" method="post" action="{{ $save_link }}">
 	  		{!! csrf_field() !!}
 	  		@foreach ($hidden_form_fields as $hidden_form_field)
-	  			@include('ctrl::form_fields.hidden', ['field' => $form_field])
+	  			@include('ctrl::form_fields.hidden', ['field' => $hidden_form_field])
 	  		@endforeach
 		  <!-- Tab panes -->
 		  <div class="tab-content">
