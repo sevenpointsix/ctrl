@@ -11,7 +11,9 @@
             "Sevenpointsix\\Ctrl\\": "src/Sevenpointsix/Ctrl"
         }
     },
-    "post-update-cmd": {
-       "php artisan vendor:publish --tag=public --force"
+    "scripts": {
+        "post-update-cmd": [
+            "php artisan vendor:publish --tag=public --force"
+        ]
     }
 }
