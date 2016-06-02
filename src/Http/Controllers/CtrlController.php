@@ -535,12 +535,14 @@ class CtrlController extends Controller
 		$default_values      = $this->convert_filter_string_to_array($filter_string); // Note that we use this to set default values, not filter the list
 		$default_description = $this->describe_filter($default_values);
 		
-		$object = $this->get_object_from_ctrl_class_id($ctrl_class_id,$object_id);
+		$object             = $this->get_object_from_ctrl_class_id($ctrl_class_id,$object_id);
 
-		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
+		$ctrl_class         = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
+		$ctrl_properties    = $ctrl_class->ctrl_properties()->where('fieldset','!=','')->get();	
 		
-		$form_fields = [];
-		$ctrl_properties = $ctrl_class->ctrl_properties()->where('fieldset','!=','')->get();	
+		$form_field_tabs    = [];
+		$hidden_form_fields = [];
+
 		foreach ($ctrl_properties as $ctrl_property) {
 
 			// Adjust the field type, mainly to handle relationships and multiple dropdowns
@@ -619,7 +621,10 @@ class CtrlController extends Controller
 				
 			}
 			
-			$form_fields['form_id_'.$ctrl_property->name] = [ // Use array keys so that we can more easily manipulate the resulting array of fields later
+			$tab = $ctrl_property->fieldset;
+			if (!isset($form_field_tabs[$tab])) $form_field_tabs[$tab] = [];
+
+			$form_field_tabs[$tab]['form_id_'.$ctrl_property->name] = [
 				'id'       => 'form_id_'.$ctrl_property->name,
 				'name'     => $field_name,
 				'values'   => $values, // A range of possible values
@@ -629,14 +634,15 @@ class CtrlController extends Controller
 				'label'    => $ctrl_property->label,
 				'tip'      => $ctrl_property->tip,
 			];
+
 		}		
 
 		// TODO: right, we need to add something here that allows us to customise the list of form fields
 		// I think we need to use a serviceprovider and inject it into this main controlller
 		// See the comment on this page re. ReportingService: http://stackoverflow.com/questions/30365169/access-controller-method-from-another-controller-in-laravel-5
 		if ($this->module->enabled('manipulate_form_fields')) {
-			$form_fields = $this->module->run('manipulate_form_fields',[
-				$form_fields,
+			$form_field_tabs = $this->module->run('manipulate_form_fields',[
+				$form_field_tabs,
 				$ctrl_class_id,
 				$object_id,
 				$filter_string
@@ -652,12 +658,11 @@ class CtrlController extends Controller
 									where('id',$default_value['ctrl_property_id'])->first();										
 				if ($default_property !== null) {
 					$default_field_name = $default_property->get_field_name();
-					$form_fields[] = [
+					$hidden_form_fields[] = [
 						'id'       => 'form_id_'.$default_field_name,
 						'name'     => $default_field_name,							
-						'value'    => $default_value['value'],				
-						'template' => 'hidden',							
-						// Don't need $values, $tip, $type or $label.
+						'value'    => $default_value['value'],										
+						// Don't need $template, $values, $tip, $type or $label.
 					];			
 				}
 			}			
@@ -681,14 +686,15 @@ class CtrlController extends Controller
 		$save_link        = route('ctrl::save_object',[$ctrl_class->id,$object_id,$filter_string]);
 		
 		return view('ctrl::edit_object',[
-			'ctrl_class'       => $ctrl_class,
-			'page_title'       => $page_title,
-			'page_description' => $page_description,
-			'back_link'        => $back_link,
-			'delete_link'      => $delete_link,
-			'save_link'        => $save_link,
-			'object'           => $object,
-			'form_fields'      => $form_fields,
+			'ctrl_class'         => $ctrl_class,
+			'page_title'         => $page_title,
+			'page_description'   => $page_description,
+			'back_link'          => $back_link,
+			'delete_link'        => $delete_link,
+			'save_link'          => $save_link,
+			'object'             => $object,
+			'form_field_tabs'    => $form_field_tabs,
+			'hidden_form_fields' => $hidden_form_fields,
 		]);
 	}
 

@@ -102,19 +102,23 @@
 
 	  <!-- Nav tabs -->
 	  <ul class="nav nav-tabs" role="tablist">
-	    <li role="presentation" class="active"><a href="#tab-1" aria-controls="tab-1" role="tab" data-toggle="tab"><i class="fa fa-th-list"></i> Details</a></li>
-
-	    <li role="presentation"><a href="#tab-2" aria-controls="tab-2" role="tab" data-toggle="tab"><i class="fa fa-star-o"></i> Testt</a></li>
+	  	<?php $tab_loop = 0; // Hate mixing PHP and blade syntax; consider http://robin.radic.nl/blade-extensions/directives/assignment.html ? ?>
+	  	@foreach (array_keys($form_field_tabs) as $tab)
+	    <li role="presentation" @if ($tab_loop++ == 0)class="active" @endif><a href="#tab-{{ str_slug($tab) }}" aria-controls="tab-{{ str_slug($tab) }}" role="tab" data-toggle="tab"><i class="fa fa-th-list"></i> {{ $tab }}</a></li>	    
+	    @endforeach
 	  </ul>
 
 	  <form class="ajax" method="post" action="{{ $save_link }}">
-
+	  		{!! csrf_field() !!}
+	  		@foreach ($hidden_form_fields as $hidden_form_field)
+	  			@include('ctrl::form_fields.hidden', ['field' => $form_field])
+	  		@endforeach
 		  <!-- Tab panes -->
 		  <div class="tab-content">
-		    <div role="tabpanel" class="tab-pane fade in active" id="tab-1">
+		  	<?php $tab_loop = 0; // Hate mixing PHP and blade syntax; consider http://robin.radic.nl/blade-extensions/directives/assignment.html ? ?>
+		  	@foreach ($form_field_tabs as $tab=>$form_fields)
+		    <div role="tabpanel" class="tab-pane fade in @if ($tab_loop++ == 0) active @endif" id="tab-{{ str_slug($tab) }}">
 		    	
-				{!! csrf_field() !!}	
-
 				@include('ctrl::form_errors')
 
 				@foreach ($form_fields as $form_field)
@@ -124,12 +128,7 @@
 				@endforeach
 				
 			</div>
-			<div role="tabpanel" class="tab-pane fade in" id="tab-2">
-				<div class="form-group">
-				     <label for="form_id_test">A TEST FIELD</label>
-				    	<input type="text" class="form-control" id="form_id_test" name="test" value="" placeholder="">
-				</div>
-			</div>
+			@endforeach			
 		  </div>
 		  <hr />
 		  <a class="btn btn-default" href="{{ route('ctrl::list_objects',$ctrl_class->id) }}"><i class="fa fa-remove"></i> Cancel</a>
