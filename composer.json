@@ -10,5 +10,8 @@
         "psr-4": {
             "Sevenpointsix\\Ctrl\\": "src"
         }
-    }
+    },
+    post-update-cmd": [
+       "php artisan vendor:publish --tag=public --force"
+    ],
 }
