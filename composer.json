@@ -13,5 +13,5 @@
     },
     "post-update-cmd": [
        "php artisan vendor:publish --tag=public --force"
-    ],
+    ]
 }
