@@ -540,7 +540,7 @@ class CtrlController extends Controller
 		$ctrl_class         = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
 		$ctrl_properties    = $ctrl_class->ctrl_properties()->where('fieldset','!=','')->get();	
 		
-		$form_field_tabs    = [];
+		$tabbed_form_fields = [];
 		$hidden_form_fields = [];
 
 		foreach ($ctrl_properties as $ctrl_property) {
@@ -620,11 +620,28 @@ class CtrlController extends Controller
 				}
 				
 			}
-			
-			$tab = $ctrl_property->fieldset;
-			if (!isset($form_field_tabs[$tab])) $form_field_tabs[$tab] = [];
+		
+			// Build the form_field
 
-			$form_field_tabs[$tab]['form_id_'.$ctrl_property->name] = [
+			$form_fields = [
+				
+			];
+
+			// Add it to the tabs
+
+			$tab_name = $ctrl_property->fieldset;
+			$tab_icon = 'fa fa-list';
+			$tab_text = '';
+
+			if (!isset($tabbed_form_fields[$tab_name])) {
+				$tabbed_form_fields[$tab_name] = [
+					'icon'        => $tab_icon,
+					'text'        => $tab_text,
+					'form_fields' => []
+				];
+			}
+
+			$tabbed_form_fields[$tab_name]['form_fields']['form_id_'.$ctrl_property->name] = [
 				'id'       => 'form_id_'.$ctrl_property->name,
 				'name'     => $field_name,
 				'values'   => $values, // A range of possible values
@@ -640,9 +657,9 @@ class CtrlController extends Controller
 		// TODO: right, we need to add something here that allows us to customise the list of form fields
 		// I think we need to use a serviceprovider and inject it into this main controlller
 		// See the comment on this page re. ReportingService: http://stackoverflow.com/questions/30365169/access-controller-method-from-another-controller-in-laravel-5
-		if ($this->module->enabled('manipulate_form_fields')) {
-			$form_field_tabs = $this->module->run('manipulate_form_fields',[
-				$form_field_tabs,
+		if ($this->module->enabled('manipulate_form')) {
+			$tabbed_form_fields = $this->module->run('manipulate_form',[
+				$tabbed_form_fields,
 				$ctrl_class_id,
 				$object_id,
 				$filter_string
@@ -693,7 +710,7 @@ class CtrlController extends Controller
 			'delete_link'        => $delete_link,
 			'save_link'          => $save_link,
 			'object'             => $object,
-			'form_field_tabs'    => $form_field_tabs,
+			'tabbed_form_fields' => $tabbed_form_fields,
 			'hidden_form_fields' => $hidden_form_fields,
 		]);
 	}

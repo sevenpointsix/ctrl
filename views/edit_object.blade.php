@@ -103,8 +103,8 @@
 	  <!-- Nav tabs -->
 	  <ul class="nav nav-tabs" role="tablist">
 	  	<?php $tab_loop = 0; // Hate mixing PHP and blade syntax; consider http://robin.radic.nl/blade-extensions/directives/assignment.html ? ?>
-	  	@foreach (array_keys($form_field_tabs) as $tab)
-	    <li role="presentation" @if ($tab_loop++ == 0)class="active" @endif><a href="#tab-{{ str_slug($tab) }}" aria-controls="tab-{{ str_slug($tab) }}" role="tab" data-toggle="tab"><i class="fa fa-th-list"></i> {{ $tab }}</a></li>	    
+	  	@foreach ($tabbed_form_fields as $tab_name=>$tab_details)
+	    <li role="presentation" @if ($tab_loop++ == 0)class="active" @endif><a href="#tab-{{ $tab_loop }}" aria-controls="tab-{{ $tab_loop }}" role="tab" data-toggle="tab"><i class="{{ $tab_details['icon'] }}"></i> {{ $tab_name }}</a></li>	    
 	    @endforeach
 	  </ul>
 
@@ -116,12 +116,19 @@
 		  <!-- Tab panes -->
 		  <div class="tab-content">
 		  	<?php $tab_loop = 0; // Hate mixing PHP and blade syntax; consider http://robin.radic.nl/blade-extensions/directives/assignment.html ? ?>
-		  	@foreach ($form_field_tabs as $tab=>$form_fields)
-		    <div role="tabpanel" class="tab-pane fade in @if ($tab_loop++ == 0) active @endif" id="tab-{{ str_slug($tab) }}">
+		  	@foreach ($tabbed_form_fields as $tab_name=>$tab_details)
+		    <div role="tabpanel" class="tab-pane fade in @if ($tab_loop++ == 0) active @endif" id="tab-{{ $tab_loop }}">
 		    	
-				@include('ctrl::form_errors')
+		    	@if ($tab_loop == 1)
+					@include('ctrl::form_errors')
+				@endif
 
-				@foreach ($form_fields as $form_field)
+
+				@if (!empty($tab_details['text']))
+					{!! $tab_details['text'] !!}
+				@endif
+
+				@foreach ($tab_details['form_fields'] as $form_field)
 
 					@include('ctrl::form_fields.'.$form_field['template'], ['field' => $form_field])
 

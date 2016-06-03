@@ -48,14 +48,30 @@
 		
 		/**
 		 * Allow the form fields array to be manipulated; this should allow us to add, remove or modify fields
-		 * @param  array The existing $form_fields array
+		 * @param  array The existing $tabbed_form_fields array, in this format;
+		 *                   [
+		 *                   	TAB_NAME => [
+		 *                   		'icon'=>'',
+		 *                   		'text'=>'',
+		 *                   		'form_fields'=>[
+		 *                   			'id'       => '',
+		 *								'name'     => '',
+		 *								'values'   => [],
+		 *								'value'    => '', // May an array, for relationships / multiple selects etc
+		 *								'type'     => '',
+		 *								'template' => '',
+		 *								'label'    => '',
+		 *								'tip'      => '',
+		 *                   		]
+		 *                   	]	
+		 *                   ]
 		 * @param  integer $ctrl_class_id The ID of the class we're editing
 		 * @param  integer $object_id The ID of the object we're editing (zero if we're creating a new one)
 		 * @param  string $filter_string Optional list filter; such as 43,1, which will set the value of the ctrl_property 43 to 1 when we save the form
 		 * @return array The new form_fields array
 		 */
-		protected function manipulate_form_fields($form_fields, $ctrl_class_id, $object_id, $filter_string) {
-			return $form_fields;
+		protected function manipulate_form($tabbed_form_fields, $ctrl_class_id, $object_id, $filter_string) {
+			return $tabbed_form_fields;
 		}
 
 		/**

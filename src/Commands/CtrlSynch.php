@@ -225,7 +225,7 @@ class CtrlSynch extends Command
                             // There are some columns we rarely want to display as editable fields
                             $exclude_fields_from_form = ['created_at','updated_at','deleted_at','url','uri'];
                             if (!in_array($ctrl_property->name, $exclude_fields_from_form)) {
-                                $ctrl_property->fieldset = 'Content';
+                                $ctrl_property->fieldset = 'Details';
                             }
                         }
 
@@ -258,7 +258,7 @@ class CtrlSynch extends Command
                             $ctrl_property->order      = $column_order++;
                             $ctrl_property->field_type = 'dropdown';
                             $ctrl_property->label      = ucfirst(str_replace('_id', '', $column_name));
-                            $ctrl_property->fieldset   = 'Content'; // Assume we always want to include simple "belongsTo" relationships on the form
+                            $ctrl_property->fieldset   = 'Details'; // Assume we always want to include simple "belongsTo" relationships on the form
                         }
 
                         $ctrl_property->save(); // As above, no need to explicitly save relationship                            
