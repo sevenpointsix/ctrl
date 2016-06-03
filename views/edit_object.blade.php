@@ -109,7 +109,7 @@
 	  </ul>
 
 	  <form class="ajax" method="post" action="{{ $save_link }}">
-	  		{!! csrf_field() !!}
+	  		
 	  		@foreach ($hidden_form_fields as $hidden_form_field)
 	  			@include('ctrl::form_fields.hidden', ['field' => $hidden_form_field])
 	  		@endforeach
@@ -138,7 +138,7 @@
 			@endforeach			
 		  </div>
 		  <hr />
-		  <a class="btn btn-default" href="{{ route('ctrl::list_objects',$ctrl_class->id) }}"><i class="fa fa-remove"></i> Cancel</a>
+		  <a class="btn btn-default" href="{{ $back_link }}"><i class="fa fa-remove"></i> Cancel</a>
 		<button type="submit" class="btn btn-success"><i class="fa fa-check-square"></i> Save</button>
 	  </form>
 

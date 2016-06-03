@@ -31,7 +31,7 @@
 	  display: 'title',
 	  source: dashboard_search,  
 	  templates: {
-		suggestion: Handlebars.compile('<div><i class="\{\{icon\}\}"></i> \{\{title\}\}</div>')
+		suggestion: Handlebars.compile('<div><i class="\{\{icon\}\}"></i> \{\{title\}\} <span class="label label-primary pull-right">\{\{class_name\}\}</span></div>')
 	  }
 	  // Could add <span class=\"label label-default pull-right\">Test</span> here
 
@@ -110,6 +110,14 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 	border-bottom-left-radius: 0px;
 	border-top-right-radius: 4px;
 	border-bottom-right-radius: 4px;
+}
+
+.tt-suggestion span.label {
+	margin-top: 3px; /* Nudge labels down a bit when displayed in typeahead */
+}
+.tt-suggestion.tt-cursor span.label { /* Invert the label when highlighted */
+	color: #337ab7;
+	background-color: #fff;
 }
 
 .page-header img {

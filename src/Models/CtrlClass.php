@@ -22,6 +22,8 @@ class CtrlClass extends Model
         return $this->hasMany('Sevenpointsix\Ctrl\Models\CtrlProperty')->orderBy('order');
     }
 
+    // I think that the following methods should be helper functions within the controller, really...
+
     /**
      * Return the name of the class defined by this ctrl_class
      * @return string
@@ -64,7 +66,7 @@ class CtrlClass extends Model
         else {
             $plural = str_plural($this->name);
         }
-        return strtolower($plural);
+        return $plural;
     }
     /**
      * Return the singular name of this class
@@ -79,7 +81,7 @@ class CtrlClass extends Model
         else {
             $singular = $this->name;
         }
-        return strtolower($singular);
+        return $singular;
        
     }
 }

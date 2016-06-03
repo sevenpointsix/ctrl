@@ -61,7 +61,7 @@ class CtrlController extends Controller
 
 			if ($count > 0) {
 				$list_link  = route('ctrl::list_objects',$ctrl_class->id);
-				$list_title = 'View '.$count.' '.$ctrl_class->get_plural();	
+				$list_title = 'View '.$count.' '.($count == 1 ? $ctrl_class->get_singular() : $ctrl_class->get_plural());	
 			}
 			else {
 				$list_link  = false;
@@ -104,7 +104,7 @@ class CtrlController extends Controller
 					$related_class      = $related_ctrl_class->get_class();
 					$related_object     = $related_class::where('id',$filter['value'])->firstOrFail();
 
-					$description[] = "belonging to the ".strtolower($related_ctrl_class->name) ." <strong><a href=".route('ctrl::edit_object',[$related_ctrl_class->id,$related_object->id]).">".$related_object->title."</a></strong>"; // Again, ->title here isn't right
+					$description[] = "belonging to the ".strtolower($related_ctrl_class->name) ." <strong><a href=".route('ctrl::edit_object',[$related_ctrl_class->id,$related_object->id]).">".$this->get_object_title($related_object)."</a></strong>";
 				}
 			}
 			$return = $this->comma_and($description);
@@ -427,7 +427,7 @@ class CtrlController extends Controller
 			$count            = $count_objects->count();
 			
 			if ($count > 0) {
-				$filter_list_title = 'View '.$count . ' '.$filter_ctrl_class->get_plural() . ($filter_ctrl_class->get_plural() > 1 ? 's': '');
+				$filter_list_title = 'View '.$count . ' '.($count == 1 ? $filter_ctrl_class->get_singular() : $filter_ctrl_class->get_plural());
 				$filter_list_link  = route('ctrl::list_objects',[$filter_ctrl_property->related_to_id,$filtered_list_string]);
 			}
 			else {
@@ -510,13 +510,49 @@ class CtrlController extends Controller
 	 * Return the object defined by the ctrl_class $ctrl_class_id, with the ID $object_id (if present)
 	 * @param  integer $ctrl_class_id the ctrl_class ID
 	 * @param  integer $object_id  The ID of the object
-	 * @return object The resulting obkect
+	 * @return object The resulting object
 	 */
 	public function get_object_from_ctrl_class_id($ctrl_class_id,$object_id = NULL) {		
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
 		$class      = $ctrl_class->get_class();
 		$object     = ($object_id) ? $class::where('id',$object_id)->firstOrFail() : new $class;		
 		return $object;
+	}
+
+	/**
+	 * Return the ctrl_class object defined by the object $object_id	 
+	 * @param  integer $object_id  The ID of the object
+	 * @return object The resulting object
+	 */
+	protected function get_ctrl_class_from_object($object) {	
+
+		$ctrl_class_name = str_replace('App\Ctrl\Models\\','',get_class($object));		
+		$ctrl_class = CtrlClass::where('name',$ctrl_class_name)->firstOrFail();		
+		return $ctrl_class;
+		
+	}
+
+	/**
+	 * Return the title of the object $object
+	 * @param  object $objectd  The object
+	 * @return string The title of the object
+	 */
+	protected function get_object_title($object) {
+
+		$ctrl_class = $this->get_ctrl_class_from_object($object);
+
+		$title_properties = $ctrl_class->ctrl_properties()->whereRaw(
+			'(find_in_set(?, flags))',
+			['string']	
+		)->get();
+		$title_strings = [];
+		foreach ($title_properties as $title_property) {
+			$property = $title_property->name;
+			$title_strings[] = $object->$property;
+		}
+
+		return implode(' ', $title_strings);
+		
 	}
 
 	/**
@@ -574,7 +610,7 @@ class CtrlController extends Controller
 				$related_class 		= $related_ctrl_class->get_class();
 				$related_objects  	= $related_class::all();
 				foreach ($related_objects as $related_object) {
-					$values[$related_object->id] = $related_object->title; // 'title' won't always be true
+					$values[$related_object->id] = $this->get_object_title($related_object); 
 				}
 			}
 			else {
@@ -603,7 +639,7 @@ class CtrlController extends Controller
 				$related_objects = $object->$field_name;
 				$value = [];
 				foreach ($related_objects as $related_object) {
-					$value[$related_object->id] = $related_object->title; // 'title' won't always be true
+					$value[$related_object->id] = $this->get_object_title($related_object);
 				}
 			}
 			else {
@@ -687,7 +723,8 @@ class CtrlController extends Controller
 
 		if ($object_id) {
 			$page_title       = 'Edit this '.$ctrl_class->get_singular();
-			$page_description = '&ldquo;'.$object->title.'&rdquo;';
+			// $page_description = '&ldquo;'.$object->title.'&rdquo;';
+			$page_description = '&ldquo;'.$this->get_object_title($object).'&rdquo;';
 			$delete_link      = route('ctrl::delete_object',[$ctrl_class->id,$object->id]);
 		}
 		else {
@@ -1147,11 +1184,12 @@ class CtrlController extends Controller
 					$objects = $query->get();	
 					if (!$objects->isEmpty()) {
 					    foreach ($objects as $object) {
-					    	$result        		= new \StdClass;
-					    	$result->title 		= $object->title; // This needs to be flexible, to find the title property; we won't necessarily have a "title" property. Should this be a method of CtrlClass?
-					    	$result->edit_link   = route('ctrl::edit_object',[$ctrl_class->id,$object->id]);							
-					    	$result->icon  		= $ctrl_class->get_icon() ? $ctrl_class->get_icon() : 'fa fa-toggle-right';
-					    	$json[]        		= $result;
+					    	$result             = new \StdClass;
+					    	$result->class_name = $ctrl_class->get_singular();
+					    	$result->title      = $this->get_object_title($object);
+					    	$result->edit_link  = route('ctrl::edit_object',[$ctrl_class->id,$object->id]);							
+					    	$result->icon       = $ctrl_class->get_icon() ? $ctrl_class->get_icon() : 'fa fa-toggle-right';
+					    	$json[]             = $result;
 					    }
 					}
 				}
