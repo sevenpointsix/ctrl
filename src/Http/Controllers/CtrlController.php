@@ -568,6 +568,10 @@ class CtrlController extends Controller
 	public function edit_object($ctrl_class_id, $object_id = NULL, $filter_string = NULL)
 	{		
 
+		// Convert the the $filter parameter into one that makes sense
+		// Used when linking BACK to a list
+		$filter_array = $this->convert_filter_string_to_array($filter_string);		
+
 		$default_values      = $this->convert_filter_string_to_array($filter_string); // Note that we use this to set default values, not filter the list
 		$default_description = $this->describe_filter($default_values);
 		
@@ -734,7 +738,21 @@ class CtrlController extends Controller
 		}		
 		// If we've set default values here, then that implies that we came through a filtered list; and we want to go back to THAT list, not a list of all these items
 		// Or do we...? Hmmm. It might make more sense to return to a filtered list of *these* items... TBC.
+		/* Yes, use the code below from @list_objects
 		$back_link        = route('ctrl::list_objects',[$ctrl_class->id,$filter_string]);
+		*/
+		// Do we have an unfiltered list we can link back to?
+        if ($filter_array) {
+        	// dd($filter_array);
+        	// $filter_array[0]['ctrl_property_id'] is now the ID of the property that links back to the "parent" list, so:
+        	$unfiltered_ctrl_property = CtrlProperty::where('id',$filter_array[0]['ctrl_property_id'])->firstOrFail();
+        	$unfiltered_ctrl_class    = CtrlClass::where('id',$unfiltered_ctrl_property->related_to_id)->firstOrFail();
+        	$back_link     = route('ctrl::list_objects',[$unfiltered_ctrl_class->id]);
+        }
+        else {
+        	// Is this a sensible fallback?
+        	$back_link        = route('ctrl::list_objects',[$ctrl_class->id,$filter_string]);
+        }
 
 		// Similarly... once we've saved a filtered object, we want to bounce back to a filtered list. This enables it:
 		$save_link        = route('ctrl::save_object',[$ctrl_class->id,$object_id,$filter_string]);
@@ -1001,28 +1019,32 @@ class CtrlController extends Controller
 		
 		$field_name = $request->field_name;
 		// We pass in field_name as a hidden parameter
-		if ($request->file($field_name)->isValid()) {
-			
-			$extension = $request->file($field_name)->getClientOriginalExtension();
-			
-			if ($request->type == 'image') {
-				$name      = uniqid('image_');
+
+		if ($request->hasFile($field_name)) {
+
+			if ($request->file($field_name)->isValid()) {
+				
+				$extension = $request->file($field_name)->getClientOriginalExtension();
+				
+				if ($request->type == 'image') {
+					$name      = uniqid('image_');
+				}
+				else if ($request->type == 'file') {
+					// We could add something a little more intelligent here
+					$name = basename($request->file($field_name)->getClientOriginalName(),".$extension").'-'.rand(11111,99999);
+				}
+				
+				$target_folder = 'uploads';
+				$target_file   = $name.'.'.$extension;
+				
+				$moved_file      = $request->file($field_name)->move($target_folder, $target_file);			
+				$response->link  = '/'.$moved_file->getPathname();
 			}
-			else if ($request->type == 'file') {
-				// We could add something a little more intelligent here
-				$name = basename($request->file($field_name)->getClientOriginalName(),".$extension").'-'.rand(11111,99999);
-			}
-			
-			$target_folder = 'uploads';
-			$target_file   = $name.'.'.$extension;
-			
-			$moved_file      = $request->file($field_name)->move($target_folder, $target_file);			
-			$response->link  = '/'.$moved_file->getPathname();
-		}
-		else {
-			$response->error = 'An error has occurred';
-			
-		}		
+			else {
+				$response->error = 'An error has occurred';
+				
+			}	
+		}	
 
 		return stripslashes(json_encode($response));
 	}
