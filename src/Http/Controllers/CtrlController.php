@@ -147,6 +147,70 @@ class CtrlController extends Controller
 	}
 
 
+	/**
+	 * Generate JSON data to populate a select2 box using Ajax
+	 * @param  string $related_ctrl_class The name of the Ctrl class defining the related objects we're loading
+	 * @return json                       JSON data with id, text pairs
+	 */
+	public function get_select2(Request $request,$ctrl_class_name) {
+
+		$json = [];
+
+		$search_term = $request->input('q');
+
+		// This is based heavily on get_typeahead
+		$ctrl_class = CtrlClass::where('name',$ctrl_class_name)->firstOrFail();		
+		$class      = $ctrl_class->get_class();
+
+		// What are the searchable columns?
+		$searchable_properties = $ctrl_class->ctrl_properties()->whereRaw(
+		   '(find_in_set(?, flags))',
+		   ['search']		   
+		)->whereNull('relationship_type')->get();
+			// I have no idea how to include searchable related columns in the query builder below...		
+
+		if (!$searchable_properties->isEmpty()) {
+			$query = $class::query(); // From http://laravel.io/forum/04-13-2015-combine-foreach-loop-and-eloquent-to-perform-a-search
+			foreach ($searchable_properties as $searchable_property) {			
+				$query->orWhere($searchable_property->name,'LIKE',"$search_term%"); // Or would a %$term% search be better?
+			}
+			$objects = $query->take(20)->get();	// Limits the dropdown to 20 items; this may need to be adjusted
+			if (!$objects->isEmpty()) {
+			    foreach ($objects as $object) {
+			    	$result            = new \StdClass;
+			    	$result->id        = $object->id;
+			    	$result->text      = $this->get_object_title($object);			    	
+			    	$json[]            = $result;
+			    }
+			}
+		}
+
+		$status = 200;
+
+        return \Response::json($json, $status);
+	}
+
+	/**
+	 * A dummy placeholder function that generates JSON, just for testing select2 for now
+	 * @return Response
+	 */
+	public function json() {
+		$json = [];
+
+		$status = 200;
+
+		foreach ([1,2,3,4,5] as $i) {
+			$result = new \StdClass;
+	    	$result->id   = $i;
+	    	$result->text = "Sample item ".date("F",strtotime('2010-0'.$i.'-01'));
+	    	$json[]       = $result;
+	    }
+
+        return \Response::json($json, $status);
+
+
+	}
+
 
 	/**
 	 * List all objects of a given CtrlClass
@@ -681,16 +745,22 @@ class CtrlController extends Controller
 				];
 			}
 
+
 			$tabbed_form_fields[$tab_name]['form_fields']['form_id_'.$ctrl_property->name] = [
-				'id'       => 'form_id_'.$ctrl_property->name,
-				'name'     => $field_name,
-				'values'   => $values, // A range of possible values
-				'value'    => $value, // Remember that $value can be an array, for relationships / multiple selects etc
-				'type'     => $ctrl_property->field_type, // This is used to modify some templates; date.blade.php can handle date or datetime types
-				'template' => $ctrl_property->template,
-				'label'    => $ctrl_property->label,
-				'tip'      => $ctrl_property->tip,
+				'id'                      => 'form_id_'.$ctrl_property->name,
+				'name'                    => $field_name,
+				'values'                  => $values, // A range of possible values
+				'value'                   => $value, // Remember that $value can be an array, for relationships / multiple selects etc
+				'type'                    => $ctrl_property->field_type, // This is used to modify some templates; date.blade.php can handle date or datetime types
+				'template'                => $ctrl_property->template,
+				'label'                   => $ctrl_property->label,
+				'tip'                     => $ctrl_property->tip,
+				'related_ctrl_class_name' => (!empty($related_ctrl_class) ? $related_ctrl_class->name : false)
 			];
+			/*
+				Note: we pass in the related_ctrl_class so that we can use Ajax to generate the list of select2 options.
+				Otherwise, if we're working with (eg) Sogra Products, we have a select box with thousands of options, which breaks.
+			*/
 
 		}		
 
@@ -1162,11 +1232,11 @@ class CtrlController extends Controller
 	
 	/**
 	 * Return JSON data to the typehead search (used on the dashboard for now)
-	 * @param  int $ctrl_class_id The ID of the Ctrl Class of the objects we're searching for
+	 * @param  text $search_term The text we're searching for
 	 * @return Response
 	 */
 	
-	public function get_typeahead(Request $request, $search_term = NULL) {		
+	public function get_typeahead($search_term = NULL) {		
 
 		$json = [];
 

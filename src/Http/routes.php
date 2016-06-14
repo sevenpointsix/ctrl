@@ -53,11 +53,19 @@ Route::group(['as' => 'ctrl::','prefix'=>'admin','middleware' => ['web']], funct
 		'uses'=>'CtrlController@get_typeahead'
 	]);
 
+	// Remote data sources for select2
+	Route::get('select2/{ctrl_class_name}',[
+		'as'=>'get_select2',
+		'uses'=>'CtrlController@get_select2'
+	]);
+
 	// Testing...
 	Route::get('test',[
 		'as'=>'test',
 		'uses'=>'CtrlController@test'
 	]);
+
+
 
 
 	// AUTH:
