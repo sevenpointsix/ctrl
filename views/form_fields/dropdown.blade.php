@@ -32,7 +32,9 @@
     <select class="form-control" id="{{ $field['id'] }}" style="width: 100%" name="{{ $field['name'] }}">
         <option value="">None</option>
         @if (count($field['values']) >= 20)
-            <option value="{{ $field['value'] }}" selected="selected">{{ $field['values'][$field['value']] }}</option>
+            @if ($field['value'])
+                <option value="{{ $field['value'] }}" selected="selected">{{ $field['values'][$field['value']] }}</option>
+            @endif
         @else
             @foreach ($field['values'] as $value=>$text)
                 <option value="{{ $value }}" @if ($field['value'] == $value) selected="selected" @endif>{{ $text }}</option>

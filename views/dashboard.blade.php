@@ -123,6 +123,11 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 .page-header img {
 	vertical-align: baseline;
 }
+
+#dashboard-grid div.btn-group {
+	margin-bottom: 5px;
+}
+
 /* very much WIP */
 /* Might not need any of this:;
 #dashboard-grid {
