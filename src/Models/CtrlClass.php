@@ -64,7 +64,7 @@ class CtrlClass extends Model
             $plural = str_plural($this->singular);
         }
         else {
-            $plural = str_plural($this->name);
+            $plural = strtolower(str_plural($this->name));
         }
         return $plural;
     }
@@ -79,7 +79,7 @@ class CtrlClass extends Model
             $singular = $this->singular;
         }
         else {
-            $singular = $this->name;
+            $singular = strtolower($this->name);
         }
         return $singular;
        

@@ -1350,10 +1350,14 @@ class CtrlController extends Controller
 	 * @return string         'a' or 'an' accordinglt
 	 */
 	protected function a_an($string) {
-		
+		$string = strtolower($string);
 		if (strpos($string,'use') === 0) {
 			// Catch "user" -- as I say, this is a very basic function!
 			return 'a';
+		}
+		else if (strpos($string,'faq') === 0) {
+			// As above
+			return 'an';
 		}
 		else if (in_array($string{0},array('a','e','i','o','u'))) {
 			return 'an';
