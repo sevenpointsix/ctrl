@@ -170,7 +170,7 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 				  <div class="form-group">				    
 				    <div class="input-group">
 				      <span class="input-group-addon"><i class="fa fa-search"></i></span>
-				      <input class="typeahead form-control input-lg" type="text" id="exampleInputAmount" placeholder="Search for an item here" style="float: none;">		
+				      <input class="typeahead form-control input-lg" type="text" placeholder="Search for an item here" style="float: none;">		
 				      {{-- float: none aligns the addon in Chrome but apparently not IE? https://github.com/twitter/typeahead.js/issues/847 --}}	      
 				    </div>
 				  </div>			  
