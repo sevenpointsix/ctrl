@@ -19,8 +19,8 @@
 */ ?>
 <div class="row-buttons">
 
-	  <a class="btn btn-sm btn-info" href="{!! $edit_link !!}" data-toggle="tooltip" data-placement="bottom" title="Edit"><i class="fa fa-pencil"></i></a>
-	  <a class="btn btn-sm btn-danger delete-item" rel="{!! $delete_link !!}" data-toggle="tooltip" data-placement="bottom" title="Delete"><i class="fa fa-trash"></i></a>
+	  <a class="btn btn-sm btn-info" href="{!! $edit_link !!}"><i class="fa fa-pencil"></i></a>
+	  <a class="btn btn-sm btn-danger delete-item" rel="{!! $delete_link !!}"><i class="fa fa-trash"></i></a>
 	  {{-- Can we filter on any related items? --}}
 	 
 	  @if ($filtered_list_links)
