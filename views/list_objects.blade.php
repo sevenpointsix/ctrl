@@ -230,12 +230,13 @@ $(function() {
         }
     } );
 
-    var table = $('#data-table').DataTable({
+    var table = $('#data-table').dataTable({
     	/* Remve the header altogether, we'll search on individual columns instead
     	dom: "<'row table-header'<'col-sm-6'f><'col-sm-6'<'dataTables_custom_buttons pull-right'>>>" +
 			 "<'row'<'col-sm-12'tr>>" +
 			 "<'row'<'col-sm-5'i><'col-sm-7'p>>",
 			 */
+		stateSave: true, // From https://datatables.net/reference/option/stateSave, means we retain search terms and current page when returning to the table
 		"orderCellsTop": true, // Is this required? It's designed to prevent the click on a search box propagating to the reorder button, but I think we handle this using stopPropagation above
 		dom: "<'row'<'col-sm-12'tr>>" +
 			 "<'row'<'col-sm-5'i><'col-sm-7'p>>",

@@ -54,6 +54,11 @@ class CtrlController extends Controller
 		foreach ($ctrl_classes as $ctrl_class) {
 
 			$count_ctrl_class = $ctrl_class->get_class();
+
+			if (!class_exists($count_ctrl_class)) {
+				die("Error: cannot load class files.<br><br><code style='border: 1px solid #999; padding: 5px 10px;'>php artisan ctrl:synch files</code>");
+			}
+
 			$count = $count_ctrl_class::count();
 
 			$add_link  = route('ctrl::edit_object',$ctrl_class->id);
@@ -410,7 +415,12 @@ class CtrlController extends Controller
         	// ->editColumn('src', '<div class="media"><div class="media-left"><a href="{{$src}}" data-toggle="lightbox" data-title="{{$src}}"><img class="media-object" src="{{$src}}" height="30"></a></div><div class="media-body" style="vertical-align: middle">{{$src}}</div></div>') // Draw the actual image, if this is an image field
         	->editColumn('src', function($object) {
 	    		if ($src = $object->src) { // If we have a "src" column, assume (for now!) that we render it as an image. We could probably load the corresponding ctrlproperty here and confirm this:
-					return sprintf('<div class="media"><div class="media-left"><a href="%1$s" data-toggle="lightbox" data-title="%1$s"><img class="media-object" src="%1$s" height="30"></a></div><div class="media-body" style="vertical-align: middle">%s</div></div>',$src);
+	    			if (strpos($src, '/') !== 0) $src = "/$src"; // We need a leading slash on the image source here
+
+	    			$path_parts = pathinfo($src);
+	    			$basename   = $path_parts['basename'];
+
+					return sprintf('<div class="media"><div class="media-left"><a href="%1$s" data-toggle="lightbox" data-title="%2$s"><img class="media-object" src="%1$s" height="30"></a></div><div class="media-body" style="vertical-align: middle">%2$s</div></div>',$src, $basename);
 				}
         	}) // Draw the actual image, if this is an image field
             ->addColumn('action', function ($object) use ($ctrl_class) {

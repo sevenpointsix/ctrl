@@ -45,21 +45,25 @@ class CtrlSynch extends Command
      */
     public function handle()
     {
+
         $action = $this->argument('action');
         $wipe   = $this->option('wipe'); 
 
-        if ($action == 'files') {            
+        if ($action == 'files') {
+            $this->tidy_up();
             $this->generate_model_files();
         }
         else if ($action == 'data') {
             $this->populate_ctrl_tables($wipe);            
+            $this->tidy_up();
         }
         else if ($action == 'all') {
             $this->populate_ctrl_tables($wipe);
+            $this->tidy_up();
             $this->generate_model_files();
         }
         else {
-            $this->line('Usage: php artisan ctrl:synch files|data|all');
+            $this->line('Usage: php artisan ctrl:synch files|data|all --wipe');
         }      
         
     }
@@ -328,10 +332,26 @@ class CtrlSynch extends Command
                     continue;
                 }
 
+                /*
+                    Now. In some circumstances -- for example, where we have two instances of a relationship serving two different purposes, such as the products/profile relationship in Argos (a profile contains products, but a product is also linked to a profile using a product_profile_cache pivot table) -- we need to create two similar relationships with different names. Previously, both of these relationships (in the Argos example) would have been called profiles(), which obviously borks the model as we have two indentically-named methods.
+                    Ideally, we'd have one method called profile(), and one called profile_cache(). So: look at the name of the pivot table, not the related object.
+                    Will this break things elsewhere? It shouldn't do; everything should just use the property name, and it will just work. Maybe.
+                 */
+
+                // Previous approach:
+                // $ctrl_property_name = str_replace('_id', '', $pivot_two);
+                // New approach:
+
+                // This will break product_profile_cache into an array, remove "product", and then rejoin it as "profile_cache"
+                $pivot_table_parts = explode('_', $pivot_table);
+                $pivot_key = array_search(str_replace('_id', '', $pivot_one),$pivot_table_parts);                
+                unset($pivot_table_parts[$pivot_key]);
+                $ctrl_property_name = implode('_', $pivot_table_parts);
+
                 $ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrCreate([                       
                     'ctrl_class_id'     => $related_ctrl_class_one->id,
                     'related_to_id'     => $related_ctrl_class_two->id,
-                    'name'              => str_replace('_id', '', $pivot_two),
+                    'name'              => $ctrl_property_name,
                     'relationship_type' => 'belongsToMany',
                     'foreign_key'       => $pivot_two,
                     'local_key'         => $pivot_one,
@@ -366,11 +386,11 @@ class CtrlSynch extends Command
             // Otherwise, empty the folder:
             File::cleanDirectory(app_path($model_folder));
         }
-
         $ctrl_classes = \Sevenpointsix\Ctrl\Models\CtrlClass::get();
 
-        foreach ($ctrl_classes as $ctrl_class) {
 
+        foreach ($ctrl_classes as $ctrl_class) {
+        
             $view_data = [
                 'model_name'    => $ctrl_class->name,
                 'soft_deletes'  => false, // Let's leave soft deletes for now
@@ -400,6 +420,7 @@ class CtrlSynch extends Command
                     // Does Laravel/Eloquent give us a quick way of extracting all ->name properties into an array?
                     // I think it does.
             } 
+
             // Which properties can be automatically filled via a filtered list? ie, clicking to add a related page to a pagesection, should set the pagesection variable.
             // This is a bit complex as we have to look at properties of other classes, linking to this class...            
             $filtered_list_properties = \Sevenpointsix\Ctrl\Models\CtrlProperty::whereRaw(
@@ -419,16 +440,19 @@ class CtrlSynch extends Command
                     }
                 }
             }
-            
+
             $relationship_properties = $ctrl_class->ctrl_properties()->whereNotNull('related_to_id')->get();
+            
             foreach ($relationship_properties as $relationship_property) {
                 $related_ctrl_class = \Sevenpointsix\Ctrl\Models\CtrlClass::find($relationship_property->related_to_id);
+
                 $relationship_data = [
                     'name'        => $relationship_property->name,
                     'model'       => $related_ctrl_class->name,
                     'foreign_key' => $relationship_property->foreign_key,
                     'local_key'   => $relationship_property->local_key,
                 ];
+            
                 if ($relationship_property->relationship_type == 'belongsToMany') {
                     $relationship_data['pivot_table'] = $relationship_property->pivot_table;
                 }
@@ -444,5 +468,19 @@ class CtrlSynch extends Command
 
         $this->info($ctrl_classes->count() . ' files generated');
         
+    }
+
+    /**
+     * Tidy up some known issues that can occur with the database; floating records etc
+     *
+     * @return Response
+     */
+    public function tidy_up()
+    {
+        // Remove any CTRL Properties that no longer have a parent class (ie, where the parent class has since been deleted)
+        DB::delete('DELETE FROM ctrl_properties WHERE ctrl_class_id NOT IN (SELECT id FROM ctrl_classes);');
+
+        // Remove any CTRL Properties that no longer have a related class (ie, where the related class has since been deleted)
+        DB::delete('DELETE FROM ctrl_properties WHERE related_to_id NOT IN (SELECT id FROM ctrl_classes);');
     }
 }
