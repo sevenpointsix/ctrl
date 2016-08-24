@@ -220,7 +220,6 @@ $(function() {
 	});
 	*/
 
-
 	// Add text search inputs to each column, from https://datatables.net/examples/api/multi_filter.html
     $('#data-table thead th').each( function () {
     	var column_searchable = $(this).attr('data-search-text');                    	
@@ -230,7 +229,7 @@ $(function() {
         }
     } );
 
-    var table = $('#data-table').dataTable({
+    var table = $('#data-table').DataTable({
     	/* Remve the header altogether, we'll search on individual columns instead
     	dom: "<'row table-header'<'col-sm-6'f><'col-sm-6'<'dataTables_custom_buttons pull-right'>>>" +
 			 "<'row'<'col-sm-12'tr>>" +
@@ -322,6 +321,9 @@ $(function() {
 			});
 			return false;
 	   	});
+		// Tooltips
+		$('[data-toggle="tooltip"]').tooltip();
+		console.log('tooltips');
     }
 
     // Apply the search (again, see https://datatables.net/examples/api/multi_filter.html)

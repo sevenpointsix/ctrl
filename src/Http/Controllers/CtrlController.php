@@ -511,6 +511,9 @@ class CtrlController extends Controller
 			$filter_add_title = 'Add '.$this->a_an($filter_ctrl_class->get_singular()).' '.$filter_ctrl_class->get_singular();
 			$filter_add_link  = route('ctrl::edit_object',[$filter_ctrl_property->related_to_id,0,$filtered_list_string]); // TODO check permissions here; can we add items?
 
+			// New: always link to the filtered list, regardless of whether we have any related items:
+			$filter_list_link  = route('ctrl::list_objects',[$filter_ctrl_property->related_to_id,$filtered_list_string]);
+
 			$title = ucwords($filter_ctrl_class->get_plural());
 
         	$filtered_list_links[]  = [
