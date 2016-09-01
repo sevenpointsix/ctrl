@@ -449,7 +449,7 @@ class CtrlController extends Controller
        		else {
        			$message = $response;
        		}
-       		$messages = [$response];
+       		$messages = [$message];
        		$request->session()->flash('messages', $messages);		 
        		$back = route('ctrl::import_objects',[$ctrl_class_id, $filter_string]);
        		return response()->json(['redirect'=>$back]);
