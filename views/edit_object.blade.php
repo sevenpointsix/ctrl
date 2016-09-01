@@ -90,7 +90,7 @@
 			@endif
 	      <ul class="nav navbar-nav navbar-right">
 			<li><a href="{{ $back_link }}"><i class="fa fa-toggle-left"></i> Back</a></li>
-			@if ($delete_link)
+			@if (!empty($delete_link))
 			<li><a href="#" rel="{{ $delete_link }}" class="delete-item"><i class="fa fa-trash"></i> Delete</a></li>
 			@endif
 	      </ul>      

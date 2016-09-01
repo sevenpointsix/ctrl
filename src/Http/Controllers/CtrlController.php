@@ -23,6 +23,7 @@ use Log;
 use Schema;
 
 use Datatables;
+use Maatwebsite\Excel\Facades\Excel;
 
 use \App\Ctrl\CtrlModules;
 use \Sevenpointsix\Ctrl\Models\CtrlClass;
@@ -356,6 +357,148 @@ class CtrlController extends Controller
 			'can_reorder'          => $can_reorder,
 			'add_link'             => $add_link,
 			'key'                  => $key
+		]);
+	}
+
+	/**
+	 * Export all objects of a given CtrlClass
+	 * @param  integer $ctrl_class_id The ID of the class we're editing
+	 * @param  string $filter_string Are we filtering the list? Currently stored as a ~ delimited list of property=>id comma-separated pairs; see below
+	 *
+	 * @return Response
+	 */
+	public function export_objects(Request $request, $ctrl_class_id, $filter_string = NULL) {
+		dd("Export option, not yet written");
+	}
+
+	/**
+	 * Handle the posted CSV when importing all objects of a given CtrlClass
+	 * @param  integer $ctrl_class_id The ID of the class we're editing
+	 * @param  string $filter_string Are we filtering the list? Currently stored as a ~ delimited list of property=>id comma-separated pairs; see below
+	 *
+	 * @return Response
+	 */
+	public function import_objects_process(Request $request, $ctrl_class_id, $filter_string = NULL) {
+		
+		$this->validate($request, [
+        	'csv-import'=>'required'
+        ],[
+		    'csv-import.required' => 'Please select a CSV file to upload'
+		]);
+
+		$csv_file = trim($request->input('csv-import'),'/');
+		$errors = [];
+
+		// We can use a callback here, function($reader) use (&$errors), but it's a bit limiting when it comes to running modules to load data etc.
+		$reader = Excel::load(public_path($csv_file));
+    	$results   = $reader->get();
+    	
+    	$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
+    	
+    	if (!$this->module->enabled('import_objects')) {
+			// This can only happen if someone is fucking around with the URL, so just bail on them.
+			\App::abort(403, 'Access denied');
+			// Should also check that we can import ctrlclass_id...
+		}
+		else if (!$ctrl_class->can('import')) {
+			\App::abort(403, 'Access denied'); // As above
+		}
+		else if (count($results) == 0) {
+    		$errors['csv-import'] = 'That CSV file doesn\'t appear to contain any data';
+    	}
+    	elseif (!$this->module->run('import_objects',[
+				'count-headers',
+				$results,
+				$ctrl_class_id,
+				$filter_string
+			])) {
+    		$errors['csv-import'] = 'That CSV file doesn\'t seem to have the correct number of columns';    	
+		}
+    	elseif (!$this->module->run('import_objects',[
+				'check-headers',
+				$results,
+				$ctrl_class_id,
+				$filter_string
+			])) {
+    		$errors['csv-import'] = 'That CSV file doesn\'t seem to have the correct column titles';    	
+		}
+    	else {
+    		// All looking good, now actually import the data...
+    		$response = $this->module->run('import_objects',[
+				'import',
+				$results,
+				$ctrl_class_id,
+				$filter_string
+			]);
+
+			if ($response === false) {
+				$errors['csv-import'] = 'Cannot import data';
+			}			
+			else if ($response === 0) {
+				$errors['csv-import'] = 'This import would have no effect; no rows would be processed';
+			}
+    	}
+
+		if (!empty($errors)) {
+			return response()->json($errors,422);
+       	}
+       	else {
+       		if (is_numeric($response)) {
+       			$message = $response . ' records imported';
+       		}
+       		else {
+       			$message = $response;
+       		}
+       		$messages = [$response];
+       		$request->session()->flash('messages', $messages);		 
+       		$back = route('ctrl::import_objects',[$ctrl_class_id, $filter_string]);
+       		return response()->json(['redirect'=>$back]);
+       	}
+		
+	}
+
+	/**
+	 * Import all objects of a given CtrlClass
+	 * @param  integer $ctrl_class_id The ID of the class we're editing
+	 * @param  string $filter_string Are we filtering the list? Currently stored as a ~ delimited list of property=>id comma-separated pairs; see below
+	 *           ** Surely we won't need to filter the list before importing to it...?
+	 *           ** I suppose we could automatically categorise imported records if we knew (eg) what category they were in...
+	 *           ** We won't handle this yet though
+	 *
+	 * @return Response
+	 */
+	public function import_objects(Request $request, $ctrl_class_id, $filter_string = NULL)
+	{		
+
+		if (!$this->module->enabled('import_objects')) {
+			// This can only happen if someone is fucking around with the URL, so just bail on them.
+			\App::abort(403, 'Access denied');
+		}
+		// Should also check that we can import ctrlclass_id...
+
+		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();		
+		if (!$ctrl_class->can('import')) {
+			\App::abort(403, 'Access denied'); // As above
+		}
+
+		$back_link = route('ctrl::list_objects',[$ctrl_class->id,$filter_string]);
+		$save_link = route('ctrl::import_objects_process',[$ctrl_class->id,$filter_string]);
+
+		$upload_field = [
+			'id'       => 'csv-import',
+			'name'     => 'csv-import',
+			'type'     => 'file',
+			'template' => 'krajee',
+			'value'    => ''
+		];
+
+		return view('ctrl::import_objects',[
+			'ctrl_class'       => $ctrl_class,
+			'page_title'       => "Import ".ucwords($ctrl_class->get_plural()),
+			'page_description' => 'Use this page to import records from a CSV file',
+			'back_link'        => $back_link,
+			'save_link'        => $save_link,
+			'form_field'       => $upload_field,
 		]);
 	}
 

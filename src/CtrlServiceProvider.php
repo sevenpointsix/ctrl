@@ -85,6 +85,11 @@ class CtrlServiceProvider extends ServiceProvider{
 		// Register the DataTables service like this (saves having to add it to config/app.php)
 		\App::register('Yajra\Datatables\DatatablesServiceProvider');
 
+		// Excel module used when importing, exporting CSV data
+		\App::register('Maatwebsite\Excel\ExcelServiceProvider');
+		// This didn't seem to work, and isn't needed if we "use Maatwebsite\Excel\Facades\Excel;" at the top of the controller
+		// \App::alias('Excel','Maatwebsite\Excel\Facades\Excel');
+
 		// Can we create a custom Service Provider here to drive "modules"?
 		/* Don't think so
 		\App::register('App\Ctrl\Providers\CtrlModuleServiceProvider');

@@ -18,6 +18,20 @@ Route::group(['as' => 'ctrl::','prefix'=>'admin','middleware' => ['web']], funct
 		'uses'=>'CtrlController@edit_object'
 	]);
 
+	Route::get('export/{ctrl_class_id}/{filter_string?}',[
+		'as'=>'export_objects',
+		'uses'=>'CtrlController@export_objects'
+	]);
+
+	Route::get('import/{ctrl_class_id}/{filter_string?}',[
+		'as'=>'import_objects',
+		'uses'=>'CtrlController@import_objects'
+	]);
+	Route::post('import/{ctrl_class_id}/{filter_string?}',[
+		'as'=>'import_objects_process',
+		'uses'=>'CtrlController@import_objects_process'
+	]);
+
 	Route::post('delete/{ctrl_class_id}/{object_id}',[
 		'as'=>'delete_object',
 		'uses'=>'CtrlController@delete_object'
