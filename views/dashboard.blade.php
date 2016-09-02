@@ -38,6 +38,9 @@
 	}).bind("typeahead:select", function(obj, datum, name) {
 		document.location = datum.edit_link; // Jump to the "Edit" link		
 	});;
+
+	$('[data-toggle="tooltip"]').tooltip();
+
 </script>
 @stop
 
@@ -149,6 +152,56 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 	background-color: #f0f0f0;	
 }
 */
+/* Stick this in a separate stylesheet once we finalise the layout */
+
+.btn-group-mixed-width .btn {
+	border-radius: 0px; /* Remove standard curved borders */
+}
+
+ /* Curve the top borders */
+.btn-group-mixed-width .btn-group:first-child .btn-group:first-child .btn {
+	border-top-left-radius: 4px;
+}
+.btn-group-mixed-width .btn-group:first-child .btn-group:last-child .btn  {
+	border-top-right-radius: 4px;
+}
+
+/* Curve the bottom borders */
+.btn-group-mixed-width .btn-group:last-child .btn-group:first-child .btn {
+	border-bottom-left-radius: 4px;
+}
+.btn-group-mixed-width .btn-group:last-child .btn-group:last-child .btn {
+	border-bottom-right-radius: 4px;
+}
+
+.btn-group-mixed-width .btn-group:not(:first-child) .btn-group .btn { /* Prevents double-thickness borders */
+	border-top: 0;
+}
+
+/* Allow narrow buttons to appear on the right */
+.btn-group-mixed-width .btn-group.btn-group-justified .btn-group.narrow {
+	width: .1%;
+}
+
+/* Align text on the wide, primary button left */
+.btn-group-mixed-width .btn-group.btn-group-justified .btn-group.wide .btn {
+	text-align: left;
+}
+/* Allow us to use a non-clickable, text-only button as a label on the left */
+.btn-group-mixed-width .btn-group.btn-group-justified .btn-group.text-only div.btn {
+	text-align: left;
+	cursor: default;
+}
+/* Override standard button colours on hover, if we're using a label */
+.btn-group-mixed-width .btn-group.btn-group-justified .btn-group.text-only div.btn:hover,
+.btn-group-mixed-width .btn-group.btn-group-justified .btn-group.text-only div.btn:focus,
+.btn-group-mixed-width .btn-group.btn-group-justified .btn-group.text-only div.btn:active {
+	color: #333;
+    background-color: #fff;
+    border-color: #ccc;
+    box-shadow: none;
+    outline: none; 
+}
 </style>
 @stop
 
@@ -177,7 +230,24 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 				</form>
 				<hr />
 
-				{{-- Just playing around with this --}}
+				@if ($layout_version == 3)
+					<div class="btn-group-mixed-width">
+					@foreach ($menu_links as $menu_title=>$links)
+						{{-- As above, is there any need to show $menu_title here? --}}
+						@foreach ($links as $link)
+						<div class="btn-group btn-group-justified" role="group">
+						  <div class="btn-group wide" role="group">
+						    <a type="button" class="btn btn-default" data-toggle="tooltip" data-placement="right" title="{{ $link['list_title'] }}" href="{{ $link['list_link'] }}"><i class="fa {{ $link['icon_only'] }}  fa-fw"></i> {{ $link['title'] }}</a>
+						  </div>				  
+						  <div class="btn-group narrow" role="group" style="width: .1%;">
+						    <a type="button" class="btn btn-info" data-toggle="tooltip" data-placement="right" title="{{ $link['add_title'] }}" href="{{ $link['add_link'] }}"><i class="fa fa-plus"></i></a>
+						  </div>
+					  	</div>
+					  	@endforeach
+					@endforeach
+					</div>
+				
+				@elseif ($layout_version == 2)
 				<div id="dashboard-grid">
 					
 					@foreach ($menu_links as $menu_title=>$links)
@@ -200,7 +270,7 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 					@endforeach
 
 				</div>
-				<?php /* Think the above is better:
+				@elseif ($layout_version == 1)
 				<div class="row no-gutter">
 				@foreach ($menu_links as $menu_title=>$links)
 
@@ -224,10 +294,37 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 				   
 				  @endforeach
 				</div>
-				*/ ?>
+				@endif
 
 			  </div>
 			</div>
+		</div>
+		<div class="col-md-6">
+			@if (!empty($import_export_links))
+			<div class="panel panel-default">
+			  <div class="panel-heading"><h3 class="panel-title"><i class="fa fa-list-alt fa-fw" style="font-weight: normal"></i> Import/Export data</h3></div>
+			  <div class="panel-body">
+			  	<div class="btn-group-mixed-width">
+			  		@foreach ($import_export_links as $import_export_link)
+				  	<div class="btn-group btn-group-justified" role="group">
+					  <div class="btn-group text-only" role="group">
+					    <div class="btn btn-default">{!! $import_export_link['icon'] !!}{{ $import_export_link['title'] }}</div>
+					  </div>
+					  @if (!empty($import_export_link['import_link']))
+					  <div class="btn-group narrow" role="group">
+					    <a href="{{ $import_export_link['import_link'] }}" type="button" class="btn btn-success" data-toggle="tooltip" data-placement="bottom" title="Import"><i class="fa fa-upload"></i></a>
+					  </div>
+					  @endif
+					  @if (!empty($import_export_link['export_link']))
+					  <div class="btn-group narrow" role="group">
+					    <a href="{{ $import_export_link['import_link'] }}" type="button" class="btn btn-success" data-toggle="tooltip" data-placement="bottom" title="Export"><i class="fa fa-download"></i></a>
+					  </div>
+					  @endif
+					</div>	
+					@endforeach				
+				</div>
+			</div>
+			@endif
 		</div>
 
 	</div>

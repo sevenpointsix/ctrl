@@ -79,7 +79,7 @@
                 <li class="dropdown">
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ $menu_title }} <span class="caret"></span></a>
                   <ul class="dropdown-menu">
-                  @foreach ($links as $link)
+                  @foreach ($links as $link)                  
                   <li><a href="{{ route('ctrl::list_objects',$link['id']) }}">{!! $link['icon'] !!}{{ $link['title'] }}</a></li>
                   @endforeach
                   </ul>

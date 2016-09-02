@@ -79,7 +79,7 @@ class CtrlController extends Controller
 				'id'         => $ctrl_class->id,
 				'title'      => ucwords($ctrl_class->get_plural()),
 				'icon'       => ($icon = $ctrl_class->get_icon()) ? '<i class="'.$icon.' fa-fw"></i> ' : '',
-				'icon_only'    => ($icon = $ctrl_class->get_icon()) ? $icon : '',
+				'icon_only'  => ($icon = $ctrl_class->get_icon()) ? $icon : '',
 				'add_link'   => $add_link,
 				'add_title'  => $add_title,
 				'list_link'  => $list_link,
@@ -142,13 +142,40 @@ class CtrlController extends Controller
 	 */
 	public function dashboard()
 	{
-		/*
-		dd($this->module->run('test',[
-			'hello'
-		]));
-		*/
+		// Can we import, export any classes
+		$ctrl_classes = CtrlClass::whereRaw(
+			   '(find_in_set(?, permissions))',
+			   ['import']		   
+			)->orWhereRaw(
+			   '(find_in_set(?, permissions))',
+			   ['export']		   
+			)->get();		
+			
+		$import_export_links = [];
+		foreach ($ctrl_classes as $ctrl_class) {
+
+			if ($ctrl_class->can('export')) {
+				$export_link  = route('ctrl::export_objects',[$ctrl_class->id]); // This omits the filter string; will we ever use this? Possible from an existing (filtered) list...
+			}
+			
+			if ($ctrl_class->can('import')) {
+				$import_link  = route('ctrl::import_objects',[$ctrl_class->id]); // As above, this omits the filter string; will we ever use this?
+			}			
+
+			$import_export_links[] = [
+				'id'          => $ctrl_class->id,
+				'title'       => ucwords($ctrl_class->get_plural()),
+				'icon'        => ($icon = $ctrl_class->get_icon()) ? '<i class="'.$icon.' fa-fw"></i> ' : '',
+				'icon_only'   => ($icon = $ctrl_class->get_icon()) ? $icon : '',
+				'export_link' => (!empty($export_link)) ? $export_link : false,
+				'import_link' => (!empty($import_link)) ? $import_link : false
+			];		
+		}
+
 		return view('ctrl::dashboard',[			
-			'logo' => config('ctrl.logo')
+			'logo'                => config('ctrl.logo'),
+			'layout_version'      => 3, // As I play around with layouts...
+			'import_export_links' => $import_export_links
 		]);
 	}
 
