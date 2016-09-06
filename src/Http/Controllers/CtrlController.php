@@ -859,9 +859,31 @@ class CtrlController extends Controller
 			if ($ctrl_property->related_to_id) {
 				$related_ctrl_class = \Sevenpointsix\Ctrl\Models\CtrlClass::find($ctrl_property->related_to_id);
 				$related_class 		= $related_ctrl_class->get_class();
-				$related_objects  	= $related_class::all();
+
+
+				// This breaks as we have too many related items... but we load these via Ajax anyway if there are more than 20. So, just get the first 20...
+				// dump($related_class);
+				// $related_objects  	= $related_class::all();
+				// $related_objects  	= $related_class::take(21)->get();
+				// This needs an overhaul, can we chunk for now?
+				/* No, doesn't work, times out
+				$related_class::chunk(200, function ($related_objects) {
+				    foreach ($related_objects as $related_object) {
+						$values[$related_object->id] = $this->get_object_title($related_object); 
+					}
+				});
+				*/
+				/*
 				foreach ($related_objects as $related_object) {
 					$values[$related_object->id] = $this->get_object_title($related_object); 
+				}
+				*/
+				// If we use select2 for EVERYTHING (sensible I think?), we can just do this...update template/dropdown accordingly
+				if ($value) {
+					$related_objects  	= $related_class::where('id',$value)->get();
+					foreach ($related_objects as $related_object) {
+						$values[$related_object->id] = $this->get_object_title($related_object); 
+					}
 				}
 			}
 			else {
