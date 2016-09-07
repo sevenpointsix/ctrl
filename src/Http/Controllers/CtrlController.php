@@ -588,9 +588,19 @@ class CtrlController extends Controller
 	    			if (strpos($src, '/') !== 0) $src = "/$src"; // We need a leading slash on the image source here
 
 	    			$path_parts = pathinfo($src);
-	    			$basename   = $path_parts['basename'];
+	    			$basename   = str_limit($path_parts['basename'],20);
 
 					return sprintf('<div class="media"><div class="media-left"><a href="%1$s" data-toggle="lightbox" data-title="%2$s"><img class="media-object" src="%1$s" height="30"></a></div><div class="media-body" style="vertical-align: middle">%2$s</div></div>',$src, $basename);
+				}
+        	}) // Draw the actual image, if this is an image field
+        	->editColumn('file', function($object) {  // If we have a "file" column, assume it's a clickable link. DEFINITELY need to query ctrlproperty->type here,see 'src' above:
+	    		if ($file = $object->file) {
+	    			if (strpos($file, '/') !== 0) $file = "/$file";
+
+	    			$path_parts = pathinfo($file);
+	    			$basename   = str_limit($path_parts['basename'],20);
+
+					return sprintf('<i class="fa fa-download"></i> <a href="%1$s">%2$s</a>',$file, $basename);
 				}
         	}) // Draw the actual image, if this is an image field
             ->addColumn('action', function ($object) use ($ctrl_class) {
@@ -832,6 +842,9 @@ class CtrlController extends Controller
 
 		foreach ($ctrl_properties as $ctrl_property) {
 
+			unset($value); // Reset $value , $values
+			$values = [];
+
 			// Adjust the field type, mainly to handle relationships and multiple dropdowns
 			/* Or, do we actually handle this in the dropdown.blade template? Currently, yes we do:
 			if ($ctrl_property->field_type == 'dropdown' && $ctrl_property->relationship_type == 'belongsToMany') {
@@ -852,57 +865,6 @@ class CtrlController extends Controller
 			if (!view()->exists('ctrl::form_fields.'.$ctrl_property->template)) {
 				trigger_error("Cannot load view for field type ".$ctrl_property->field_type);
 			}
-
-			unset($value); // Reset $value 
-			// Do we have a range of values for this field? For example, an ENUM or relationship field			
-			$values = [];
-			if ($ctrl_property->related_to_id) {
-				$related_ctrl_class = \Sevenpointsix\Ctrl\Models\CtrlClass::find($ctrl_property->related_to_id);
-				$related_class 		= $related_ctrl_class->get_class();
-
-
-				// This breaks as we have too many related items... but we load these via Ajax anyway if there are more than 20. So, just get the first 20...
-				// dump($related_class);
-				// $related_objects  	= $related_class::all();
-				// $related_objects  	= $related_class::take(21)->get();
-				// This needs an overhaul, can we chunk for now?
-				/* No, doesn't work, times out
-				$related_class::chunk(200, function ($related_objects) {
-				    foreach ($related_objects as $related_object) {
-						$values[$related_object->id] = $this->get_object_title($related_object); 
-					}
-				});
-				*/
-				/*
-				foreach ($related_objects as $related_object) {
-					$values[$related_object->id] = $this->get_object_title($related_object); 
-				}
-				*/
-				// If we use select2 for EVERYTHING (sensible I think?), we can just do this...update template/dropdown accordingly
-				if ($value) {
-					$related_objects  	= $related_class::where('id',$value)->get();
-					foreach ($related_objects as $related_object) {
-						$values[$related_object->id] = $this->get_object_title($related_object); 
-					}
-				}
-			}
-			else {
-				$column = DB::select("SHOW COLUMNS FROM {$ctrl_property->ctrl_class->table_name} WHERE Field = '{$ctrl_property->name}'");
-				$type = $column[0]->Type;
-				// Is this an ENUM field?
-				preg_match("/enum\((.*)\)/", $type, $matches);				
-				if ($matches) {					
-					// Convert 'One','Two','Three' into an array
-					$enums = explode("','",trim($matches[1],"'"));
-					$loop = 1;
-					foreach ($enums as $enum) {
-						// Note that apostrophes are doubled-up when exported from SHOW COLUMNS
-						$value = str_replace("''","'",$enum);					
-						$values[$loop++] = $value;
-					}
-				}
-			}
-
 
 			// Ascertain the name current value of this field
 			// This essentially converts 'one' to 'one_id' and so on
@@ -926,17 +888,58 @@ class CtrlController extends Controller
 				}
 				if (!isset($value)) { // No default value, so pull it from the existing object
 					$value      = $object->$field_name;		
-				}
-				
+				}				
 			}
-		
-			// Build the form_field
 
-			$form_fields = [
-				
-			];
+			// Do we have a range of valid values for this field? For example, an ENUM or relationship field			
+			if ($ctrl_property->related_to_id) {
+				$related_ctrl_class = \Sevenpointsix\Ctrl\Models\CtrlClass::find($ctrl_property->related_to_id);
+				$related_class 		= $related_ctrl_class->get_class();
 
-			// Add it to the tabs
+
+				// This breaks as we have too many related items... but we load these via Ajax anyway if there are more than 20. So, just get the first 20...
+				// dump($related_class);
+				// $related_objects  	= $related_class::all();
+				// $related_objects  	= $related_class::take(21)->get();
+				// This needs an overhaul, can we chunk for now?
+				/* No, doesn't work, times out
+				$related_class::chunk(200, function ($related_objects) {
+				    foreach ($related_objects as $related_object) {
+						$values[$related_object->id] = $this->get_object_title($related_object); 
+					}
+				});
+				*/
+				/*
+				foreach ($related_objects as $related_object) {
+					$values[$related_object->id] = $this->get_object_title($related_object); 
+				}
+				*/
+				// If we use select2 for EVERYTHING (sensible I think?), we can just do this...update template/dropdown accordingly
+				if (!empty($value)) {
+					$related_objects  	= $related_class::where('id',$value)->get();
+					foreach ($related_objects as $related_object) {
+						$values[$related_object->id] = $this->get_object_title($related_object); 
+					}
+				}
+			}
+			else {
+				$column = DB::select("SHOW COLUMNS FROM {$ctrl_property->ctrl_class->table_name} WHERE Field = '{$ctrl_property->name}'");
+				$type = $column[0]->Type;
+				// Is this an ENUM field?
+				preg_match("/enum\((.*)\)/", $type, $matches);				
+				if ($matches) {					
+					// Convert 'One','Two','Three' into an array
+					$enums = explode("','",trim($matches[1],"'"));
+					$loop = 1;
+					foreach ($enums as $enum) {
+						// Note that apostrophes are doubled-up when exported from SHOW COLUMNS
+						$value = str_replace("''","'",$enum);					
+						$values[$loop++] = $value;
+					}
+				}
+			}
+
+			// Build the form_field anddd it to the tabs
 
 			$tab_name = $ctrl_property->fieldset;
 			$tab_icon = 'fa fa-list';
