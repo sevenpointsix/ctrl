@@ -85,5 +85,18 @@
 
 		}
 
+		/**
+		 * Import objects from a CSV file
+		 * @param  string $action        There are various things that this function can do; count rows, check headers, import data and so on.
+		 * @param  collection $results The results of the CSV import, as returned by Maatwebsite\Excel
+		 * @param  int $ctrlclass_id  The ID of the CtrlClass we're importing
+		 * @param  string $filter_string Any filters we've applied to the list before importing (not currently used)
+		 * @return various				Cn be a boolean (for success/failure), an integer (for a row count), or a string (for a description of a result). Depends on context.
+		 */
+		protected function import_objects($action,$results, $ctrl_class_id,$filter_string = NULL) {
+			// Argos has a good example of this function in use
+			$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
+		}
+
 
 	}

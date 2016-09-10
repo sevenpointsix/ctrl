@@ -74,6 +74,7 @@ class CtrlProperty extends Model
             case 'mediumint':
             case 'decimal':
             case 'float':
+            case 'double':
                 // 'int' could be a relationship, but we check this separately
                 $type = 'text';
                 break;

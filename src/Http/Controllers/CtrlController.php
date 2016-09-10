@@ -23,6 +23,7 @@ use Log;
 use Schema;
 
 use Datatables;
+use Maatwebsite\Excel\Facades\Excel;
 
 use \App\Ctrl\CtrlModules;
 use \Sevenpointsix\Ctrl\Models\CtrlClass;
@@ -54,6 +55,11 @@ class CtrlController extends Controller
 		foreach ($ctrl_classes as $ctrl_class) {
 
 			$count_ctrl_class = $ctrl_class->get_class();
+
+			if (!class_exists($count_ctrl_class)) {
+				die("Error: cannot load class files.<br><br><code style='border: 1px solid #999; padding: 5px 10px;'>php artisan ctrl:synch files</code>");
+			}
+
 			$count = $count_ctrl_class::count();
 
 			$add_link  = route('ctrl::edit_object',$ctrl_class->id);
@@ -73,7 +79,7 @@ class CtrlController extends Controller
 				'id'         => $ctrl_class->id,
 				'title'      => ucwords($ctrl_class->get_plural()),
 				'icon'       => ($icon = $ctrl_class->get_icon()) ? '<i class="'.$icon.' fa-fw"></i> ' : '',
-				'icon_only'    => ($icon = $ctrl_class->get_icon()) ? $icon : '',
+				'icon_only'  => ($icon = $ctrl_class->get_icon()) ? $icon : '',
 				'add_link'   => $add_link,
 				'add_title'  => $add_title,
 				'list_link'  => $list_link,
@@ -136,13 +142,40 @@ class CtrlController extends Controller
 	 */
 	public function dashboard()
 	{
-		/*
-		dd($this->module->run('test',[
-			'hello'
-		]));
-		*/
+		// Can we import, export any classes
+		$ctrl_classes = CtrlClass::whereRaw(
+			   '(find_in_set(?, permissions))',
+			   ['import']		   
+			)->orWhereRaw(
+			   '(find_in_set(?, permissions))',
+			   ['export']		   
+			)->get();		
+			
+		$import_export_links = [];
+		foreach ($ctrl_classes as $ctrl_class) {
+
+			if ($ctrl_class->can('export')) {
+				$export_link  = route('ctrl::export_objects',[$ctrl_class->id]); // This omits the filter string; will we ever use this? Possible from an existing (filtered) list...
+			}
+			
+			if ($ctrl_class->can('import')) {
+				$import_link  = route('ctrl::import_objects',[$ctrl_class->id]); // As above, this omits the filter string; will we ever use this?
+			}			
+
+			$import_export_links[] = [
+				'id'          => $ctrl_class->id,
+				'title'       => ucwords($ctrl_class->get_plural()),
+				'icon'        => ($icon = $ctrl_class->get_icon()) ? '<i class="'.$icon.' fa-fw"></i> ' : '',
+				'icon_only'   => ($icon = $ctrl_class->get_icon()) ? $icon : '',
+				'export_link' => (!empty($export_link)) ? $export_link : false,
+				'import_link' => (!empty($import_link)) ? $import_link : false
+			];		
+		}
+
 		return view('ctrl::dashboard',[			
-			'logo' => config('ctrl.logo')
+			'logo'                => config('ctrl.logo'),
+			'layout_version'      => 3, // As I play around with layouts...
+			'import_export_links' => $import_export_links
 		]);
 	}
 
@@ -355,6 +388,148 @@ class CtrlController extends Controller
 	}
 
 	/**
+	 * Export all objects of a given CtrlClass
+	 * @param  integer $ctrl_class_id The ID of the class we're editing
+	 * @param  string $filter_string Are we filtering the list? Currently stored as a ~ delimited list of property=>id comma-separated pairs; see below
+	 *
+	 * @return Response
+	 */
+	public function export_objects(Request $request, $ctrl_class_id, $filter_string = NULL) {
+		dd("Export option, not yet written");
+	}
+
+	/**
+	 * Handle the posted CSV when importing all objects of a given CtrlClass
+	 * @param  integer $ctrl_class_id The ID of the class we're editing
+	 * @param  string $filter_string Are we filtering the list? Currently stored as a ~ delimited list of property=>id comma-separated pairs; see below
+	 *
+	 * @return Response
+	 */
+	public function import_objects_process(Request $request, $ctrl_class_id, $filter_string = NULL) {
+		
+		$this->validate($request, [
+        	'csv-import'=>'required'
+        ],[
+		    'csv-import.required' => 'Please select a CSV file to upload'
+		]);
+
+		$csv_file = trim($request->input('csv-import'),'/');
+		$errors = [];
+
+		// We can use a callback here, function($reader) use (&$errors), but it's a bit limiting when it comes to running modules to load data etc.
+		$reader = Excel::load(public_path($csv_file));
+    	$results   = $reader->get();
+    	
+    	$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
+    	
+    	if (!$this->module->enabled('import_objects')) {
+			// This can only happen if someone is fucking around with the URL, so just bail on them.
+			\App::abort(403, 'Access denied');
+			// Should also check that we can import ctrlclass_id...
+		}
+		else if (!$ctrl_class->can('import')) {
+			\App::abort(403, 'Access denied'); // As above
+		}
+		else if (count($results) == 0) {
+    		$errors['csv-import'] = 'That CSV file doesn\'t appear to contain any data';
+    	}
+    	elseif (!$this->module->run('import_objects',[
+				'count-headers',
+				$results,
+				$ctrl_class_id,
+				$filter_string
+			])) {
+    		$errors['csv-import'] = 'That CSV file doesn\'t seem to have the correct number of columns';    	
+		}
+    	elseif (!$this->module->run('import_objects',[
+				'check-headers',
+				$results,
+				$ctrl_class_id,
+				$filter_string
+			])) {
+    		$errors['csv-import'] = 'That CSV file doesn\'t seem to have the correct column titles';    	
+		}
+    	else {
+    		// All looking good, now actually import the data...
+    		$response = $this->module->run('import_objects',[
+				'import',
+				$results,
+				$ctrl_class_id,
+				$filter_string
+			]);
+
+			if ($response === false) {
+				$errors['csv-import'] = 'Cannot import data';
+			}			
+			else if ($response === 0) {
+				$errors['csv-import'] = 'This import would have no effect; no rows would be processed';
+			}
+    	}
+
+		if (!empty($errors)) {
+			return response()->json($errors,422);
+       	}
+       	else {
+       		if (is_numeric($response)) {
+       			$message = $response . ' records imported';
+       		}
+       		else {
+       			$message = $response;
+       		}
+       		$messages = [$message];
+       		$request->session()->flash('messages', $messages);		 
+       		$back = route('ctrl::import_objects',[$ctrl_class_id, $filter_string]);
+       		return response()->json(['redirect'=>$back]);
+       	}
+		
+	}
+
+	/**
+	 * Import all objects of a given CtrlClass
+	 * @param  integer $ctrl_class_id The ID of the class we're editing
+	 * @param  string $filter_string Are we filtering the list? Currently stored as a ~ delimited list of property=>id comma-separated pairs; see below
+	 *           ** Surely we won't need to filter the list before importing to it...?
+	 *           ** I suppose we could automatically categorise imported records if we knew (eg) what category they were in...
+	 *           ** We won't handle this yet though
+	 *
+	 * @return Response
+	 */
+	public function import_objects(Request $request, $ctrl_class_id, $filter_string = NULL)
+	{		
+
+		if (!$this->module->enabled('import_objects')) {
+			// This can only happen if someone is fucking around with the URL, so just bail on them.
+			\App::abort(403, 'Access denied');
+		}
+		// Should also check that we can import ctrlclass_id...
+
+		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();		
+		if (!$ctrl_class->can('import')) {
+			\App::abort(403, 'Access denied'); // As above
+		}
+
+		$back_link = route('ctrl::list_objects',[$ctrl_class->id,$filter_string]);
+		$save_link = route('ctrl::import_objects_process',[$ctrl_class->id,$filter_string]);
+
+		$upload_field = [
+			'id'       => 'csv-import',
+			'name'     => 'csv-import',
+			'type'     => 'file',
+			'template' => 'krajee',
+			'value'    => ''
+		];
+
+		return view('ctrl::import_objects',[
+			'ctrl_class'       => $ctrl_class,
+			'page_title'       => "Import ".ucwords($ctrl_class->get_plural()),
+			'page_description' => 'Use this page to import records from a CSV file',
+			'back_link'        => $back_link,
+			'save_link'        => $save_link,
+			'form_field'       => $upload_field,
+		]);
+	}
+
+	/**
 	 * Get data for datatables
 	 * @param  integer $ctrl_class_id The ID of the class we're editing
 	 * @param  string $filter Optional list filter, passed in from the datatables Ajax call.
@@ -410,7 +585,22 @@ class CtrlController extends Controller
         	// ->editColumn('src', '<div class="media"><div class="media-left"><a href="{{$src}}" data-toggle="lightbox" data-title="{{$src}}"><img class="media-object" src="{{$src}}" height="30"></a></div><div class="media-body" style="vertical-align: middle">{{$src}}</div></div>') // Draw the actual image, if this is an image field
         	->editColumn('src', function($object) {
 	    		if ($src = $object->src) { // If we have a "src" column, assume (for now!) that we render it as an image. We could probably load the corresponding ctrlproperty here and confirm this:
-					return sprintf('<div class="media"><div class="media-left"><a href="%1$s" data-toggle="lightbox" data-title="%1$s"><img class="media-object" src="%1$s" height="30"></a></div><div class="media-body" style="vertical-align: middle">%s</div></div>',$src);
+	    			if (strpos($src, '/') !== 0) $src = "/$src"; // We need a leading slash on the image source here
+
+	    			$path_parts = pathinfo($src);
+	    			$basename   = str_limit($path_parts['basename'],20);
+
+					return sprintf('<div class="media"><div class="media-left"><a href="%1$s" data-toggle="lightbox" data-title="%2$s"><img class="media-object" src="%1$s" height="30"></a></div><div class="media-body" style="vertical-align: middle">%2$s</div></div>',$src, $basename);
+				}
+        	}) // Draw the actual image, if this is an image field
+        	->editColumn('file', function($object) {  // If we have a "file" column, assume it's a clickable link. DEFINITELY need to query ctrlproperty->type here,see 'src' above:
+	    		if ($file = $object->file) {
+	    			if (strpos($file, '/') !== 0) $file = "/$file";
+
+	    			$path_parts = pathinfo($file);
+	    			$basename   = str_limit($path_parts['basename'],20);
+
+					return sprintf('<i class="fa fa-download"></i> <a href="%1$s">%2$s</a>',$file, $basename);
 				}
         	}) // Draw the actual image, if this is an image field
             ->addColumn('action', function ($object) use ($ctrl_class) {
@@ -500,6 +690,9 @@ class CtrlController extends Controller
 			}
 			$filter_add_title = 'Add '.$this->a_an($filter_ctrl_class->get_singular()).' '.$filter_ctrl_class->get_singular();
 			$filter_add_link  = route('ctrl::edit_object',[$filter_ctrl_property->related_to_id,0,$filtered_list_string]); // TODO check permissions here; can we add items?
+
+			// New: always link to the filtered list, regardless of whether we have any related items:
+			$filter_list_link  = route('ctrl::list_objects',[$filter_ctrl_property->related_to_id,$filtered_list_string]);
 
 			$title = ucwords($filter_ctrl_class->get_plural());
 
@@ -649,6 +842,9 @@ class CtrlController extends Controller
 
 		foreach ($ctrl_properties as $ctrl_property) {
 
+			unset($value); // Reset $value , $values
+			$values = [];
+
 			// Adjust the field type, mainly to handle relationships and multiple dropdowns
 			/* Or, do we actually handle this in the dropdown.blade template? Currently, yes we do:
 			if ($ctrl_property->field_type == 'dropdown' && $ctrl_property->relationship_type == 'belongsToMany') {
@@ -669,35 +865,6 @@ class CtrlController extends Controller
 			if (!view()->exists('ctrl::form_fields.'.$ctrl_property->template)) {
 				trigger_error("Cannot load view for field type ".$ctrl_property->field_type);
 			}
-
-			unset($value); // Reset $value 
-			// Do we have a range of values for this field? For example, an ENUM or relationship field			
-			$values = [];
-			if ($ctrl_property->related_to_id) {
-				$related_ctrl_class = \Sevenpointsix\Ctrl\Models\CtrlClass::find($ctrl_property->related_to_id);
-				$related_class 		= $related_ctrl_class->get_class();
-				$related_objects  	= $related_class::all();
-				foreach ($related_objects as $related_object) {
-					$values[$related_object->id] = $this->get_object_title($related_object); 
-				}
-			}
-			else {
-				$column = DB::select("SHOW COLUMNS FROM {$ctrl_property->ctrl_class->table_name} WHERE Field = '{$ctrl_property->name}'");
-				$type = $column[0]->Type;
-				// Is this an ENUM field?
-				preg_match("/enum\((.*)\)/", $type, $matches);				
-				if ($matches) {					
-					// Convert 'One','Two','Three' into an array
-					$enums = explode("','",trim($matches[1],"'"));
-					$loop = 1;
-					foreach ($enums as $enum) {
-						// Note that apostrophes are doubled-up when exported from SHOW COLUMNS
-						$value = str_replace("''","'",$enum);					
-						$values[$loop++] = $value;
-					}
-				}
-			}
-
 
 			// Ascertain the name current value of this field
 			// This essentially converts 'one' to 'one_id' and so on
@@ -721,17 +888,58 @@ class CtrlController extends Controller
 				}
 				if (!isset($value)) { // No default value, so pull it from the existing object
 					$value      = $object->$field_name;		
-				}
-				
+				}				
 			}
-		
-			// Build the form_field
 
-			$form_fields = [
-				
-			];
+			// Do we have a range of valid values for this field? For example, an ENUM or relationship field			
+			if ($ctrl_property->related_to_id) {
+				$related_ctrl_class = \Sevenpointsix\Ctrl\Models\CtrlClass::find($ctrl_property->related_to_id);
+				$related_class 		= $related_ctrl_class->get_class();
 
-			// Add it to the tabs
+
+				// This breaks as we have too many related items... but we load these via Ajax anyway if there are more than 20. So, just get the first 20...
+				// dump($related_class);
+				// $related_objects  	= $related_class::all();
+				// $related_objects  	= $related_class::take(21)->get();
+				// This needs an overhaul, can we chunk for now?
+				/* No, doesn't work, times out
+				$related_class::chunk(200, function ($related_objects) {
+				    foreach ($related_objects as $related_object) {
+						$values[$related_object->id] = $this->get_object_title($related_object); 
+					}
+				});
+				*/
+				/*
+				foreach ($related_objects as $related_object) {
+					$values[$related_object->id] = $this->get_object_title($related_object); 
+				}
+				*/
+				// If we use select2 for EVERYTHING (sensible I think?), we can just do this...update template/dropdown accordingly
+				if (!empty($value)) {
+					$related_objects  	= $related_class::where('id',$value)->get();
+					foreach ($related_objects as $related_object) {
+						$values[$related_object->id] = $this->get_object_title($related_object); 
+					}
+				}
+			}
+			else {
+				$column = DB::select("SHOW COLUMNS FROM {$ctrl_property->ctrl_class->table_name} WHERE Field = '{$ctrl_property->name}'");
+				$type = $column[0]->Type;
+				// Is this an ENUM field?
+				preg_match("/enum\((.*)\)/", $type, $matches);				
+				if ($matches) {					
+					// Convert 'One','Two','Three' into an array
+					$enums = explode("','",trim($matches[1],"'"));
+					$loop = 1;
+					foreach ($enums as $enum) {
+						// Note that apostrophes are doubled-up when exported from SHOW COLUMNS
+						$value = str_replace("''","'",$enum);					
+						$values[$loop++] = $value;
+					}
+				}
+			}
+
+			// Build the form_field anddd it to the tabs
 
 			$tab_name = $ctrl_property->fieldset;
 			$tab_icon = 'fa fa-list';

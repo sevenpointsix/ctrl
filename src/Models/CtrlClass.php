@@ -84,4 +84,14 @@ class CtrlClass extends Model
         return $singular;
        
     }
+
+    /**
+     * Check whether we can $action this class; based initially on ->permissions, but should be easily extended (using a Module)
+     * @param  string $action What we're trying to do (eg, 'edit' or 'import')
+     * @return boolean
+     */
+    public function can($action) {
+        $permissions = explode(',', $this->permissions);
+        return in_array($action,$permissions);
+    }
 }

@@ -220,7 +220,6 @@ $(function() {
 	});
 	*/
 
-
 	// Add text search inputs to each column, from https://datatables.net/examples/api/multi_filter.html
     $('#data-table thead th').each( function () {
     	var column_searchable = $(this).attr('data-search-text');                    	
@@ -236,6 +235,8 @@ $(function() {
 			 "<'row'<'col-sm-12'tr>>" +
 			 "<'row'<'col-sm-5'i><'col-sm-7'p>>",
 			 */
+		stateSave: true, // From https://datatables.net/reference/option/stateSave, means we retain search terms and current page when returning to the table
+			// NOTE: this doesn't work! It only works if we change the initialisation function to dataTable, not DataTable, but that breaks everything else! WTF?
 		"orderCellsTop": true, // Is this required? It's designed to prevent the click on a search box propagating to the reorder button, but I think we handle this using stopPropagation above
 		dom: "<'row'<'col-sm-12'tr>>" +
 			 "<'row'<'col-sm-5'i><'col-sm-7'p>>",
@@ -321,6 +322,9 @@ $(function() {
 			});
 			return false;
 	   	});
+		// Tooltips
+		$('[data-toggle="tooltip"]').tooltip();
+			
     }
 
     // Apply the search (again, see https://datatables.net/examples/api/multi_filter.html)
@@ -369,7 +373,7 @@ $(function() {
 				});		       
 		    }
 		});
-    }).draw(); // Is the redraw actually necessary?
+    }); // .draw(); // Is the redraw actually necessary? NO, and it breaks stateSave...
 
    	// Allow the search field to be cleared:
    	$('span.clear-search').on('click',function() {

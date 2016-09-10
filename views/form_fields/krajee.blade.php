@@ -24,7 +24,7 @@
   @endif
 
   $('#{{ $field['id'] }}_krajee').fileinput({
-  	/* Set the Ajaz upload URL and pass in some extra details (file type, _token) */
+  	/* Set the Ajax upload URL and pass in some extra details (file type, _token) */
 	  	uploadUrl:'{{ route('ctrl::krajee_upload') }}',
 	  	uploadExtraData: function() {
 	        return {
@@ -45,6 +45,9 @@
       /* Only allow images for now */
     		allowedFileTypes: ['image'],
     	/* Load the current image */
+    @elseif ($field['name'] == 'csv-import')
+      /* If this is a 'csv' field (used when importing data) then only allow text files */
+        allowedFileTypes: ['text'],
     @endif
     @if (!empty($field['value']))
       @if ($field['type'] == 'image')

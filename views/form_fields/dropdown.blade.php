@@ -7,6 +7,7 @@
         $multiple_select = is_array($field['value']);
         $ajax_source     = (count($field['values']) >= 20);
         */
+       $ajax_source = true; // Let's ALWAYS use Ajax...
     ?>
 
     @if (is_array($field['value'])) {{-- Indicates a multiple select --}}
@@ -16,7 +17,8 @@
 
         {{-- We also want to patch in an Ajax-driven Select2 box, if necessary. More than 20 values perhaps? --}}
 
-        @if (count($field['values']) >= 20)
+        {{-- @if (count($field['values']) >= 20) --}}
+        @if ($ajax_source)
             @foreach ($field['value'] as $value=>$text)
                 <option value="{{ $value }}" selected="selected">{{ $text }}</option>
             @endforeach
@@ -31,7 +33,8 @@
 
     <select class="form-control" id="{{ $field['id'] }}" style="width: 100%" name="{{ $field['name'] }}">
         <option value="">None</option>
-        @if (count($field['values']) >= 20)
+        {{-- @if (count($field['values']) >= 20) --}}
+        @if ($ajax_source)
             @if ($field['value'])
                 <option value="{{ $field['value'] }}" selected="selected">{{ $field['values'][$field['value']] }}</option>
             @endif
@@ -63,7 +66,8 @@
     @push('js')
     <script type="text/javascript">
         {{-- Based on http://www.southcoastweb.co.uk/jquery-select2-v4-ajaxphp-tutorial --}}
-        @if (count($field['values']) >= 10)
+        {{-- @if (count($field['values']) >= 10) --}}
+        @if ($ajax_source)
             $('#{{ $field['id'] }}').select2({
                 ajax: {
                     url: "{{ route('ctrl::get_select2',['ctrl_class_name'=>$field['related_ctrl_class_name']]) }}",
