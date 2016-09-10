@@ -46,24 +46,7 @@
 
 @section('css')
 	<style>
-	ul.nav.nav-tabs {
-		_margin-bottom: 20px;
-		border-bottom: none;
-	}
-	.ctrl-edit-object form { /* Give the form a border, background colour, and some padding */
-		padding: 15px;
-		background-color: #f9f9f9;
-		border: 1px solid #ddd;
-		border-top-right-radius: 4px;
-		border-bottom-right-radius: 4px;
-		border-bottom-left-radius: 4px;
-	}
-	.ctrl-edit-object .nav-tabs>li.active>a, .ctrl-edit-object .nav-tabs>li.active>a:focus, .ctrl-edit-object .nav-tabs>li.active>a:hover {
-		background-color: #f9f9f9; /* Give the tabs the same background colour as the form */
-	}
-	.cbx {
-		background-color: #fff; /* Give the custom checkboxes a white background */
-	}
+	
 	</style>
 @stop
 
@@ -98,7 +81,7 @@
 	  </div><!-- /.container-fluid -->
 	</nav>
 
-	<div class="ctrl-edit-object">
+	<div class="ctrl-form">
 
 	  <!-- Nav tabs -->
 	  <ul class="nav nav-tabs" role="tablist">

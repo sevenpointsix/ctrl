@@ -96,6 +96,57 @@
 		protected function import_objects($action,$results, $ctrl_class_id,$filter_string = NULL) {
 			// Argos has a good example of this function in use
 			$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
+
+			// Configure requred_headers, define the callback function
+			switch ($ctrl_class->name) {
+				case '[CLASS_NAME]':
+					$required_headers = ['HEADER_1','HEADER_3','HEADER_3'];						
+
+					$import_callback = function($results) {
+						$count = 0;
+						foreach ($results as $result) {
+							$count++;							
+						}	
+						return $count;
+					};
+					
+					break;
+				default:
+					return false; // Can't import this class
+
+			}
+
+			// We should really move all this code back into the main CtrlController:
+
+			// Have we defined any required headers? If so, and we're counting/checking them, return boolean as necessary
+			if (in_array($action, ['count-headers','check-headers']) && !empty($required_headers)) {
+
+				// Convert all headers into slugged values, as per http://www.maatwebsite.nl/laravel-excel/docs/import#results
+				// Technically this uses the protected function Excel::getSluggedIndex()
+				// but it's essentially the same as Laravel's str_slug():
+				$required_headers = array_map('str_slug',$required_headers,
+					array_fill(0,count($required_headers),'_')
+					// This passes an '_' parameter to str_slug;
+					// see http://stackoverflow.com/questions/8745447/array-map-function-in-php-with-parameter
+				);
+
+				$first_row = $results->first()->toArray();   	
+			    $csv_headers   = array_keys($first_row);
+			    
+				if ($action == 'count-headers' && count($csv_headers) != count($required_headers)) {
+					return false;
+				}
+				else  if ($action == 'check-headers' && $csv_headers != $required_headers) {
+					return false;
+				}
+				else {
+					return true;
+				}
+			}
+			// Or, have we defined a callback function?
+			else if ($action == 'import') {
+				return $import_callback($results);
+			}
 		}
 
 

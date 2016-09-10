@@ -38,7 +38,7 @@
 	  </div><!-- /.container-fluid -->
 	</nav>
 
-	<div class="ctrl-edit-object">
+	<div class="ctrl-form">
 
 	  <form class="ajax" method="post" action="{{ $save_link }}">
 	  		@include('ctrl::messages')

@@ -9,7 +9,7 @@
 {{-- This allows us to push some JS to the JS stack only once; it's a hack, but appears to work --}}
 @if (empty($GLOBALS['push_krajee_js']))
     @push('js')
-        <script src="{{ asset('assets/vendor/ctrl/vendor/bootstrap-fileinput/js/fileinput.min.js') }}"></script>
+        <script src="{{ asset('assets/vendor/ctrl/vendor/bootstrap-fileinput/js/fileinput.js') }}"></script>
     @endpush
     <?php $GLOBALS['push_krajee_js'] = true; ?>
 @endif
@@ -33,6 +33,9 @@
 	            field_name: '{{ $field['name'] }}_krajee'
 	        };
 	    },
+      // allowedPreviewTypes: ['image', 'video'], // Otherwise we preview huge CSV files when importing, which is slow and pointless      
+      // ... or, can we limit the size of a file to be previewed? Yep:
+      maxFilePreviewSize: 1000,      
 	/* Remove the close button, and the upload button (we automatically upload) */
 	  	showClose: false,
 	  	showUpload: false,	  	
@@ -81,14 +84,16 @@
   		dropZoneEnabled: false,
   	
   }).on("filebatchselected", function(event, files) {
-	// trigger upload method immediately after files are selected
-	$('#{{ $field['id'] }}_krajee').fileinput("upload");
+	   // trigger upload method immediately after files are selected
+	   $('#{{ $field['id'] }}_krajee').fileinput("upload");
   }).on('fileuploaded', function(event, data, previewId, index) {
     var response = data.response;
     // Set the hidden field value to that of the file just uploaded
     $('#{{ $field['id'] }}').val(response.link);
     // Hide the progress bar (I'm not sure why this stays visible)
-    $('#{{ $field['id'] }}').prev('div.file-input').find('.kv-upload-progress').addClass('hide');
+      // I think this has changed?
+      // $('#{{ $field['id'] }}').prev('div.file-input').find('.kv-upload-progress').addClass('hide');
+      $('#{{ $field['id'] }}').parent('div.form-group').find('.kv-upload-progress').addClass('hide');
     // Hide the "Download" option, no point having it there if we've just uploaded the file
     $('#fileinput-custom-download_{{ $field['id'] }}').hide();
   }).on('fileclear', function(event) {

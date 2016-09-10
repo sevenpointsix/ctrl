@@ -31,6 +31,40 @@ class CtrlServiceProvider extends ServiceProvider{
 	public function boot()
 	{
 
+		// If we run `artisan vendor publish --force`, we can overwrite config files;
+		// this is user error (most likely, my user error), but it's a major cock-up so let's catch it
+		if (\App::runningInConsole()) {			
+			$args = $_SERVER['argv'];
+			if (!empty($args)) {
+				// Are we attempting to run `artisan vendor publish --force`, without the public tag?
+				if (
+					in_array('artisan', $args)
+					&& in_array('vendor:publish', $args)
+					&& (
+						!in_array('--tag=public', $args)
+						||
+						in_array('--tag=config', $args)
+					)
+					&& in_array('--force', $args)
+				) {
+					// Require a `--ctrl` flag in order to force a `vendor publish`
+					if (!in_array('--ctrl', $args)) {
+						$message = [
+							'Running `artisan vendor publish --force` will override CTRL config files!',
+							'If you really wish to do this, please add the flag `--ctrl`.',
+							'Otherwise, to publish CSS files only, use the argument `--tag=public`.'
+						];
+						$maxlen = max(array_map('strlen', $message)); // Nice, http://stackoverflow.com/questions/1762191/how-to-get-the-length-of-longest-string-in-an-array
+						$divider = str_repeat('*',$maxlen);
+						array_unshift($message, $divider);
+						array_push($message, $divider);
+						echo "\n".implode("\n", $message)."\n\n";
+						exit();
+					}
+				}
+			}
+		}
+
 		/* Can I put this here? Just check that we have a Ctrl folder, for models and Modules */
 		$ctrl_folder = app_path('Ctrl/');
         if(!File::exists($ctrl_folder)) {
