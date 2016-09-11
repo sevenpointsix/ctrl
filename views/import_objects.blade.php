@@ -41,14 +41,18 @@
 	<div class="ctrl-form">
 
 	  <form class="ajax" method="post" action="{{ $save_link }}">
-	  		@include('ctrl::messages')
-	  		@include('ctrl::form_errors')
-	  		<p>Please select a CSV file from your computer by clicking "Browse", and then click "Import".</p>
-			
-			@include('ctrl::form_fields.'.$form_field['template'], ['field' => $form_field])
-		  <hr />
-		  <a class="btn btn-default" href="{{ $back_link }}"><i class="fa fa-remove"></i> Cancel</a>
-		<button type="submit" class="btn btn-success"><i class="fa fa-check-square"></i> Import</button>
+		@include('ctrl::messages')
+		@include('ctrl::form_errors')
+		<p>Please select a CSV file from your computer by clicking "Browse", and then click "Import".</p>
+		@include('ctrl::form_fields.'.$form_field['template'], ['field' => $form_field])			
+		<hr />
+		<div class="form-group">
+			<a class="btn btn-default" href="{{ $back_link }}"><i class="fa fa-remove"></i> Cancel</a>
+			<button type="submit" class="btn btn-success" data-loading-text="<i class='fa fa-circle-o-notch fa-spin fa-fw'></i> Importing..."><i class="fa fa-check-square"></i> Import</button>
+
+		</div>
+		<p class="help-block"><i class="fa fa-hourglass-half"></i> Very large files might take several minutes to import. <a href="{{ $sample_link }}">Download an example CSV here</a>.</p>
+		
 	  </form>
 
 	</div>

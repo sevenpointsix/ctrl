@@ -399,6 +399,47 @@ class CtrlController extends Controller
 	}
 
 	/**
+	 * Send the user a sample CSV file, which illustrates how to import data
+	 * @param  integer $ctrl_class_id The ID of the class we're editing
+	 * @param  string $filter_string Are we filtering the list? Currently stored as a ~ delimited list of property=>id comma-separated pairs; see below
+	 *
+	 * @return Response
+	 */
+	public function import_objects_sample(Request $request, $ctrl_class_id, $filter_string = NULL) {
+		if (!$this->module->enabled('import_objects')) {
+			// This can only happen if someone is fucking around with the URL, so just bail on them.
+			\App::abort(403, 'Access denied');
+		}
+		// Should also check that we can import ctrlclass_id...
+
+		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();		
+		if (!$ctrl_class->can('import')) {
+			\App::abort(403, 'Access denied'); // As above
+		}
+
+		$headers = $this->module->run('import_objects',[
+			'get-headers',
+			$ctrl_class_id,
+			// $filter_string
+		]);
+
+		$filename = 'import-'.str_slug($ctrl_class->get_plural()).'-example';
+
+		// \Maatwebsite\Excel\Facades\Excel::create($filename, function($excel) use ($headers) {
+		Excel::create($filename, function($excel) use ($headers) {
+			 $excel->sheet('Sheetname', function($sheet) use ($headers) {
+
+		        $sheet->fromArray(array(
+		            $headers
+		        ),null,'A1',false,false);
+
+		    });		    
+		})->download('csv');;
+
+
+	}
+
+	/**
 	 * Handle the posted CSV when importing all objects of a given CtrlClass
 	 * @param  integer $ctrl_class_id The ID of the class we're editing
 	 * @param  string $filter_string Are we filtering the list? Currently stored as a ~ delimited list of property=>id comma-separated pairs; see below
@@ -407,20 +448,7 @@ class CtrlController extends Controller
 	 */
 	public function import_objects_process(Request $request, $ctrl_class_id, $filter_string = NULL) {
 		
-		$this->validate($request, [
-        	'csv-import'=>'required'
-        ],[
-		    'csv-import.required' => 'Please select a CSV file to upload'
-		]);
-
-		$csv_file = trim($request->input('csv-import'),'/');
-		$errors = [];
-
-		// We can use a callback here, function($reader) use (&$errors), but it's a bit limiting when it comes to running modules to load data etc.
-		$reader = Excel::load(public_path($csv_file));
-    	$results   = $reader->get();
-    	
-    	$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
+		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
     	
     	if (!$this->module->enabled('import_objects')) {
 			// This can only happen if someone is fucking around with the URL, so just bail on them.
@@ -430,52 +458,116 @@ class CtrlController extends Controller
 		else if (!$ctrl_class->can('import')) {
 			\App::abort(403, 'Access denied'); // As above
 		}
-		else if (count($results) == 0) {
-    		$errors['csv-import'] = 'That CSV file doesn\'t appear to contain any data';
-    	}
-    	elseif (!$this->module->run('import_objects',[
-				'count-headers',
-				$results,
-				$ctrl_class_id,
-				$filter_string
-			])) {
-    		$errors['csv-import'] = 'That CSV file doesn\'t seem to have the correct number of columns';    	
-		}
-    	elseif (!$this->module->run('import_objects',[
-				'check-headers',
-				$results,
-				$ctrl_class_id,
-				$filter_string
-			])) {
-    		$errors['csv-import'] = 'That CSV file doesn\'t seem to have the correct column titles';    	
-		}
-    	else {
-    		// All looking good, now actually import the data...
-    		$response = $this->module->run('import_objects',[
-				'import',
-				$results,
-				$ctrl_class_id,
-				$filter_string
-			]);
 
-			if ($response === false) {
-				$errors['csv-import'] = 'Cannot import data';
-			}			
-			else if ($response === 0) {
-				$errors['csv-import'] = 'This import would have no effect; no rows would be processed';
+		$this->validate($request, [
+        	'csv-import'=>'required'
+        ],[
+		    'csv-import.required' => 'Please select a CSV file to upload'
+		]);
+
+		$csv_file = trim($request->input('csv-import'),'/');
+		$errors = [];
+
+
+		// Work out what headers we need, what the callback functions are, whether we have a "pre-import" function, etc:
+
+		$required_headers = $this->module->run('import_objects',[
+			'get-headers',
+			$ctrl_class_id,
+			// $filter_string // required?
+		]);
+
+		// Convert all headers into slugged values, as per http://www.maatwebsite.nl/laravel-excel/docs/import#results
+		// Excel does this on import automatically, so we need compare slugged values with the headers Excel has converted
+		// Technically this uses the protected function Excel::getSluggedIndex()
+		// but it's essentially the same as Laravel's str_slug():
+		$slugged_headers = array_map('str_slug',$required_headers,
+			array_fill(0,count($required_headers),'_')
+			// This passes an '_' parameter to str_slug;
+			// see http://stackoverflow.com/questions/8745447/array-map-function-in-php-with-parameter
+		);
+
+		$callback_function = $this->module->run('import_objects',[
+			'get-callback-function',
+			$ctrl_class_id,
+			// $filter_string // required?
+		]);
+
+		
+		// Run the pre-import-function if necessary
+		if ($pre_import_function = $this->module->run('import_objects',[
+			'get-pre-import-function',
+			$ctrl_class_id,
+			// $filter_string // required?
+		])) {
+			$pre_import_function();
+		}
+			
+		// Now import the data in chunks:
+
+    	$loop = 0;
+    	$count = 0;
+
+    	set_time_limit(0); // Dammit, it's the LOAD that's taking a while, not the procecssing.
+    						// This is a problem in Argos because it's a 25Mb CSV...
+    						// Ah, it's definitely still quicker to chunk though
+
+    	// Not sure if this is required or not, but it's been useful in the past
+    	// Found the tip here: https://github.com/Maatwebsite/Laravel-Excel/issues/388
+    	ini_set('auto_detect_line_endings', true);
+
+    	Excel::filter('chunk')->load($csv_file)->chunk(250, function($results) use (
+    		&$count,
+    		$loop,
+    		$ctrl_class_id,
+    		$errors,
+    		$required_headers,
+    		$slugged_headers,
+    		$callback_function
+    	) {
+			if ($loop++ == 0) { // First pass so check headers etc
+				$first_row   = $results->first()->toArray();   	
+			    $csv_headers = array_keys($first_row);
+
+					
+				if (count($results) == 0) {
+		    		$errors['csv-import'] = 'That CSV file doesn\'t appear to contain any data';
+		    	}
+		    	elseif (count($csv_headers) != count($required_headers)) {
+		    		// Can fairly easily run an array diff here...
+		    		$errors['csv-import'] = 'That CSV file doesn\'t seem to have the correct number of columns';    	
+				}
+		    	elseif ($csv_headers != $slugged_headers) {
+		    		// ... and here
+		    		$errors['csv-import'] = 'That CSV file doesn\'t seem to have the correct column titles';    	
+				}				
 			}
-    	}
 
+			if (!$errors) {
+
+	    		$response = $callback_function($results); // Again, we may need the filter string here in some cases...?
+
+				if ($response === false) {
+					$errors['csv-import'] = 'Cannot import data';
+				}			
+				else if ($response === 0) {
+					$errors['csv-import'] = 'This import would have no effect; no rows would be processed';
+					// Is this always right? Might we sometimes import zero rows from the first chunk, even though we'd import rows in subsequent chunks?
+				}
+				else {
+					$count += $response;
+				}
+			}
+
+			if ($errors) return; // Should exit the chunk, I think
+			
+		}, false); // False allows us to pass variables by reference; https://github.com/Maatwebsite/Laravel-Excel/issues/744
+    	
 		if (!empty($errors)) {
 			return response()->json($errors,422);
        	}
        	else {
-       		if (is_numeric($response)) {
-       			$message = $response . ' records imported';
-       		}
-       		else {
-       			$message = $response;
-       		}
+       		$message  = $count . ' records imported';
        		$messages = [$message];
        		$request->session()->flash('messages', $messages);		 
        		$back = route('ctrl::import_objects',[$ctrl_class_id, $filter_string]);
@@ -508,8 +600,9 @@ class CtrlController extends Controller
 			\App::abort(403, 'Access denied'); // As above
 		}
 
-		$back_link = route('ctrl::list_objects',[$ctrl_class->id,$filter_string]);
-		$save_link = route('ctrl::import_objects_process',[$ctrl_class->id,$filter_string]);
+		$back_link   = route('ctrl::list_objects',[$ctrl_class->id,$filter_string]);
+		$save_link   = route('ctrl::import_objects_process',[$ctrl_class->id,$filter_string]);
+		$sample_link = route('ctrl::import_objects_sample',[$ctrl_class->id,$filter_string]);
 
 		$upload_field = [
 			'id'       => 'csv-import',
@@ -525,6 +618,7 @@ class CtrlController extends Controller
 			'page_description' => 'Use this page to import records from a CSV file',
 			'back_link'        => $back_link,
 			'save_link'        => $save_link,
+			'sample_link'	   => $sample_link,
 			'form_field'       => $upload_field,
 		]);
 	}

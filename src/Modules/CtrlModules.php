@@ -102,7 +102,11 @@
 				case '[CLASS_NAME]':
 					$required_headers = ['HEADER_1','HEADER_3','HEADER_3'];						
 
-					$import_callback = function($results) {
+					$pre_import_function = function() {
+						// For example, we might want to truncate the table here
+					};
+
+					$callback_function = function($results) {
 						$count = 0;
 						foreach ($results as $result) {
 							$count++;							
@@ -116,36 +120,17 @@
 
 			}
 
-			// We should really move all this code back into the main CtrlController:
-
-			// Have we defined any required headers? If so, and we're counting/checking them, return boolean as necessary
-			if (in_array($action, ['count-headers','check-headers']) && !empty($required_headers)) {
-
-				// Convert all headers into slugged values, as per http://www.maatwebsite.nl/laravel-excel/docs/import#results
-				// Technically this uses the protected function Excel::getSluggedIndex()
-				// but it's essentially the same as Laravel's str_slug():
-				$required_headers = array_map('str_slug',$required_headers,
-					array_fill(0,count($required_headers),'_')
-					// This passes an '_' parameter to str_slug;
-					// see http://stackoverflow.com/questions/8745447/array-map-function-in-php-with-parameter
-				);
-
-				$first_row = $results->first()->toArray();   	
-			    $csv_headers   = array_keys($first_row);
-			    
-				if ($action == 'count-headers' && count($csv_headers) != count($required_headers)) {
-					return false;
-				}
-				else  if ($action == 'check-headers' && $csv_headers != $required_headers) {
-					return false;
-				}
-				else {
-					return true;
-				}
+			if ($action == 'get-headers') {
+				return $headers;
+			}						
+			else if ($action == 'get-callback-function') {
+				return $callback_function;
 			}
-			// Or, have we defined a callback function?
-			else if ($action == 'import') {
-				return $import_callback($results);
+			else if ($action == 'get-pre-import-function') {
+				return (!empty($pre_import_function)) ? $pre_import_function : false;
+			}
+			else {
+				dd("Unrecognised action $action");
 			}
 		}
 

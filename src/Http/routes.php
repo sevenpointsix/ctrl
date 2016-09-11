@@ -23,10 +23,15 @@ Route::group(['as' => 'ctrl::','prefix'=>'admin','middleware' => ['web']], funct
 		'uses'=>'CtrlController@export_objects'
 	]);
 
+	Route::get('import/sample/{ctrl_class_id}/{filter_string?}',[
+		'as'=>'import_objects_sample',
+		'uses'=>'CtrlController@import_objects_sample'
+	]);
 	Route::get('import/{ctrl_class_id}/{filter_string?}',[
 		'as'=>'import_objects',
 		'uses'=>'CtrlController@import_objects'
 	]);
+	
 	Route::post('import/{ctrl_class_id}/{filter_string?}',[
 		'as'=>'import_objects_process',
 		'uses'=>'CtrlController@import_objects_process'
