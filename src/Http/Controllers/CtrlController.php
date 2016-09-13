@@ -468,7 +468,6 @@ class CtrlController extends Controller
 		$csv_file = trim($request->input('csv-import'),'/');
 		$errors = [];
 
-
 		// Work out what headers we need, what the callback functions are, whether we have a "pre-import" function, etc:
 
 		$required_headers = $this->module->run('import_objects',[
@@ -494,13 +493,17 @@ class CtrlController extends Controller
 		]);
 
 		
-		// Run the pre-import-function if necessary
+		// Run the pre-import-function if necessary; this can either prep data, or truncate tables,
+		// or (in the case of the Argos CAT sheet) bypass the Excel import altogether		
+
 		if ($pre_import_function = $this->module->run('import_objects',[
 			'get-pre-import-function',
 			$ctrl_class_id,
-			// $filter_string // required?
+			// $filter_string // required?			
 		])) {
-			$pre_import_function();
+			if ($response = $pre_import_function($csv_file)) {
+				return $response;
+			}
 		}
 			
 		// Now import the data in chunks:
