@@ -102,8 +102,8 @@
 				case '[CLASS_NAME]':
 					$required_headers = ['HEADER_1','HEADER_3','HEADER_3'];						
 
-					$pre_import_function = function() {
-						// For example, we might want to truncate the table here
+					$pre_import_function = function($ctrl_class_id, $filter_string,$csv_file) {
+						// For example, we might want to truncate the table here, or even bypass the Excel:: import altogether (as we do for Argos)
 					};
 
 					$callback_function = function($results) {
