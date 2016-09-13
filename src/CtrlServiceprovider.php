@@ -15,7 +15,6 @@ use File;
 
 class CtrlServiceProvider extends ServiceProvider{
 
-
 	/**
 	 * Indicates if loading of the provider is deferred.
 	 *
