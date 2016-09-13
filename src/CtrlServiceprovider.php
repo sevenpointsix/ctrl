@@ -15,6 +15,8 @@ use File;
 
 class CtrlServiceProvider extends ServiceProvider{
 
+	// Dummy comment to force a commit
+
 	/**
 	 * Indicates if loading of the provider is deferred.
 	 *
