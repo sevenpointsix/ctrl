@@ -10,6 +10,9 @@
 	@push('js')
 		<!-- Include JS files. -->
 		<script type="text/javascript" src="{{ asset('assets/vendor/ctrl/vendor/froala/js/froala_editor.min.js') }}"></script>
+		<script>
+		  $.FroalaEditor.DEFAULTS.key = '{{ env('FROALA_KEY','') }}';
+		</script>
 
 		<!-- Include Code Mirror. -->
 		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.3.0/codemirror.min.js"></script>
