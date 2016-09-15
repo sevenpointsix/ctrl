@@ -501,7 +501,7 @@ class CtrlController extends Controller
 			$ctrl_class_id,
 			// $filter_string // required?			
 		])) {
-			if ($response = $pre_import_function($csv_file)) {
+			if ($response = $pre_import_function($ctrl_class_id,$filter_string,$csv_file)) {
 				return $response;
 			}
 		}
