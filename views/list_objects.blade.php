@@ -7,6 +7,7 @@
 {{-- This should prevent bootstrap being loaded twice --}}
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/u/bs/dt-1.10.12,b-1.2.0,r-2.1.0,rr-1.1.2/datatables.min.css"/>
 
+
 <!-- Row reorder -->
 {{--  No longer required? 
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.1.1/css/rowReorder.dataTables.min.css" />
@@ -192,6 +193,8 @@
 --}}
 {{-- This version should include row reorder as well --}}
 <script type="text/javascript" src="https://cdn.datatables.net/u/bs/dt-1.10.12,b-1.2.0,r-2.1.0,rr-1.1.2/datatables.min.js"></script>
+{{-- Pagination plugin --}}
+<script type="text/javascript" src="https://cdn.datatables.net/plug-ins/1.10.12/pagination/select.js"></script>
 
 <!-- WIP: might use this lightbox for opening images from table rows, and likely elsewhere. TBC -->
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/ekko-lightbox/4.0.1/ekko-lightbox.min.js"></script>
@@ -237,6 +240,9 @@ $(function() {
 			 */
 		stateSave: true, // From https://datatables.net/reference/option/stateSave, means we retain search terms and current page when returning to the table
 			// NOTE: this doesn't work! It only works if we change the initialisation function to dataTable, not DataTable, but that breaks everything else! WTF?
+
+		"sPaginationType": "listbox", // see https://datatables.net/plug-ins/pagination/select
+
 		"orderCellsTop": true, // Is this required? It's designed to prevent the click on a search box propagating to the reorder button, but I think we handle this using stopPropagation above
 		dom: "<'row'<'col-sm-12'tr>>" +
 			 "<'row'<'col-sm-5'i><'col-sm-7'p>>",
@@ -284,7 +290,8 @@ $(function() {
                 	if (!d || d == 'None') return false; /* OMIT empty values as we can't yet search for "missing" relationships; see notes in CtrlController. Is 'None' always going to represent a missing relationship...? */                	
                     select.append( '<option value="'+d+'">'+d+'</option>' )
                 } );
-            } );            
+            } );    
+        
         }        
     });
 
@@ -383,7 +390,10 @@ $(function() {
  		.draw();
    	});
 
-   	
+// If we're using the pagination plugin, style it with Bootstrap:
+		   	$('.dataTables_paginate.paging_listbox').find('select').addClass('form-control');
+
+
 
 
     // Add custom buttons
