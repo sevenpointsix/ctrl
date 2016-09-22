@@ -1021,6 +1021,10 @@ class CtrlController extends Controller
 			}
 			else {
 				$column = DB::select("SHOW COLUMNS FROM {$ctrl_property->ctrl_class->table_name} WHERE Field = '{$ctrl_property->name}'");
+				if (!isset($column[0])) {
+					dump("SHOW COLUMNS FROM {$ctrl_property->ctrl_class->table_name} WHERE Field = '{$ctrl_property->name}'");
+					dd($column);
+				}
 				$type = $column[0]->Type;
 				// Is this an ENUM field?
 				preg_match("/enum\((.*)\)/", $type, $matches);				
@@ -1239,8 +1243,16 @@ class CtrlController extends Controller
 	            		// I initially thought we'd have to treat these differently, but it seems to work at the moment. Could break in more advanced cases though.
 	            	) {
 
-	            	// OK, I think we can use synch here; or does this break for hasMany?	            		            
-	            	$object->$related_field_name()->sync($related_objects);
+	            	// OK, I think we can use synch here; or does this break for hasMany?	         
+	            	// Yeah, breaks for hasMany... :-(  This works though:
+	            	if ($related_ctrl_property->relationship_type == 'belongsToMany') {
+	            		$object->$related_field_name()->sync($related_objects);
+	            	}
+	            	else if ($related_ctrl_property->relationship_type == 'hasMany') {	            		
+	            		$object->$related_field_name()->saveMany($related_objects);	            		
+	            	}
+	            	
+	            	
 					
 					/*
 		            // A hasMany relationship needs saveMany
