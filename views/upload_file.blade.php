@@ -19,7 +19,7 @@
 	        <span class="icon-bar"></span>
 	        <span class="icon-bar"></span>
 	      </button>   
-	      <a class="navbar-brand">@if ($icon = $ctrl_class->get_icon())<i class="{{ $icon }} fa-fw"></i> @endif
+	      <a class="navbar-brand">@if (!empty($icon))<i class="{{ $icon }} fa-fw"></i> @endif
 	      	{{ $page_title }}</a>   
 	    </div>
 
@@ -29,10 +29,7 @@
 				<p class="navbar-text">{!! $page_description !!}</p>
 			@endif
 	      <ul class="nav navbar-nav navbar-right">
-			<li><a href="{{ $back_link }}"><i class="fa fa-toggle-left"></i> Back</a></li>
-			@if (!empty($delete_link))
-			<li><a href="#" rel="{{ $delete_link }}" class="delete-item"><i class="fa fa-trash"></i> Delete</a></li>
-			@endif
+			<li><a href="{{ $back_link }}"><i class="fa fa-toggle-left"></i> Back</a></li>			
 	      </ul>      
 	    </div><!-- /.navbar-collapse -->
 	  </div><!-- /.container-fluid -->
@@ -43,15 +40,14 @@
 	  <form class="ajax" method="post" action="{{ $save_link }}">
 		@include('ctrl::messages')
 		@include('ctrl::form_errors')
-		<p>Please select a CSV file from your computer by clicking "Browse", and then click "Import".</p>
+		<p>{!! $help_text !!}</p>		
 		@include('ctrl::form_fields.'.$form_field['template'], ['field' => $form_field])			
 		<hr />
 		<div class="form-group">
 			<a class="btn btn-default" href="{{ $back_link }}"><i class="fa fa-remove"></i> Cancel</a>
-			<button type="submit" class="btn btn-success" data-loading-text="<i class='fa fa-circle-o-notch fa-spin fa-fw'></i> Importing..."><i class="fa fa-check-square"></i> Import</button>
+			<button type="submit" class="btn btn-success" data-loading-text="<i class='fa fa-circle-o-notch fa-spin fa-fw'></i> Importing..."><i class="fa fa-check-square"></i> Upload</button>
 
 		</div>
-		<p class="help-block"><i class="fa fa-hourglass-half"></i> Very large files might take several minutes to import. <a href="{{ $sample_link }}">Download an example CSV here</a>.</p>
 		
 	  </form>
 

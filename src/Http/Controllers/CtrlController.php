@@ -119,6 +119,9 @@ class CtrlController extends Controller
 	}
 
 	protected function _check_login() {
+
+
+
 		$public_routes = ['ctrl::login','ctrl::post_login'];
 		$user          = Auth::user();
 		
@@ -615,13 +618,13 @@ class CtrlController extends Controller
 			'value'    => ''
 		];
 
-		return view('ctrl::import_objects',[
-			'ctrl_class'       => $ctrl_class,
+		return view('ctrl::upload_file',[
+			'icon'             => $ctrl_class->get_icon(),
 			'page_title'       => "Import ".ucwords($ctrl_class->get_plural()),
 			'page_description' => 'Use this page to import records from a CSV file',
+			'help_text'        => 'Please select a CSV file from your computer by clicking "Browse", and then click "Import". <a href="'.$sample_link.'">You can download an example CSV here</a>.',
 			'back_link'        => $back_link,
 			'save_link'        => $save_link,
-			'sample_link'	   => $sample_link,
 			'form_field'       => $upload_field,
 		]);
 	}
