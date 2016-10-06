@@ -1,8 +1,8 @@
 @extends('ctrl::form_fields.master')
 
 @section('input')
-  <input type="file" id="{{ $field['id'] }}_krajee" name="{{ $field['name'] }}_krajee">
-  <input type="hidden" id="{{ $field['id'] }}" name="{{ $field['name'] }}" value="{{ $field['value'] }}">
+  <input type="file" id="{{ $field['id'] }}_krajee" name="{{ $field['name'] }}_krajee" @if (!empty($field['allow-multiple'])) multiple="multiple" @endif>
+  <input type="hidden" id="{{ $field['id'] }}" name="{{ $field['name'] }}@if (!empty($field['allow-multiple']))[]@endif" value="{{ $field['value'] }}">
 @overwrite
 {{-- Note that we need @overwrite because we include multiple instances of templates that extend form_fields.master: see https://github.com/laravel/framework/issues/1058 --}}
 
@@ -39,8 +39,10 @@
 	/* Remove the close button, and the upload button (we automatically upload) */
 	  	showClose: false,
 	  	showUpload: false,	  	
+      @if (empty($field['allow-multiple']))      
 	/* Limit this to only allow one file; from http://plugins.krajee.com/file-auto-replace-demo#1-file-limit-alt */	
     	maxFileCount: 1,
+      @endif
     	autoReplace: true,
     	overwriteInitial: true,
     	showUploadedThumbs: false,
@@ -48,9 +50,8 @@
       /* Only allow images for now */
     		allowedFileTypes: ['image'],
     	/* Load the current image */
-    @elseif ($field['name'] == 'csv-import')
-      /* If this is a 'csv' field (used when importing data) then only allow text files */
-        allowedFileTypes: ['text'],
+    @elseif (!empty($field['allowed-types']))      
+        allowedFileTypes: ['{{ implode(',',$field['allowed-types']) }}'],
     @endif
     @if (!empty($field['value']))
       @if ($field['type'] == 'image')
@@ -89,7 +90,20 @@
   }).on('fileuploaded', function(event, data, previewId, index) {
     var response = data.response;
     // Set the hidden field value to that of the file just uploaded
-    $('#{{ $field['id'] }}').val(response.link);
+
+    // WE NEED TO HANDLE MULTIPLE FILE UPLOADS HERE. We get one response per upload, so we need to append this value to $('#{{ $field['id'] }}')[]...?
+    // I think we're going to have to active duplicate the current field each time...
+    // Something like this
+    if ($('#{{ $field['id'] }}').attr('name').indexOf('[]') > -1) {
+      new_field = $('#{{ $field['id'] }}').clone().removeAttr('id');  
+      new_field.val(response.link);
+      $('#{{ $field['id'] }}').after(new_field);
+    }
+    else {
+      $('#{{ $field['id'] }}').val(response.link);
+    }
+  
+    // Does this need to change for multiple uploads too? 
     // Hide the progress bar (I'm not sure why this stays visible)
       // I think this has changed?
       // $('#{{ $field['id'] }}').prev('div.file-input').find('.kv-upload-progress').addClass('hide');

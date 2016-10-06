@@ -443,25 +443,58 @@ class CtrlController extends Controller
 	}
 
 	/**
-	 * Handle the posted CSV when importing all objects of a given CtrlClass
+	 * Handle the posted files when importing all objects of a given CtrlClass, as 'files'; called by @import_obects_process
 	 * @param  integer $ctrl_class_id The ID of the class we're editing
 	 * @param  string $filter_string Are we filtering the list? Currently stored as a ~ delimited list of property=>id comma-separated pairs; see below
 	 *
 	 * @return Response
 	 */
-	public function import_objects_process(Request $request, $ctrl_class_id, $filter_string = NULL) {
-		
-		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
-    	
-    	if (!$this->module->enabled('import_objects')) {
-			// This can only happen if someone is fucking around with the URL, so just bail on them.
-			\App::abort(403, 'Access denied');
-			// Should also check that we can import ctrlclass_id...
-		}
-		else if (!$ctrl_class->can('import')) {
-			\App::abort(403, 'Access denied'); // As above
-		}
+	protected function import_objects_process_files(Request $request, $ctrl_class_id, $filter_string = NULL) {
+		$this->validate($request, [
+        	'files-import'=>'required'
+        ],[
+		    'files-import.required' => 'Please select some files to upload'
+		]);
 
+		// Lifted from http://tutsnare.com/upload-multiple-files-in-laravel/
+
+		//AAARGH -- we're not processing file uploads here! We do that by AJAX! Fuck me. We accept file paths here...
+
+		dd($_POST); // NOTE: if multiple uploads, we need to filter 
+		$files = $request->file('files-import');
+		dd($files);
+		// Making counting of uploaded images
+		$file_count = count($files);
+		// start count how many uploaded
+		$upload_count = 0;
+		foreach ($files as $file) {
+			$rules = array('file' => 'required'); //'required|mimes:png,gif,jpeg,txt,pdf,doc'
+			$validator = Validator::make(array('file'=> $file), $rules);
+			if ($validator->passes()) {
+				$destinationPath = 'uploads';
+				$filename = $file->getClientOriginalName();
+				$upload_success = $file->move($destinationPath, $filename);
+				$upload_count++;
+			}
+		}
+		dd("$upload_count, $file_count");
+		if($upload_count == $file_count){
+			Session::flash('success', 'Upload successfully'); 
+			return Redirect::to('upload');
+		} 
+		else {
+			return Redirect::to('upload')->withInput()->withErrors($validator);
+		}
+	}
+
+	/**
+	 * Handle the posted CSV when importing all objects of a given CtrlClass, as DATA; called by @import_obects_process
+	 * @param  integer $ctrl_class_id The ID of the class we're editing
+	 * @param  string $filter_string Are we filtering the list? Currently stored as a ~ delimited list of property=>id comma-separated pairs; see below
+	 *
+	 * @return Response
+	 */
+	protected function import_objects_process_data(Request $request, $ctrl_class_id, $filter_string = NULL) {
 		$this->validate($request, [
         	'csv-import'=>'required'
         ],[
@@ -583,6 +616,44 @@ class CtrlController extends Controller
 	}
 
 	/**
+	 * Handle the posted CSV when importing all objects of a given CtrlClass
+	 * @param  integer $ctrl_class_id The ID of the class we're editing
+	 * @param  string $filter_string Are we filtering the list? Currently stored as a ~ delimited list of property=>id comma-separated pairs; see below
+	 *
+	 * @return Response
+	 */
+	public function import_objects_process(Request $request, $ctrl_class_id, $filter_string = NULL) {
+		
+		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
+    	
+    	if (!$this->module->enabled('import_objects')) {
+			// This can only happen if someone is fucking around with the URL, so just bail on them.
+			\App::abort(403, 'Access denied');
+			// Should also check that we can import ctrlclass_id...
+		}
+		else if (!$ctrl_class->can('import')) {
+			\App::abort(403, 'Access denied'); // As above
+		}
+
+		$import_type = $this->module->run('import_objects',[
+			'get-import-type',
+			$ctrl_class_id,
+		]); 
+
+		if ($import_type == 'data') {
+			return $this->import_objects_process_data($request, $ctrl_class_id, $filter_string);
+		}
+		else if ($import_type == 'files') {
+			return $this->import_objects_process_files($request, $ctrl_class_id, $filter_string);
+		}
+		else {
+			dd("Unrecognised import type $import_type");
+		}
+
+		
+	}
+
+	/**
 	 * Import all objects of a given CtrlClass
 	 * @param  integer $ctrl_class_id The ID of the class we're editing
 	 * @param  string $filter_string Are we filtering the list? Currently stored as a ~ delimited list of property=>id comma-separated pairs; see below
@@ -606,23 +677,50 @@ class CtrlController extends Controller
 			\App::abort(403, 'Access denied'); // As above
 		}
 
-		$back_link   = route('ctrl::list_objects',[$ctrl_class->id,$filter_string]);
+		$back_link   = route('ctrl::list_objects',[$ctrl_class->id,$filter_string]); // Should this actually link back to the dashboard, as this is where we currently link TO @import FROM?
 		$save_link   = route('ctrl::import_objects_process',[$ctrl_class->id,$filter_string]);
 		$sample_link = route('ctrl::import_objects_sample',[$ctrl_class->id,$filter_string]);
 
-		$upload_field = [
-			'id'       => 'csv-import',
-			'name'     => 'csv-import',
-			'type'     => 'file',
-			'template' => 'krajee',
-			'value'    => ''
-		];
+		// Now. We can repurpose this function to allow files and images to be uploaded in bulk too.
+		$import_type = $this->module->run('import_objects',[
+			'get-import-type',
+			$ctrl_class_id,
+		]); // Should default to 'data', can also be 'files' or 'images'
+
+		if ($import_type == 'data') {
+			$upload_field = [
+				'id'            => 'csv-import',
+				'name'          => 'csv-import',
+				'type'          => 'file',
+				'template'      => 'krajee',
+				'value'         => '',
+				'allowed-types' => ['text'] /* Only allow text files for CSV upload */				
+			];
+			$page_description = 'Use this page to import records from a CSV file';
+			$help_text = 'Please select a CSV file from your computer by clicking "Browse", and then click "Import". <a href="'.$sample_link.'">You can download an example CSV here</a>.';
+		}
+		else if ($import_type == 'files') {
+			$upload_field = [
+				'id'             => 'files-import',
+				'name'           => 'files-import',
+				'type'           => 'file',
+				'template'       => 'krajee',
+				'value'          => '',
+				'allow-multiple' => true,
+				'tip'  			 => 'You can select multiple files by holding down the Command (&#8984;) or CTRL key.'
+			];
+			$page_description = 'Use this page to import multiple '.$ctrl_class->get_plural() .' at the same time';
+			$help_text = 'Please select files from your computer by clicking "Browse", and then click "Import".';
+		}
+		else {
+			dd("Unrecognised import type $import_type");
+		}
 
 		return view('ctrl::upload_file',[
 			'icon'             => $ctrl_class->get_icon(),
 			'page_title'       => "Import ".ucwords($ctrl_class->get_plural()),
-			'page_description' => 'Use this page to import records from a CSV file',
-			'help_text'        => 'Please select a CSV file from your computer by clicking "Browse", and then click "Import". <a href="'.$sample_link.'">You can download an example CSV here</a>.',
+			'page_description' => $page_description,
+			'help_text'        => $help_text,
 			'back_link'        => $back_link,
 			'save_link'        => $save_link,
 			'form_field'       => $upload_field,

@@ -113,7 +113,7 @@
 						}	
 						return $count;
 					};
-					
+					$import_type = 'data'; // Defaults to this anyway; can also be "files" or "images" for bulk file uploads
 					break;
 				default:
 					return false; // Can't import this class
@@ -128,6 +128,9 @@
 			}
 			else if ($action == 'get-pre-import-function') {
 				return (!empty($pre_import_function)) ? $pre_import_function : false;
+			}
+			else if ($action == 'get-import-type') {
+				return (!empty($import_type)) ? $import_type : 'data'; // Can also be files, images
 			}
 			else {
 				dd("Unrecognised action $action");

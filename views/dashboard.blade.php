@@ -182,6 +182,10 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 .btn-group-mixed-width .btn-group.btn-group-justified .btn-group.narrow {
 	width: .1%;
 }
+.btn-group-mixed-width .btn-group.btn-group-justified .btn-group.narrow .btn { /* Without this, the icons overflow from the buttons on small screens */
+	padding-left: 0px;
+	padding-right: 0px;
+}
 
 /* Align text on the wide, primary button left */
 .btn-group-mixed-width .btn-group.btn-group-justified .btn-group.wide .btn {
@@ -216,19 +220,19 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 		<div class="col-md-6">
 			
 			<div class="panel panel-default">
-			  <div class="panel-heading"><h3 class="panel-title"><i class="fa fa-list-alt fa-fw" style="font-weight: normal"></i> Dashboard</h3></div>
-			  <div class="panel-body">
+			  	<div class="panel-heading"><h3 class="panel-title"><i class="fa fa-list-alt fa-fw" style="font-weight: normal"></i> Dashboard</h3></div>
+			  	<div class="panel-body">
 			    
-			  	<form id="dashboard-search">
-				  <div class="form-group">				    
-				    <div class="input-group">
-				      <span class="input-group-addon"><i class="fa fa-search"></i></span>
-				      <input class="typeahead form-control input-lg" type="text" placeholder="Search for an item here" style="float: none;">		
-				      {{-- float: none aligns the addon in Chrome but apparently not IE? https://github.com/twitter/typeahead.js/issues/847 --}}	      
-				    </div>
-				  </div>			  
-				</form>
-				<hr />
+				  	<form id="dashboard-search">
+					  <div class="form-group">				    
+					    <div class="input-group">
+					      <span class="input-group-addon"><i class="fa fa-search"></i></span>
+					      <input class="typeahead form-control input-lg" type="text" placeholder="Search for an item here" style="float: none;">		
+					      {{-- float: none aligns the addon in Chrome but apparently not IE? https://github.com/twitter/typeahead.js/issues/847 --}}	      
+					    </div>
+					  </div>			  
+					</form>
+					<hr />
 
 				@if ($layout_version == 3)
 					<div class="btn-group-mixed-width">
@@ -248,85 +252,81 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 					</div>
 				
 				@elseif ($layout_version == 2)
-				<div id="dashboard-grid">
-					
-					@foreach ($menu_links as $menu_title=>$links)
+					<div id="dashboard-grid">
+						
+						@foreach ($menu_links as $menu_title=>$links)
 
-						@if (count($links) > 1) 
-							{{-- Could echo $menu_title here, but is it really necessary? I quite like the idea of just one big grid... --}}
-						@endif
-						@foreach ($links as $link)
-	  					<div class="btn-group">
-
-						  <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-						    <i class="{{ $link['icon_only'] }} fa-3x fa-fw"></i><br><span class="label label-primary">{{ $link['title'] }}</span>			  
-						  </a>
-						  <ul class="dropdown-menu">
-						  	<li><a @if ($link['list_link']) href="{{ $link['list_link'] }}" @else class="disabled" @endif><i class="fa fa-list fa-fw"></i> {{ $link['list_title'] }}</a></li>			  	
-						    <li><a href="{{ $link['add_link'] }}"><i class="fa fa-plus fa-fw"></i> {{ $link['add_title'] }}</a></li>
-						  </ul>
-						</div>
-						@endforeach
-					@endforeach
-
-				</div>
-				@elseif ($layout_version == 1)
-				<div class="row no-gutter">
-				@foreach ($menu_links as $menu_title=>$links)
-
-					<div class="col-md-6">
-						<div class="list-group">
 							@if (count($links) > 1) 
-						  	<div class="list-group-item list-group-item-info"><strong>{{ $menu_title }}</strong></div>					  
-						  	@endif
-						  @foreach ($links as $link)
-							<a href="{{ route('ctrl::list_objects',$link['id']) }}" class="list-group-item">							
-								{{-- Not keen on this <span class="badge">14</span> --}}
-								{{-- I would like to add an "add" button here though. How? --}}							
-								<button class="btn btn-xs btn-success pull-right"  onclick="document.location = '{{ $link['add_link'] }}'; return false"  data-toggle="tooltip" data-placement="bottom" title="{{ $link['add_title'] }}"><i class="fa fa-plus"></i></button>
-								{!! $link['icon'] !!} {{ $link['title'] }}
-							</a>
-							
+								{{-- Could echo $menu_title here, but is it really necessary? I quite like the idea of just one big grid... --}}
+							@endif
+							@foreach ($links as $link)
+		  					<div class="btn-group">
 
+							  <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+							    <i class="{{ $link['icon_only'] }} fa-3x fa-fw"></i><br><span class="label label-primary">{{ $link['title'] }}</span>			  
+							  </a>
+							  <ul class="dropdown-menu">
+							  	<li><a @if ($link['list_link']) href="{{ $link['list_link'] }}" @else class="disabled" @endif><i class="fa fa-list fa-fw"></i> {{ $link['list_title'] }}</a></li>			  	
+							    <li><a href="{{ $link['add_link'] }}"><i class="fa fa-plus fa-fw"></i> {{ $link['add_title'] }}</a></li>
+							  </ul>
+							</div>
 							@endforeach
-						</div>
+						@endforeach
 					</div>
-				   
-				  @endforeach
-				</div>
-				@endif
+				@elseif ($layout_version == 1)
+					<div class="row no-gutter">
+					@foreach ($menu_links as $menu_title=>$links)
+						<div class="col-md-6">
+							<div class="list-group">
+								@if (count($links) > 1) 
+							  	<div class="list-group-item list-group-item-info"><strong>{{ $menu_title }}</strong></div>					  
+							  	@endif
+							  @foreach ($links as $link)
+								<a href="{{ route('ctrl::list_objects',$link['id']) }}" class="list-group-item">							
+									{{-- Not keen on this <span class="badge">14</span> --}}
+									{{-- I would like to add an "add" button here though. How? --}}							
+									<button class="btn btn-xs btn-success pull-right"  onclick="document.location = '{{ $link['add_link'] }}'; return false"  data-toggle="tooltip" data-placement="bottom" title="{{ $link['add_title'] }}"><i class="fa fa-plus"></i></button>
+									{!! $link['icon'] !!} {{ $link['title'] }}
+								</a>
+								
 
-			  </div>
+								@endforeach
+							</div>
+						</div>
+					  @endforeach
+					</div>
+				@endif
+			 	</div>
 			</div>
 		</div>
 		<div class="col-md-6">
 			@if (!empty($import_export_links))
 			<div class="panel panel-default">
-			  <div class="panel-heading"><h3 class="panel-title"><i class="fa fa-list-alt fa-fw" style="font-weight: normal"></i> Import/Export data</h3></div>
-			  <div class="panel-body">
-			  	<div class="btn-group-mixed-width">
-			  		@foreach ($import_export_links as $import_export_link)
-				  	<div class="btn-group btn-group-justified" role="group">
-					  <div class="btn-group text-only" role="group">
-					    <div class="btn btn-default">{!! $import_export_link['icon'] !!}{{ $import_export_link['title'] }}</div>
-					  </div>
-					  @if (!empty($import_export_link['import_link']))
-					  <div class="btn-group narrow" role="group">
-					    <a href="{{ $import_export_link['import_link'] }}" type="button" class="btn btn-success" data-toggle="tooltip" data-placement="bottom" title="Import"><i class="fa fa-upload"></i></a>
-					  </div>
-					  @endif
-					  @if (!empty($import_export_link['export_link']))
-					  <div class="btn-group narrow" role="group">
-					    <a href="{{ $import_export_link['import_link'] }}" type="button" class="btn btn-success" data-toggle="tooltip" data-placement="bottom" title="Export"><i class="fa fa-download"></i></a>
-					  </div>
-					  @endif
-					</div>	
-					@endforeach				
+			  	<div class="panel-heading"><h3 class="panel-title"><i class="fa fa-list-alt fa-fw" style="font-weight: normal"></i> Import/Export data</h3></div>
+			  	<div class="panel-body">
+			  		<div class="btn-group-mixed-width">
+				  		@foreach ($import_export_links as $import_export_link)
+					  	<div class="btn-group btn-group-justified" role="group">
+						  	<div class="btn-group text-only" role="group">
+						    	<div class="btn btn-default">{!! $import_export_link['icon'] !!}{{ $import_export_link['title'] }}</div>
+						  	</div>
+							@if (!empty($import_export_link['import_link']))
+							<div class="btn-group narrow" role="group">
+								<a href="{{ $import_export_link['import_link'] }}" type="button" class="btn btn-success" data-toggle="tooltip" data-placement="bottom" title="Import"><i class="fa fa-upload"></i></a>
+							</div>
+						  	@endif
+						  	@if (!empty($import_export_link['export_link']))
+						  	<div class="btn-group narrow" role="group">
+						    	<a href="{{ $import_export_link['import_link'] }}" type="button" class="btn btn-success" data-toggle="tooltip" data-placement="bottom" title="Export"><i class="fa fa-download"></i></a>
+						  	</div>
+						  @endif
+						</div>	
+						@endforeach				
+					</div>
 				</div>
 			</div>
 			@endif
 		</div>
-
 	</div>
 
 	
