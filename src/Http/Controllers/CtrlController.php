@@ -1052,7 +1052,7 @@ class CtrlController extends Controller
 			if (in_array($ctrl_property->field_type,['image','file'])) {
 				$ctrl_property->template = 'krajee';
 			}
-			elseif (in_array($ctrl_property->field_type,['date','datetime'])) {
+			elseif (in_array($ctrl_property->field_type,['date','datetime','time'])) {
 				$ctrl_property->template = 'date';
 			}
 			else {
@@ -1160,7 +1160,7 @@ class CtrlController extends Controller
 				'name'                    => $field_name,
 				'values'                  => $values, // A range of possible values
 				'value'                   => $value, // Remember that $value can be an array, for relationships / multiple selects etc
-				'type'                    => $ctrl_property->field_type, // This is used to modify some templates; date.blade.php can handle date or datetime types
+				'type'                    => $ctrl_property->field_type, // This is used to modify some templates; date.blade.php can handle date, datetime or time types for example
 				'template'                => $ctrl_property->template,
 				'label'                   => $ctrl_property->label,
 				'tip'                     => $ctrl_property->tip,
@@ -1261,12 +1261,13 @@ class CtrlController extends Controller
 	 */
 	public function save_object(Request $request, $ctrl_class_id, $object_id = NULL, $filter_string = NULL)
 	{		
-		
+		// dd($_POST);
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();				
 		$ctrl_properties = $ctrl_class->ctrl_properties()->where('fieldset','!=','')->get();
 
 		// Validate the post:
 		$validation = [];
+		$messages = []; // Polish the validation messages a bit
 		foreach ($ctrl_properties as $ctrl_property) {
 
 			$field_name = $ctrl_property->get_field_name();
@@ -1274,6 +1275,7 @@ class CtrlController extends Controller
 			$flags = explode(',', $ctrl_property->flags);
 			if (in_array('required', $flags)) {
 				$validation[$field_name][] = 'required';
+				$messages["$field_name.required"] = "The &ldquo;{$ctrl_property->label}&rdquo; field is required";
 			}
 			// Note: could also do this in query builder:
 			/*
@@ -1283,10 +1285,15 @@ class CtrlController extends Controller
 			*/
 			if ($ctrl_property->field_type == 'email') {
 				$validation[$field_name][] = 'email';
+				$messages["$field_name.email"] = "The &ldquo;{$ctrl_property->label}&rdquo; field must be a valid email address";
 			}
-			// Check for valid dates; not sure if tis is correct?
 			if (in_array($ctrl_property->field_type,['date','datetime'])) {
 				$validation[$field_name][] = 'date';
+				$messages["$field_name.date"] = "The &ldquo;{$ctrl_property->label}&rdquo; field must be a valid date";
+			}
+			else if (in_array($ctrl_property->field_type,['time'])) {
+				$validation[$field_name][] = 'date_format:g:i\ A';
+				$messages["$field_name.date"] = "The &ldquo;{$ctrl_property->label}&rdquo; field must be a valid time";
 			}
 
 			if (!empty($validation[$field_name])) {
@@ -1294,7 +1301,7 @@ class CtrlController extends Controller
 			}
 		}
 		if ($validation) {
-			$this->validate($request, $validation);
+			$this->validate($request, $validation, $messages);
 	    }
 
 	    $class 		= $ctrl_class->get_class();		
@@ -1302,8 +1309,18 @@ class CtrlController extends Controller
 		
 		// Convert dates back into MySQL format; this feels quite messy but I can't see where else to do it:
 		foreach ($ctrl_properties as $ctrl_property) {
-			if (in_array($ctrl_property->field_type,['date','datetime']) && !empty($_POST[$ctrl_property->name])) {				
-				$date_format = $ctrl_property->field_type == 'date' ? 'Y-m-d' : 'Y-m-d H:i:s';
+			if (in_array($ctrl_property->field_type,['date','datetime','time']) && !empty($_POST[$ctrl_property->name])) {								
+				switch ($ctrl_property->field_type) {
+					case 'date':
+						$date_format = 'Y-m-d';
+						break;
+					case 'datetime':
+						$date_format = 'Y-m-d H:i:s';
+						break;
+					case 'time':
+						$date_format = 'H:i:s';
+						break;						
+				}
 				$_POST[$ctrl_property->name] = date($date_format,strtotime($_POST[$ctrl_property->name]));
 			}
 		}

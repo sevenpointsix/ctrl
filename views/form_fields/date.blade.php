@@ -8,14 +8,18 @@
         // Convert the current database value into a readable string; we convert this back before saving it to the DB
         // This is a bit messy but the datetimepicker doesn't seem to do much in the way of date conversion...
         if ($field['type'] == 'date') {
-            $date_format = 'jS F Y';
-            $clientside_date_format = 'Do MMMM YYYY'; // Based on Moment.js, http://momentjs.com/docs/#/displaying/format/
+            $convert_date_format = 'jS F Y'; // Convert the date FROM this format as it comes from the databse
+            $clientside_date_format = 'Do MMMM YYYY'; // Display the date usin this format, based on Moment.js, http://momentjs.com/docs/#/displaying/format/
         }
         elseif ($field['type'] == 'datetime') {
-            $date_format = 'jS F Y H:i';
+            $convert_date_format = 'jS F Y H:i';
             $clientside_date_format = 'Do MMMM YYYY HH:mm';
         }
-        $date_value = ($field['value'] && strtotime($field['value']) > 0) ? date($date_format,strtotime($field['value'])) : '';
+        elseif ($field['type'] == 'time') {
+            $convert_date_format = 'H:i';
+            $clientside_date_format = 'LT';
+        }
+        $date_value = ($field['value'] && strtotime($field['value']) > 0) ? date($convert_date_format,strtotime($field['value'])) : '';
     ?>
     <input type="text" class="form-control" id="{{ $field['id'] }}" name="{{ $field['name'] }}" value="{{ $date_value }}" placeholder="">    
 @overwrite
@@ -40,8 +44,9 @@
             widgetPositioning: {
                 horizontal: 'left',
                 vertical: 'bottom'
-            }
-            // showClose: true // Has no effect when sideBySide is true
+            },
+            showClose: true, // Has no effect when sideBySide is true, but fine for date/time fields
+            toolbarPlacement:'bottom' // Aha! Fixes showClose for sideBySide, see https://github.com/Eonasdan/bootstrap-datetimepicker/issues/1267
             // inline: true // Nice but needs wrapping in columns, otherwise it has 100% width
         });
     });

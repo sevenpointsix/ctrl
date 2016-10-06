@@ -26,7 +26,7 @@ class CtrlSynch extends Command
      *
      * @var string
      */
-    protected $description = 'This command updates the ctrl_ tables to reflect the current database';
+    protected $description = 'This command updates the ctrl_ tables to reflect the current database, and/or generates model files';
 
     /**
      * Create a new command instance.
