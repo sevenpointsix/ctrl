@@ -455,36 +455,35 @@ class CtrlController extends Controller
         ],[
 		    'files-import.required' => 'Please select some files to upload'
 		]);
+	
+		// Filter the array to remove empty values; we always have an empty initial value because of the way that the Krajee upload works
+		// (ie, we clone the input element for each Ajax response post-upload, but that leaves the orginal node empty)
+		$files = array_filter($request->input('files-import'));
+		
+		$callback_function = $this->module->run('import_objects',[
+			'get-callback-function',
+			$ctrl_class_id,
+			// $filter_string // required?
+		]);
 
-		// Lifted from http://tutsnare.com/upload-multiple-files-in-laravel/
+		$count = $callback_function($files);
 
-		//AAARGH -- we're not processing file uploads here! We do that by AJAX! Fuck me. We accept file paths here...
-
-		dd($_POST); // NOTE: if multiple uploads, we need to filter 
-		$files = $request->file('files-import');
-		dd($files);
-		// Making counting of uploaded images
-		$file_count = count($files);
-		// start count how many uploaded
-		$upload_count = 0;
-		foreach ($files as $file) {
-			$rules = array('file' => 'required'); //'required|mimes:png,gif,jpeg,txt,pdf,doc'
-			$validator = Validator::make(array('file'=> $file), $rules);
-			if ($validator->passes()) {
-				$destinationPath = 'uploads';
-				$filename = $file->getClientOriginalName();
-				$upload_success = $file->move($destinationPath, $filename);
-				$upload_count++;
-			}
+		/* At some point it'd make sense to run a rudimentary security check; this will need tweaking if we ever use a path other than /uploads for uploads. Realistically, though, this is only needed if someone is actively trying to hack the CMS:
+		foreach ($files as $file) {			
+			if (strpos($file, '/uploads') !== 0) continue;
 		}
-		dd("$upload_count, $file_count");
-		if($upload_count == $file_count){
-			Session::flash('success', 'Upload successfully'); 
-			return Redirect::to('upload');
-		} 
-		else {
-			return Redirect::to('upload')->withInput()->withErrors($validator);
-		}
+		*/
+		
+		if (!empty($errors)) {
+			return response()->json($errors,422);
+       	}
+       	else {
+       		$message  = $count . ' files imported';
+       		$messages = [$message];
+       		$request->session()->flash('messages', $messages);		 
+       		$back = route('ctrl::import_objects',[$ctrl_class_id, $filter_string]);
+       		return response()->json(['redirect'=>$back]);
+       	}
 	}
 
 	/**

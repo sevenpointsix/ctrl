@@ -91,13 +91,11 @@
     var response = data.response;
     // Set the hidden field value to that of the file just uploaded
 
-    // WE NEED TO HANDLE MULTIPLE FILE UPLOADS HERE. We get one response per upload, so we need to append this value to $('#{{ $field['id'] }}')[]...?
-    // I think we're going to have to active duplicate the current field each time...
-    // Something like this
-    if ($('#{{ $field['id'] }}').attr('name').indexOf('[]') > -1) {
+    // Handle multiple uploads here
+    if ($('#{{ $field['id'] }}').attr('name').indexOf('[]') > -1) { // If this is a multiple field
       new_field = $('#{{ $field['id'] }}').clone().removeAttr('id');  
       new_field.val(response.link);
-      $('#{{ $field['id'] }}').after(new_field);
+      $('#{{ $field['id'] }}').after(new_field);      
     }
     else {
       $('#{{ $field['id'] }}').val(response.link);
