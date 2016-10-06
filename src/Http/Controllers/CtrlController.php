@@ -524,9 +524,9 @@ class CtrlController extends Controller
 
     	Excel::filter('chunk')->load($csv_file)->chunk(250, function($results) use (
     		&$count,
-    		$loop,
+    		$loop, // Does this need to be passed by reference?
     		$ctrl_class_id,
-    		$errors,
+    		&$errors,
     		$required_headers,
     		$slugged_headers,
     		$callback_function
