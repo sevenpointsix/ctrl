@@ -337,6 +337,22 @@ class CtrlController extends Controller
         	
         }
         // dd($js_columns);
+        if ($this->module->enabled('custom_columns')) {
+			$custom_columns = $this->module->run('custom_columns',[
+				$ctrl_class_id,
+			]);
+		}
+		if (!empty($custom_columns)) {
+			foreach ($custom_columns as $custom_column=>$details) {
+				$cc 		  = new \StdClass;
+		        $cc->data     = $custom_column;
+		        $cc->name     = $custom_column;
+		        $js_columns[] = $cc;
+		        $th_columns[] = sprintf('<th %s>%s</th>',($details['searchable'] ? 'data-search-text="true"' : ''),$details['table_heading']);
+			}
+		}
+        
+
         // Add the "action" column
         $action_column       = new \StdClass;
         $action_column->data = 'action';
@@ -769,14 +785,29 @@ class CtrlController extends Controller
 			$objects = $class::with(implode(',', $with))->select($ctrl_class->table_name.'.*');	
 		}
 		else {
-			$objects    = $class::query();
+			// $objects    = $class::query(); 
+			// I think that select() and query() just return a Query Builder object, so both can be used here
+			// Taking this approach means that we can add extra selects (ie, extra columns) via a module though
+			$objects    = $class::select($ctrl_class->table_name.'.*');		
 		}
 
+		if ($this->module->enabled('custom_columns')) {
+			$custom_columns = $this->module->run('custom_columns',[
+				$ctrl_class_id,
+			]);
+		}
+		if (!empty($custom_columns)) {
+			foreach ($custom_columns as $custom_column=>$details) {
+				$add_select = \DB::raw(sprintf('(%s) AS `%s`',$details['raw_sql'],$custom_column));				
+				$objects->addSelect($add_select);				
+			}
+		}
+		
 		// See http://datatables.yajrabox.com/eloquent/dt-row for some good tips here
 
 		// Known issue, that I'm struggling to resolve; if we have a dropdown to search related fields, but there's no relationship for an object, we can't select the "empty" value and show all items without a relationship. TODO.
 
-        return Datatables::of($objects)  
+        $datatable = Datatables::of($objects)  
         	->setRowId('id') // For reordering
         	->editColumn('order', '<i class="fa fa-reorder"></i>') // Set the displayed value of the order column to just show the icon        	        	
         	// ->editColumn('src', '<div class="media"><div class="media-left"><a href="{{$src}}" data-toggle="lightbox" data-title="{{$src}}"><img class="media-object" src="{{$src}}" height="30"></a></div><div class="media-body" style="vertical-align: middle">{{$src}}</div></div>') // Draw the actual image, if this is an image field
@@ -789,7 +820,7 @@ class CtrlController extends Controller
 
 					return sprintf('<div class="media"><div class="media-left"><a href="%1$s" data-toggle="lightbox" data-title="%2$s"><img class="media-object" src="%1$s" height="30"></a></div><div class="media-body" style="vertical-align: middle">%2$s</div></div>',$src, $basename);
 				}
-        	}) // Draw the actual image, if this is an image field
+        	})
         	->editColumn('file', function($object) {  // If we have a "file" column, assume it's a clickable link. DEFINITELY need to query ctrlproperty->type here,see 'src' above:
 	    		if ($file = $object->file) {
 	    			if (strpos($file, '/') !== 0) $file = "/$file";
@@ -799,12 +830,11 @@ class CtrlController extends Controller
 
 					return sprintf('<i class="fa fa-download"></i> <a href="%1$s">%2$s</a>',$file, $basename);
 				}
-        	}) // Draw the actual image, if this is an image field
+        	})
             ->addColumn('action', function ($object) use ($ctrl_class) {
-
             	return $this->get_row_buttons($ctrl_class->id, $object->id);
 
-            })
+            })       
             // Is this the best place to filter results if necessary?
             // I think so. See: http://datatables.yajrabox.com/eloquent/custom-filter
         	->filter(function ($query) use ($filter_array) {
@@ -822,8 +852,15 @@ class CtrlController extends Controller
 	            	}
 	            	//$query->where('title','LIKE',"%related%");	                
 	            }	            
-	        })
-            ->make(true);
+	        });
+
+        /* Ah, this is the WRONG way to add a column. Instead, add it to the main ::select() routines above:
+        $datatable->addColumn('product_count', function ($object) use ($ctrl_class) {
+        	return DB::table('product_profile_cache')->where('profile_id',$object->profile_id)->count();
+        });
+        */
+
+	    return $datatable->make(true);
 
 		// return Datatables::of($objects)->make(true);
 	}

@@ -138,4 +138,29 @@
 		}
 
 
+		/**
+		 * Add custom columns to the DataTable
+		 * @param  integer $ctrl_class_id The ID of the class we're editing
+		 * @return various				 Various; can be an array of headers, a function definition, and so on. Depends on context.
+		 */
+		protected function custom_columns($ctrl_class_id) {
+			$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
+
+			$columns = [];
+
+			// Configure requred_headers, define the callback function
+			switch ($ctrl_class->name) {
+				case '[CLASS_NAME]':					
+					$columns['[COLUMN_KEY]'] = [
+						'table_heading' => 'COLUMN_TITLE',
+						'searchable'    => false, // Do we want to add a search box to this column?
+						'raw_sql'		=> "[QUERY]"
+							// eg, SELECT count(*) from product_profile_cache WHERE profile_id = faqs.profile_id
+					];
+				break;
+			}
+
+			return $columns;
+		}
+
 	}
