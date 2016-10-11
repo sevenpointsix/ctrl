@@ -24,6 +24,7 @@ use Schema;
 
 use Datatables;
 use Maatwebsite\Excel\Facades\Excel;
+use Sunra\PhpSimple\HtmlDomParser; // For manipulating pages, eg, customising the dashboard
 
 use \App\Ctrl\CtrlModules;
 use \Sevenpointsix\Ctrl\Models\CtrlClass;
@@ -175,11 +176,19 @@ class CtrlController extends Controller
 			];		
 		}
 
-		return view('ctrl::dashboard',[			
+		$rendered_view = view('ctrl::dashboard',[			
 			'logo'                => config('ctrl.logo'),
 			'layout_version'      => 3, // As I play around with layouts...
 			'import_export_links' => $import_export_links
 		]);
+
+		// Manipulate the dashboard?
+		$dom = HtmlDomParser::str_get_html($rendered_view);
+		$import_export_panel = $dom->find('div[id=import_export_panel]',0);
+		$import_export_panel->outertext .= '<p>TEST</p>';
+		$rendered_view = $dom;
+
+		return $rendered_view;
 	}
 
 

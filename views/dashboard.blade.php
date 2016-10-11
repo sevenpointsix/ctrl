@@ -301,7 +301,7 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 		</div>
 		<div class="col-md-6">
 			@if (!empty($import_export_links))
-			<div class="panel panel-default">
+			<div class="panel panel-default" id="import_export_panel">
 			  	<div class="panel-heading"><h3 class="panel-title"><i class="fa fa-list-alt fa-fw" style="font-weight: normal"></i> Import/Export data</h3></div>
 			  	<div class="panel-body">
 			  		<div class="btn-group-mixed-width">
