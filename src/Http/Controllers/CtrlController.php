@@ -184,7 +184,9 @@ class CtrlController extends Controller
 
 		// Manipulate the dashboard to add custom content if necessary:
  		if ($this->module->enabled('manipulate_dom')) {
+ 			$dom = \Sunra\PhpSimple\HtmlDomParser::str_get_html($rendered_view);
 			$rendered_view = $this->module->run('manipulate_dom',[
+				$dom,
 				'dashboard'
 			]);
 		}

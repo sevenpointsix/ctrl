@@ -166,17 +166,20 @@
 		/**
 		 * Manipulate the DOM of a page; this is a flexible way to tweak a page or add custom content
 		 * @param  Request  $request	 
-		 * @param  string $rendered_view The current rendered view
+		 * @param  string $dom The current dom
 		 * @param  string $context Explain where this rendered view is actually displayed, eg "dashboard"
-		 * @return
+		 * @return string $dom The $dom object (which will be rendered directly as a string)
 		 */
-		protected function manipulate_dom($rendered_view, $context) {
-			$dom = Sunra\PhpSimple\HtmlDomParser::str_get_html($rendered_view);
-			$import_export_panel = $dom->find('div[id=import_export_panel]',0);
-			$import_export_panel->outertext .= '<p>TEST</p>';
-			$rendered_view = $dom;
+		protected function manipulate_dom($dom, $context) {
+			
+			/* For example...
+			if ($context == 'dashboard') {
+				$import_export_panel = $dom->find('div[id=import_export_panel]',0);
+				$import_export_panel->outertext .= '<p>An extra panel goes here</p>';	
+			}
+			*/
 
-			return $rendered_view;
+			return $dom;
 		}
 
 	}
