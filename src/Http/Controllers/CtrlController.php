@@ -182,12 +182,13 @@ class CtrlController extends Controller
 			'import_export_links' => $import_export_links
 		]);
 
-		// Manipulate the dashboard?
-		$dom = HtmlDomParser::str_get_html($rendered_view);
-		$import_export_panel = $dom->find('div[id=import_export_panel]',0);
-		$import_export_panel->outertext .= '<p>TEST</p>';
-		$rendered_view = $dom;
-
+		// Manipulate the dashboard to add custom content if necessary:
+ 		if ($this->module->enabled('manipulate_dom')) {
+			$rendered_view = $this->module->run('manipulate_dom',[
+				'dashboard'
+			]);
+		}
+		
 		return $rendered_view;
 	}
 

@@ -163,4 +163,20 @@
 			return $columns;
 		}
 
+		/**
+		 * Manipulate the DOM of a page; this is a flexible way to tweak a page or add custom content
+		 * @param  Request  $request	 
+		 * @param  string $rendered_view The current rendered view
+		 * @param  string $context Explain where this rendered view is actually displayed, eg "dashboard"
+		 * @return
+		 */
+		protected function manipulate_dom($rendered_view, $context) {
+			$dom = Sunra\PhpSimple\HtmlDomParser::str_get_html($rendered_view);
+			$import_export_panel = $dom->find('div[id=import_export_panel]',0);
+			$import_export_panel->outertext .= '<p>TEST</p>';
+			$rendered_view = $dom;
+
+			return $rendered_view;
+		}
+
 	}
