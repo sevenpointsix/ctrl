@@ -222,10 +222,22 @@ class CtrlController extends Controller
 			// I have no idea how to include searchable related columns in the query builder below...		
 
 		if (!$searchable_properties->isEmpty()) {
+
+			$first_header_property = $ctrl_class->ctrl_properties()->whereRaw(
+			   '(find_in_set(?, flags))',
+			   ['header']		   
+			)->orderBy('order')->first();
+
 			$query = $class::query(); // From http://laravel.io/forum/04-13-2015-combine-foreach-loop-and-eloquent-to-perform-a-search
 			foreach ($searchable_properties as $searchable_property) {			
-				$query->orWhere($searchable_property->name,'LIKE',"$search_term%"); // Or would a %$term% search be better?
+				$query->orWhere($searchable_property->name,'LIKE',"%$search_term%"); // Or would a %$term% search be better?
 			}
+
+			// $query->orderBy($first_header_property->name);
+			// Wow, this actually works. Prefer matches at the start of a string, from:
+			// http://stackoverflow.com/questions/6265544/how-to-prioritize-a-like-query-select-based-on-string-position-in-field
+			$query->orderByRaw("INSTR({$first_header_property->name}, '$search_term'), {$first_header_property->name}");
+
 			$objects = $query->take(20)->get();	// Limits the dropdown to 20 items; this may need to be adjusted
 			if (!$objects->isEmpty()) {
 			    foreach ($objects as $object) {
