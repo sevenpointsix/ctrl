@@ -75,7 +75,7 @@ class CtrlServiceProvider extends ServiceProvider{
 		// This folder holds the core views used by the CMS...
 		$this->loadViewsFrom(realpath(__DIR__.'/../views'), 'ctrl');
 		// ...and this folder can be used to store custom views if necessary
-		$this->loadViewsFrom(app_path('ctrl/views'), 'ctrl_custom');
+		$this->loadViewsFrom(app_path('Ctrl/views'), 'ctrl_custom');
 		$this->setupRoutes($this->app->router);
 
 		// This allows the config file to be published using artisan vendor:publish
