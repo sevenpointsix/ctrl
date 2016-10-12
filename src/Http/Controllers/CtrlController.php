@@ -176,7 +176,7 @@ class CtrlController extends Controller
 			];		
 		}
 
-		$rendered_view = view('ctrl::dashboard',[			
+		$view = view('ctrl::dashboard',[			
 			'logo'                => config('ctrl.logo'),
 			'layout_version'      => 3, // As I play around with layouts...
 			'import_export_links' => $import_export_links
@@ -184,14 +184,18 @@ class CtrlController extends Controller
 
 		// Manipulate the dashboard to add custom content if necessary:
  		if ($this->module->enabled('manipulate_dom')) {
- 			$dom = \Sunra\PhpSimple\HtmlDomParser::str_get_html($rendered_view);
-			$rendered_view = $this->module->run('manipulate_dom',[
+ 			// Note that we need to pass some parameters here to prevent line breaks from being removed:
+ 			// str_get_html($str, $lowercase=true, $forceTagsClosed=true, $target_charset = DEFAULT_TARGET_CHARSET, $stripRN=true, $defaultBRText=DEFAULT_BR_TEXT, $defaultSpanText=DEFAULT_SPAN_TEXT)
+ 			// From http://stackoverflow.com/questions/4812691/preserve-line-breaks-simple-html-dom-parser
+ 			$rendered_view = $view->render();
+ 			$dom = \Sunra\PhpSimple\HtmlDomParser::str_get_html($rendered_view, false, false, 'UTF-8', false);
+			$view = $this->module->run('manipulate_dom',[
 				$dom,
 				'dashboard'
 			]);
 		}
 		
-		return $rendered_view;
+		return $view;
 	}
 
 
