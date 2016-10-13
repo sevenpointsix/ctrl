@@ -236,7 +236,13 @@ class CtrlController extends Controller
 			// $query->orderBy($first_header_property->name);
 			// Wow, this actually works. Prefer matches at the start of a string, from:
 			// http://stackoverflow.com/questions/6265544/how-to-prioritize-a-like-query-select-based-on-string-position-in-field
-			$query->orderByRaw("INSTR({$first_header_property->name}, '$search_term'), {$first_header_property->name}");
+			// We need to handle relationships here though:
+			if ($first_header_property->relationship_type == 'belongsTo') {
+				$query->orderBy($first_header_property->foreign_key);
+			}
+			else {
+				$query->orderByRaw("INSTR({$first_header_property->name}, '$search_term'), {$first_header_property->name}");
+			}
 
 			$objects = $query->take(20)->get();	// Limits the dropdown to 20 items; this may need to be adjusted
 			if (!$objects->isEmpty()) {
@@ -1066,8 +1072,17 @@ class CtrlController extends Controller
 		)->get();
 		$title_strings = [];
 		foreach ($title_properties as $title_property) {
-			$property = $title_property->name;
-			$title_strings[] = $object->$property;
+
+			// So, if $title_property here is a relationship, like a "link type"
+			// load the related object, and then call get_object_title...?
+			if ($title_property->relationship_type == 'belongsTo') {
+				$related_object = $object->{$title_property->name};
+				$title_strings[] = $this->get_object_title($related_object);
+			}
+			else {
+				$property = $title_property->name;
+				$title_strings[] = $object->$property;
+			}
 		}
 
 		return implode(' ', $title_strings);

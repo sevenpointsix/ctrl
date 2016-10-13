@@ -125,6 +125,7 @@ class CtrlServiceProvider extends ServiceProvider{
 
 		// Excel module used when importing, exporting CSV data
 		\App::register('Maatwebsite\Excel\ExcelServiceProvider');
+		
 		// This didn't seem to work, and isn't needed if we "use Maatwebsite\Excel\Facades\Excel;" at the top of the controller
 		// \App::alias('Excel','Maatwebsite\Excel\Facades\Excel');
 

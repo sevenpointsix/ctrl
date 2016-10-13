@@ -244,7 +244,7 @@ class CtrlSynch extends Command
                         ])->first();
 
                         if (is_null($inverse_ctrl_class)) {
-                            trigger_error("Cannot load ctrl_class for table $inverse_table_name");
+                            $this->error("Cannot load ctrl_class for inverse property $column_name of $standard_table");
                             continue;
                         }
 
@@ -328,7 +328,7 @@ class CtrlSynch extends Command
                 ])->first();
 
                 if (is_null($related_ctrl_class_one) || is_null($related_ctrl_class_two)) {
-                    trigger_error("Cannot load related ctrl_classes for pivot table $related_table_name");
+                    $this->error("Cannot load related ctrl_classes for pivot table $related_table_name; may not be a problem");
                     continue;
                 }
 
