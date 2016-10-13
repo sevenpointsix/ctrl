@@ -329,7 +329,7 @@ class CtrlController extends Controller
         		// We also haven't allowed for classes with multiple "string" values;
         		// we may have to utilise something from http://datatables.yajrabox.com/eloquent/dt-row for that
         		$related_ctrl_class = CtrlClass::where('id',$header->related_to_id)->firstOrFail();	
-        		$string = $ctrl_class->ctrl_properties()->whereRaw(
+        		$string = $related_ctrl_class->ctrl_properties()->whereRaw(
 				   'find_in_set(?, flags)',
 				   ['string']				   
 				)->firstOrFail();
@@ -867,7 +867,6 @@ class CtrlController extends Controller
         	})
             ->addColumn('action', function ($object) use ($ctrl_class) {
             	return $this->get_row_buttons($ctrl_class->id, $object->id);
-
             })       
             // Is this the best place to filter results if necessary?
             // I think so. See: http://datatables.yajrabox.com/eloquent/custom-filter
