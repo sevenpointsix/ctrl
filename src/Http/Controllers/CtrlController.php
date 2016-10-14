@@ -362,6 +362,10 @@ class CtrlController extends Controller
         					// We still have a bug whereby the sort icon disappears from the order column when we sort by another column though...?
         			$column->className      = "reorder";
         		}
+        		else if ($header->field_type == 'checkbox') { // We convert these to Yes/No values, so allow a search dropdown...        			
+	        		// $column->defaultContent = 'None'; // Necessary..?
+        			$th_columns[] = '<th data-search-dropdown="true">'.$header->label.'</th>';
+        		}
         		else {
         			$th_columns[] = '<th data-search-text="true">'.$header->label.'</th>';
         		}
@@ -892,6 +896,22 @@ class CtrlController extends Controller
         	return DB::table('product_profile_cache')->where('profile_id',$object->profile_id)->count();
         });
         */
+
+        // Can we filter certain columns here though? Try this:
+        foreach ($headers as $header) {
+			if ($header->field_type == 'checkbox') {
+				// Convert checkboxes to yes/no
+				$property = $header->name;
+				$datatable->editColumn($property, function($object) use ($property) {
+		    		if ($object->$property) {
+		    			return 'Yes';
+					}
+					else {
+						return 'No';
+					}
+	        	});
+			}
+		}
 
 	    return $datatable->make(true);
 

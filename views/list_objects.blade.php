@@ -274,9 +274,15 @@ $(function() {
                 if (column_searchable !== 'true') return false; // Ignore columns not marked as searcahble                  		
                 if (column.data().unique().length == 1) {
                 	column.orderable = false; // Attempting to remove the "order" option on this column, but this doesn't work...
-                	return false; // Ignore columns with only one unique value
+                	// return false; // Ignore columns with only one unique value
+                	// This is confusing I think... it looks like a bug:                	
+                	select_html = '<select class="form-control" disabled onclick="stopPropagation(event);"><option value="">'+column_title+'</option></select>';
                 }
-                var select = $('<select class="form-control" onclick="stopPropagation(event);"><option value="">'+column_title+'</option></select>')
+                else {
+                	select_html = '<select class="form-control" onclick="stopPropagation(event);"><option value="">'+column_title+'</option></select>';
+                }
+
+                var select = $(select_html)
                     .appendTo( $(column.header()).empty() )
                     .on( 'change', function () {
                         var val = $.fn.dataTable.util.escapeRegex(
