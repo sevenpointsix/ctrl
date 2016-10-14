@@ -22,6 +22,7 @@ use Storage;
 use Log;
 use Schema;
 
+use Barryvdh\Debugbar; // Will this kick off if we've not installed DebugBar on the main site? We need it so that we can disable it when returning Froala AJAX 
 use Datatables;
 use Maatwebsite\Excel\Facades\Excel;
 use Sunra\PhpSimple\HtmlDomParser; // For manipulating pages, eg, customising the dashboard
@@ -1551,6 +1552,8 @@ class CtrlController extends Controller
 	        'file' => 'required|image'
 	    ]);
 	    */
+	    
+	    Debugbar::disable();
 
 	    $response = new \StdClass;
 
