@@ -214,7 +214,8 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 	<div class="page-header">
 	  <h1>@if ($logo)<img src="{{ $logo }}"> @endif<small>Content Management System</small></h1>
 	</div>
-
+	@include('ctrl::errors')
+	@include('ctrl::messages')
 	<div class="row">
 
 		<div class="col-md-6">
