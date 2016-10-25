@@ -105,8 +105,7 @@ class CtrlController extends Controller
 			$description = array();
 			foreach ($filter_string as $filter) {
 				$ctrl_property = CtrlProperty::where('id',$filter['ctrl_property_id'])->firstOrFail(); // This throws a 404 if not found; not sure that's strictly what we want
-				// We only handle 'belongsTo' filters at the moment
-				if ($ctrl_property->relationship_type == 'belongsTo') {
+				if ($ctrl_property->relationship_type == 'belongsTo' || $ctrl_property->relationship_type == 'belongsToMany') { // Can't be anything else, can it?
 					$related_ctrl_class = CtrlClass::where('id',$ctrl_property->related_to_id)->firstOrFail(); // As above
 					$related_class      = $related_ctrl_class->get_class();
 					$related_object     = $related_class::where('id',$filter['value'])->firstOrFail();
