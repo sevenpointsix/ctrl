@@ -1007,29 +1007,29 @@ class CtrlController extends Controller
 				trigger_error("Cannot process relationship_type");
 			}
 			
+			/*
 			if ($count > 0) {
 				$filter_list_title = 'View '.$count . ' '.($count == 1 ? $filter_ctrl_class->get_singular() : $filter_ctrl_class->get_plural());
 				$filter_list_link  = route('ctrl::list_objects',[$filter_ctrl_property->related_to_id,$filtered_list_string]);
 			}
 			else {
 				$filter_list_title = 'No '.$filter_ctrl_class->get_plural();						
-
 				$filter_list_link  = false;
 			}
-			$filter_add_title = 'Add '.$this->a_an($filter_ctrl_class->get_singular()).' '.$filter_ctrl_class->get_singular();
+			*/
 
+			$filter_add_title = 'Add '.$this->a_an($filter_ctrl_class->get_singular()).' '.$filter_ctrl_class->get_singular();
 			$filter_add_link  = route('ctrl::edit_object',[$filter_ctrl_property->related_to_id,0,$filtered_list_string]); // TODO check permissions here; can we add items?
 
 			// New: always link to the filtered list, regardless of whether we have any related items:
 			$filter_list_link  = route('ctrl::list_objects',[$filter_ctrl_property->related_to_id,$filtered_list_string]);
-
-			$title = ucwords($filter_ctrl_class->get_plural());
+			$filter_list_title = $filter_ctrl_property->label ? $filter_ctrl_property->label : ucwords($filter_ctrl_class->get_plural());
 
         	$filtered_list_links[]  = [
     			'icon'       => $filter_ctrl_class->get_icon(),
     			'count'      => $count,
-    			'title'      => $title, // A generic title, only used by the key at the moment
-    			'list_title' => $filter_list_title,
+    			'title'      => $filter_list_title, // A generic title, only used by the key at the moment
+    			// 'list_title' => $filter_list_title, // Not used
     			'list_link'  => $filter_list_link,
     			'add_title'  => $filter_add_title,
     			'add_link'   => $filter_add_link,
