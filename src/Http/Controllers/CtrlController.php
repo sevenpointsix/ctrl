@@ -878,14 +878,26 @@ class CtrlController extends Controller
 	            if ($filter_array) {
 	            	foreach ($filter_array as $filter) {
 						$filter_ctrl_property = CtrlProperty::where('id',$filter['ctrl_property_id'])->firstOrFail(); // This throws a 404 if not found; not sure that's strictly what we want
-						// We only handle 'belongsTo' filters at the moment
-						if ($filter_ctrl_property->relationship_type == 'belongsTo') {
-							// Duplication of code from @describe_filter here
+						
 							$related_ctrl_class = CtrlClass::where('id',$filter_ctrl_property->related_to_id)->firstOrFail(); // As above
 							$related_class      = $related_ctrl_class->get_class();
 							$related_object     = $related_class::where('id',$filter['value'])->firstOrFail();
+
+						if ($filter_ctrl_property->relationship_type == 'belongsTo') {
+							// Duplication of code from @describe_filter here							
 							$query->where($filter_ctrl_property->foreign_key,$related_object->id);
 						}						
+						else if ($filter_ctrl_property->relationship_type == 'belongsToMany') {							
+							// We need to join the query here, to generate something like this (from Argos, listing products related to a cached profile)
+							/*
+							$query->join('product_profile_cache', 'id', '=', $filter_ctrl_property->join_table.'product_profile_cache.product_id')            
+                    			  ->where('product_profile_cache.profile_id',$related_object->id);							
+							 */                    		
+							// Technically 'id' here is 'products.id'; is 'id' always unambiguous?
+							$query->join($filter_ctrl_property->pivot_table, 'id', '=', $filter_ctrl_property->pivot_table.'.'.$filter_ctrl_property->local_key)            
+                    			  ->where($filter_ctrl_property->pivot_table.'.'.$filter_ctrl_property->foreign_key,$related_object->id);							
+
+	            	}
 	            	}
 	            	//$query->where('title','LIKE',"%related%");	                
 	            }	            
@@ -937,7 +949,8 @@ class CtrlController extends Controller
     	$filtered_list_properties = $ctrl_class->ctrl_properties()->whereRaw(
 		   '(find_in_set(?, flags))',
 		   ['filtered_list']		   
-		)->where('relationship_type','hasMany')->get(); // I think a filtered list will always be "hasMany"?           	            					
+		// )->where('relationship_type','hasMany')->get(); // I think a filtered list will always be "hasMany"?           	            					
+		)->get(); // maybe not...
     	foreach ($filtered_list_properties as $filter_ctrl_property) {
     		// Build the filter string
     		/*
@@ -946,10 +959,25 @@ class CtrlController extends Controller
     		 	- We need to find the "test" property of the "Many" object, so that we can show Many items where "test" is the value of this object
     		 I believe we can do this by matching the foreign key
     		 */
+    		try {
+    			if ($filter_ctrl_property->relationship_type == 'hasMany') {
     		$inverse_filter_ctrl_property = CtrlProperty::where('ctrl_class_id',$filter_ctrl_property->related_to_id)
     														->where('related_to_id',$filter_ctrl_property->ctrl_class_id)
     														->where('foreign_key',$filter_ctrl_property->foreign_key) // Necessary?
     														->firstOrFail();
+    			}
+    			else if ($filter_ctrl_property->relationship_type == 'belongsToMany') {
+    				$inverse_filter_ctrl_property = CtrlProperty::where('ctrl_class_id',$filter_ctrl_property->related_to_id)
+    														->where('related_to_id',$filter_ctrl_property->ctrl_class_id)
+    														->where('pivot_table',$filter_ctrl_property->pivot_table)
+    														->firstOrFail();
+    			}
+    		
+    		}
+    		catch (\Exception $e) {
+    			trigger_error($e->getMessage());
+    		}
+
     		
     		$filtered_list_array    = [
     			'ctrl_property_id'=>$inverse_filter_ctrl_property->id, // We don't use the keys here, they're for clarity only (as we use them elsewhere when handling filters)
@@ -958,14 +986,26 @@ class CtrlController extends Controller
     		$filtered_list_string = implode(',', $filtered_list_array); // Add 1,2 to the array (ctrl_property_id,value). Discard keys as above
     		
     		// Establish the title and icon for the link; ie, the icon and title of the related class
+    		
     		$filter_ctrl_class = CtrlClass::where('id',$filter_ctrl_property->related_to_id)->firstOrFail();
+    		
 			//$filter_related_class = $filter_ctrl_class->get_class();
 
 			// Count the related items					
 			$count_ctrl_class = $filter_ctrl_class;
 			$count_class      = $count_ctrl_class->get_class();					
+
+			// Need to vary this if we're counting belongsToMany:
+			if ($filter_ctrl_property->relationship_type == 'hasMany') {
 			$count_objects    = $count_class::where($inverse_filter_ctrl_property->foreign_key,$filtered_list_array['value']);
 			$count            = $count_objects->count();
+			}
+			else if ($filter_ctrl_property->relationship_type == 'belongsToMany') {
+				$count = DB::table($filter_ctrl_property->pivot_table)->where($inverse_filter_ctrl_property->foreign_key,$filtered_list_array['value'])->count();				
+			}
+			else {
+				trigger_error("Cannot process relationship_type");
+			}
 			
 			if ($count > 0) {
 				$filter_list_title = 'View '.$count . ' '.($count == 1 ? $filter_ctrl_class->get_singular() : $filter_ctrl_class->get_plural());
@@ -973,9 +1013,11 @@ class CtrlController extends Controller
 			}
 			else {
 				$filter_list_title = 'No '.$filter_ctrl_class->get_plural();						
+
 				$filter_list_link  = false;
 			}
 			$filter_add_title = 'Add '.$this->a_an($filter_ctrl_class->get_singular()).' '.$filter_ctrl_class->get_singular();
+
 			$filter_add_link  = route('ctrl::edit_object',[$filter_ctrl_property->related_to_id,0,$filtered_list_string]); // TODO check permissions here; can we add items?
 
 			// New: always link to the filtered list, regardless of whether we have any related items:
@@ -1423,6 +1465,8 @@ class CtrlController extends Controller
 				$_POST[$ctrl_property->name] = date($date_format,strtotime($_POST[$ctrl_property->name]));
 			}
 		}
+
+		// dd($_POST);
 		
         $object->fill($_POST);
 
