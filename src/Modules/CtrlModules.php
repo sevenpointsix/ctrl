@@ -182,4 +182,35 @@
 			return $dom;
 		}
 
+		/**
+		 * Tweak permissions
+		 * @param  Request  $request	 
+		 * @param  integer $ctrl_class_id The ID of the class we're editing
+		 * @param  $action What we're trying to do (eg, 'add')		 
+		 * @return boolean
+		 */
+		protected function permissions($ctrl_class_id, $action) {
+			// Load the Ctrl Class; could just pass in the object here
+			try {
+				$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
+			}
+			catch (\Exception $e) {
+				trigger_error($e->getMessage());
+			}
+			/* For example...
+			if ($ctrl_class->name == 'Product' && $action == 'add') {
+				// Are we filtering this list to show cached products for a profile...?
+				if ($filter_string = \Request::segment(4)) {
+					$filter_values = explode(',', $filter_string);
+					if (count($filter_values == 2)) {
+						$filter_property = CtrlProperty::where('id',$filter_values[0])->firstOrFail();
+						if ($filter_property->name == 'profile_cache') {
+							return false;
+						}
+					}
+				}			
+			}
+			*/
+		}
+
 	}

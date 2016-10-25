@@ -377,7 +377,7 @@ class CtrlController extends Controller
         // dd($js_columns);
         if ($this->module->enabled('custom_columns')) {
 			$custom_columns = $this->module->run('custom_columns',[
-				$ctrl_class_id,
+				$ctrl_class->id,
 			]);
 		}
 		if (!empty($custom_columns)) {
@@ -426,7 +426,22 @@ class CtrlController extends Controller
         	$show_all_link = route('ctrl::list_objects',$ctrl_class->id);
         }
 
-        $add_link = route('ctrl::edit_object',[$ctrl_class->id,0,$filter_string]);
+        $can_add           = true;  
+        if ($this->module->enabled('permissions')) {
+			$custom_permission = $this->module->run('permissions',[				
+				$ctrl_class->id,
+				'add',
+				// $filter_string
+			]);
+		}
+		if (isset($custom_permission) && !is_null($custom_permission)) {
+			$can_add = $custom_permission;
+		}
+		else if (!$ctrl_class->can('add')) {
+			$can_add = false;
+		}
+		//dd($can_add);
+        $add_link = $can_add ? route('ctrl::edit_object',[$ctrl_class->id,0,$filter_string]) : '';
 
         $key = 		$key = $this->get_row_buttons($ctrl_class->id,0,true);
 
