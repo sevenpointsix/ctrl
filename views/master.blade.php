@@ -117,6 +117,9 @@
     <script src="{{ asset('assets/vendor/ctrl/js/main.js') }}"></script>
     
     @yield('js')
+
+    @include('ctrl::notify')
+
     @stack('js') {{-- Individual form fields push to the stack --}}
 
   </body>

@@ -38,8 +38,10 @@
 	<div class="ctrl-form">
 
 	  <form class="ajax" method="post" action="{{ $save_link }}">
+	  {{-- We use notify for these now
 		@include('ctrl::messages')
 		@include('ctrl::form_errors')
+	--}}
 		<p>{!! $help_text !!}</p>		
 		@include('ctrl::form_fields.'.$form_field['template'], ['field' => $form_field])			
 		<hr />
