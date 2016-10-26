@@ -1484,6 +1484,25 @@ class CtrlController extends Controller
 		
         $object->fill($_POST);
 
+        // OK. I don't want nullable fields (typically integers or floats) to be set to zero, if the posted value is an empty string
+        // What's the best way to do this?
+        $check_nullable_properties = $ctrl_class->ctrl_properties()
+                                              ->where('fieldset','!=','')
+                                              ->where('relationship_type','=',NULL) // This makes sense, I think
+                                              ->get();  
+        
+		foreach ($check_nullable_properties as $check_nullable_property) {
+			$column = $check_nullable_property->name;
+	        $nullable = DB::table('INFORMATION_SCHEMA.COLUMNS')
+	        			// ->select("IS_NULLABLE")
+	        			->where('table_name',$ctrl_class->table_name)
+	        			->where('COLUMN_NAME',$column)
+	        			->value('IS_NULLABLE');
+	        if (!is_null($nullable) && $nullable == 'YES' && isset($_POST[$column]) && $_POST[$column] === '') {
+	        	$object->$column = null;
+	        }
+        }
+
         $object->save(); // Save the new object, otherwise we can't save any relationships...
        
         // Now load any related fields (excluding belongsTo, as this indicates the presence of an _id field)
