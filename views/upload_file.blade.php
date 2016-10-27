@@ -38,9 +38,8 @@
 	<div class="ctrl-form">
 
 	  <form class="ajax" method="post" action="{{ $save_link }}">
-	  	
-	  	{{-- This div is populated with any messages that come back in the Ajax response --}}	  	
-		<div id="messages"></div>
+	  		  	
+		@include('ctrl::messages')
 	
 		<p>{!! $help_text !!}</p>		
 		@include('ctrl::form_fields.'.$form_field['template'], ['field' => $form_field])			

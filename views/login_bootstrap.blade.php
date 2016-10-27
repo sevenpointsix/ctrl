@@ -72,7 +72,7 @@
         {!! csrf_field() !!}
         <h2 class="form-signin-heading">Please sign in</h2>
 
-        <div id="messages"></div>
+        @include('ctrl::messages')
 
         <input type="email" class="form-control" placeholder="Email address" required autofocus name="email" value="{{ old('email') }}">
         <input type="password" class="form-control" placeholder="Password" required name="password">

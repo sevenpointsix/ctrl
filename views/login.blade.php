@@ -64,7 +64,7 @@
                   @endif
 
                   {{-- This is only used for logins where the Ajax post fails, which is hopefully never --}}
-                 <div id="messages"></div>
+                  @include('ctrl::messages')
 
 
                   <form class="ajax" role="form" method="post" action="{{ route('ctrl::post_login') }}">

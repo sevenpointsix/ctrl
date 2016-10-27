@@ -103,8 +103,7 @@
 		    <div role="tabpanel" class="tab-pane fade in @if ($tab_loop++ == 0) active @endif" id="tab-{{ $tab_loop }}">
 		    	
 		    	@if ($tab_loop == 1)
-					{{-- @include('ctrl::form_errors') -- dropping this approach --}}
-					<div id="messages"></div>
+					@include('ctrl::messages')
 				@endif
 
 
