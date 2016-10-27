@@ -23,7 +23,7 @@ $(function() {
     		if ($icon) $icon .= 'fa fa-fw';
     	?>
 	    $.notify({
-			icon: {{ $icon }},				
+			icon: '{{ $icon }}',
 			message: '{{ addslashes($notification) }}',					
 		},{
 			placement: {
