@@ -2,6 +2,12 @@ $(document).ready(function() {
 
   $('form.ajax').on('submit',function(e) {
     
+    var submit_button = $(this).find('button[type=submit][data-loading-text]');
+    if (submit_button.length > 0) {
+      var submit_button_original_text = submit_button.html();
+      submit_button.html(submit_button.attr('data-loading-text'));  
+    }
+
     $.ajaxSetup({
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
     });
@@ -41,6 +47,9 @@ $(document).ready(function() {
             scrollTop: $('#messages').offset().top - 100
           }, 'fast');
 
+          if (submit_button.length > 0) {            
+            submit_button.html(submit_button_original_text);  
+          }
           
         }
         else {
@@ -51,6 +60,9 @@ $(document).ready(function() {
           }
           else {
             console.log('Error');      
+          }
+          if (submit_button.length > 0) {            
+            submit_button.html(submit_button_original_text);  
           }
         }
       }     
