@@ -1824,7 +1824,7 @@ class CtrlController extends Controller
 		    if (!empty(Auth::user()->ctrl_group)) {
 		    	$redirect = URL::previous();
 			    $message  = 'Logged in';
-	        	$messages = collect([$message]);
+	        	$messages = [$message => 'success'];
 	        	$request->session()->flash('messages', $messages);		        	
 	        	$status = 200;
 		    }
