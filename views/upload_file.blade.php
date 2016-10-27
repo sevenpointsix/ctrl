@@ -38,10 +38,10 @@
 	<div class="ctrl-form">
 
 	  <form class="ajax" method="post" action="{{ $save_link }}">
-		{{-- We also use notify for errors, but for validation like this I think that they're better placed above the form --}}		
-		{{-- In fact, we'll switch to using a specific "notify" session to flash messages to notify --}}
-		@include('ctrl::form_messages')
-		@include('ctrl::form_errors')
+	  	
+	  	{{-- This div is populated with any messages that come back in the Ajax response --}}	  	
+		<div id="messages"></div>
+	
 		<p>{!! $help_text !!}</p>		
 		@include('ctrl::form_fields.'.$form_field['template'], ['field' => $form_field])			
 		<hr />

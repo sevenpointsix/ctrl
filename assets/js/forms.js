@@ -29,23 +29,16 @@ $(document).ready(function() {
             error_messages.push(error);
           });         
 
-          errors_div = $('#errors');
-
-          // Clone the error div (unless we already have done!) and display it:
-          error = $('#error-clone');
-
-          if (error.length == 0) {
-            error = errors_div.find('.template').clone().removeClass('hidden').removeClass('template').attr('id','error-clone');  
-          }
-
-          error.find('span.message').html(error_messages.join('<br>')); 
-
-          error.appendTo(errors_div);
+          // We now use Handlebars here, to load the error HTML.
+          var errors = error_messages.join('<br>');
+          var message_template = Handlebars.compile('<div class="alert alert-{{type}} alert-dismissible" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><span class="message">{{{message}}}</span></div>');
+          var message_html = message_template({type: "danger", message: errors});
+          $('#messages').html(message_html);
 
           $('a[role=tab]:first').tab('show') // Select first tab
 
           $("html, body").animate({
-            scrollTop: errors_div.offset().top - 100
+            scrollTop: $('#messages').offset().top - 100
           }, 'fast');
 
           

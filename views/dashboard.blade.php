@@ -2,7 +2,6 @@
 
 @section('js')
 <script src="{{ asset('assets/vendor/ctrl/vendor/corejs-typeahead/typeahead.bundle.min.js') }}"></script>
-<script src="{{ asset('assets/vendor/ctrl/vendor/handlebars/handlebars-v4.0.5.js') }}"></script>
 
 <script>
 	var dashboard_search = new Bloodhound({
