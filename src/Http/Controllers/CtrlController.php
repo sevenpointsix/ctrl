@@ -1118,7 +1118,7 @@ class CtrlController extends Controller
 		if ($object_id == 'first') {
 			$object     = $class::first();
 		}
-		else if (is_numeric($object_id)) {
+		else if ($object_id && is_numeric($object_id)) {
 			try {
 				$object     = $class::where('id',$object_id)->firstOrFail();
 			}

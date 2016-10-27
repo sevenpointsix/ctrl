@@ -1,29 +1,36 @@
 {{-- Draw the JS to flash messages and errors(?) to notify --}}
 @push('js')
 <script>
-@if(Session::has('errors'))    
+@if(Session::has('notify'))    
 $(function() {	
-    @foreach (session('errors') as $error)
+    @foreach (session('notify') as $notification=>$type)
+    	<?php // Hack
+    		switch ($type) {
+    			case 'success';
+    				$icon = 'fa-check';
+    				break;
+    			case 'info';
+    			case 'warning';
+    				$icon = 'fa-info-circle';
+    				break;
+    			case 'danger';
+    			case 'error';
+    				$icon = 'fa-exclamation-circle';
+    				break;
+    			default;
+    				$icon = '';
+    		}
+    		if ($icon) $icon .= 'fa fa-fw';
+    	?>
 	    $.notify({
-			icon: 'fa fa-exclamation-triangle fa-fw',				
-			message: '{{ addslashes($error) }}',					
+			icon: {{ $icon }},				
+			message: '{{ addslashes($notification) }}',					
 		},{
-			type: "error",
-			newest_on_top: true,
-			delay: 0,					
-		});
-    @endforeach
-});
-@endif
-
-@if(Session::has('messages'))    
-$(function() {	
-    @foreach (session('messages') as $message)
-	    $.notify({
-			icon: 'fa fa-check fa-fw',				
-			message: '{{ addslashes($message) }}',					
-		},{
-			type: "success",
+			placement: {
+				from: 'top',
+				align: 'right'
+			},
+			type: "{{ $type }}",
 			newest_on_top: true,
 			delay: 0,					
 		});
