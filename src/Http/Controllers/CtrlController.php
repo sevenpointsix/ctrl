@@ -1376,8 +1376,8 @@ class CtrlController extends Controller
 		if ($object_id) {
 			$page_title       = 'Edit this '.$ctrl_class->get_singular();
 			// $page_description = '&ldquo;'.$object->title.'&rdquo;';
-			$page_description = '&ldquo;'.$this->get_object_title($object).'&rdquo;';
-			$delete_link      = route('ctrl::delete_object',[$ctrl_class->id,$object->id]);
+			$page_description = $this->get_object_title($object) ? '&ldquo;'.$this->get_object_title($object).'&rdquo;' : '';
+			$delete_link      = $ctrl_class->can('delete') ? route('ctrl::delete_object',[$ctrl_class->id,$object->id]) : '';
 		}
 		else {
 			$page_title = 'Add '.$this->a_an($ctrl_class->get_singular()) . ' ' .$ctrl_class->get_singular();			
@@ -1399,7 +1399,8 @@ class CtrlController extends Controller
         }
         else {
         	// Is this a sensible fallback?
-        	$back_link        = route('ctrl::list_objects',[$ctrl_class->id,$filter_string]);
+        	// Only if we can list the items... we almost always can        	
+        	$back_link        = $ctrl_class->can('list') ? route('ctrl::list_objects',[$ctrl_class->id,$filter_string]) : route('ctrl::dashboard');
         }
 
 		// Similarly... once we've saved a filtered object, we want to bounce back to a filtered list. This enables it:
