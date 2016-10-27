@@ -10,10 +10,9 @@ $(function() {
 		},{
 			type: "error",
 			newest_on_top: true,
-			delay: 2500,					
+			delay: 0,					
 		});
     @endforeach
-</div>
 });
 @endif
 
@@ -26,7 +25,7 @@ $(function() {
 		},{
 			type: "success",
 			newest_on_top: true,
-			delay: 2500,					
+			delay: 0,					
 		});
     @endforeach
 });

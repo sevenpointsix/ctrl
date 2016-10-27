@@ -1115,7 +1115,21 @@ class CtrlController extends Controller
 	public function get_object_from_ctrl_class_id($ctrl_class_id,$object_id = NULL) {		
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
 		$class      = $ctrl_class->get_class();
-		$object     = ($object_id) ? $class::where('id',$object_id)->firstOrFail() : new $class;		
+		if ($object_id == 'first') {
+			$object     = $class::first();
+		}
+		else if (is_numeric($object_id)) {
+			try {
+				$object     = $class::where('id',$object_id)->firstOrFail();
+			}
+			catch (\Exception $e) {
+				trigger_error($e->getMessage());
+			}
+		}
+		else {
+			$object     = new $class;			
+		}
+		
 		return $object;
 	}
 
