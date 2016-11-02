@@ -1141,7 +1141,12 @@ class CtrlController extends Controller
 	protected function get_ctrl_class_from_object($object) {	
 
 		$ctrl_class_name = str_replace('App\Ctrl\Models\\','',get_class($object));		
+		try {
 		$ctrl_class = CtrlClass::where('name',$ctrl_class_name)->firstOrFail();		
+		}
+		catch (\Exception $e) {
+			trigger_error($e->getMessage());
+		}
 		return $ctrl_class;
 		
 	}
@@ -1432,7 +1437,12 @@ class CtrlController extends Controller
 	public function save_object(Request $request, $ctrl_class_id, $object_id = NULL, $filter_string = NULL)
 	{		
 		// dd($_POST);
+		try {
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();				
+		}
+		catch (\Exception $e) {
+			trigger_error($e->getMessage());
+		}
 		$ctrl_properties = $ctrl_class->ctrl_properties()->where('fieldset','!=','')->get();
 
 		// Validate the post:
@@ -1474,8 +1484,9 @@ class CtrlController extends Controller
 			$this->validate($request, $validation, $messages);
 	    }
 
-	    $class 		= $ctrl_class->get_class();		
-		$object  	= ($object_id) ? $class::where('id',$object_id)->firstOrFail() : new $class;		
+	    // $class 		= $ctrl_class->get_class();		
+		// $object  	= ($object_id) ? $class::where('id',$object_id)->firstOrFail() : new $class;		
+		$object = $this->get_object_from_ctrl_class_id($ctrl_class->id,$object_id);
 		
 		// Convert dates back into MySQL format; this feels quite messy but I can't see where else to do it:
 		foreach ($ctrl_properties as $ctrl_property) {
@@ -1630,7 +1641,16 @@ class CtrlController extends Controller
 			]);
 		}
         
+		$message  = ucwords($ctrl_class->get_singular()) . ' saved';
+   		$messages = [$message];
+   		$request->session()->flash('messages', $messages);	
+        
+		if ($ctrl_class->can('list')) {      
         $redirect = route('ctrl::list_objects',[$ctrl_class->id,$filter_string]);
+        }
+        else {
+  			$redirect = route('ctrl::dashboard');
+        }
 
         if ($request->ajax()) {
             return json_encode([
