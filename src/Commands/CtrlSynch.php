@@ -388,7 +388,6 @@ class CtrlSynch extends Command
         }
         $ctrl_classes = \Sevenpointsix\Ctrl\Models\CtrlClass::get();
 
-
         foreach ($ctrl_classes as $ctrl_class) {
         
             $view_data = [
@@ -399,7 +398,7 @@ class CtrlSynch extends Command
                 'belongsTo'     => [],
                 'hasMany'       => [],
                 'belongsToMany' => [],
-
+                'timestamps'    => true // Assume we can have timestamps by default; could also set CREATED_AT and UPDATED_AT if these need to be customised
             ];
             
             // NOTE: this may need to include properties that we set using a filter in the URL
@@ -458,6 +457,10 @@ class CtrlSynch extends Command
                 }
                 $view_data[$relationship_property->relationship_type][] = $relationship_data;
             }
+
+            // Do we have timestamps?
+            $timestamps = DB::select("SHOW COLUMNS FROM {$ctrl_class->table_name} WHERE `field` = 'created_at' OR `field` = 'updated_at'"); // Bindings fail here for some reason
+            if (count($timestamps) != 2) $view_data['timestamps'] = false; // Don't set timestamps, as we don't have the default Laravel timestamp fields
 
             $model_code = View::make('ctrl::model_template',$view_data)->render();
             $model_path = app_path($model_folder.$ctrl_class->name.'.php');

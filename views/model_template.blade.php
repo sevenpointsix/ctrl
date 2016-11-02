@@ -37,6 +37,14 @@ class {{ $model_name }} extends Model
     protected $fillable = ['{!! implode("','",$fillable) !!}'];
     @endif
 
+    @if (empty($timestamps))
+    /**
+     * We don't have timestamps for this model
+     * @type {Boolean}
+     */
+    public $timestamps = false;
+    @endif
+
     /**
      * RELATIONSHIPS:
      */
