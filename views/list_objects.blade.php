@@ -240,6 +240,7 @@ $(function() {
 			 */
 		stateSave: true, // From https://datatables.net/reference/option/stateSave, means we retain search terms and current page when returning to the table
 			// NOTE: this doesn't work! It only works if we change the initialisation function to dataTable, not DataTable, but that breaks everything else! WTF?
+			// No, this works fine in fact -- why did I think it didn't?
 
 		"sPaginationType": "listbox", // see https://datatables.net/plug-ins/pagination/select
 
@@ -300,6 +301,18 @@ $(function() {
         
         }        
     });
+
+    // Restore search state, from https://datatables.net/forums/discussion/33182/individual-column-searching-with-statesave-not-showing-previous-values
+    var state = table.state.loaded();
+    if (state) {
+        table.columns().eq(0).each(function (colIdx) {
+            var colSearch = state.columns[colIdx].search;
+            if (colSearch.search) { // We're searching column colIdx for the term colSearch, so re-populate the search box
+                $('input', table.column(colIdx).header()).val(colSearch.search);
+            }
+        });
+        table.draw();
+    }
 
     // Set up some click events on the table buttons, "delete" only for now
     function init_table_buttons() {    	
