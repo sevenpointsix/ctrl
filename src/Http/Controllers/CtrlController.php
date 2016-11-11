@@ -1251,8 +1251,10 @@ class CtrlController extends Controller
 			if ($ctrl_property->related_to_id && in_array($ctrl_property->relationship_type,['hasMany','belongsToMany'])) {
 				$related_objects = $object->$field_name;
 				$value = [];
-				foreach ($related_objects as $related_object) {
-					$value[$related_object->id] = $this->get_object_title($related_object);
+				if (!is_null($related_objects)) { // 20161111: Why would this be null? Does this imply a data error?
+					foreach ($related_objects as $related_object) {
+						$value[$related_object->id] = $this->get_object_title($related_object);
+					}
 				}
 			}
 			else {
