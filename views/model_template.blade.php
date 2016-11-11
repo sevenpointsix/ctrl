@@ -37,6 +37,14 @@ class {{ $model_name }} extends Model
     protected $fillable = ['{!! implode("','",$fillable) !!}'];
     @endif
 
+    @if (empty($timestamps))
+    /**
+     * We don't have timestamps for this model
+     * @type {Boolean}
+     */
+    public $timestamps = false;
+    @endif
+
     /**
      * RELATIONSHIPS:
      */
@@ -72,7 +80,7 @@ class {{ $model_name }} extends Model
     }
     @endforeach    
 
-    {{-- Experimenting with mutators for the User class --}}
+    {{-- Mutators for the User class, these handle passwords and groups (although the latter needs refining) --}}
     @if ($model_name == 'User')
 /**
      * Don't retrieve the password
@@ -93,7 +101,20 @@ class {{ $model_name }} extends Model
      */
     public function setPasswordAttribute($value)
     {
-        return Hash::make($value);
+        // return Hash::make($value);
+        if (!empty($value)) $this->attributes['password']  = Hash::make($value);
     }
+
+    /**
+     * Stick everyone in a "user" group by default; this needs refining, we've not really tackled "groups" on this version of CTRL yet
+     *
+     * @param  string  $value
+     * @return string
+     */
+    public function setCtrlGroupAttribute($value)
+    {
+        if (empty($value)) $this->attributes['ctrl_group'] = 'user';
+    }
+
     @endif
 }

@@ -122,7 +122,7 @@
 		  </div>
 		  <hr />
 		  <a class="btn btn-default" href="{{ $back_link }}"><i class="fa fa-remove"></i> Cancel</a>
-		<button type="submit" class="btn btn-success"><i class="fa fa-check-square"></i> Save</button>
+		<button type="submit" class="btn btn-success" data-loading-text="<i class='fa fa-circle-o-notch fa-spin fa-fw'></i> Saving..."><i class="fa fa-check-square"></i> Save</button>
 	  </form>
 
 	</div>

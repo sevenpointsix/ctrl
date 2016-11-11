@@ -26,14 +26,22 @@ $(document).ready(function() {
       },
       error: function(jqXHR, textStatus, errorThrown ) { 
 
-        if (jqXHR.status == 422) { // This is the status code Laravel returns when validation fails:
-          response = $.parseJSON(jqXHR.responseText);           
-          var error_messages = new Array();         
-          $.each(response, function(field, error) {              
-            // Field [name=field] now has the error error           
-            $('[name="'+field+'"]').parents('div.form-group').addClass('has-error');                          
-            error_messages.push(error);
-          });         
+        if (jqXHR.status == 422 || jqXHR.status == 500) { // 422 is the status code Laravel returns when validation fails:
+          
+          var error_messages = new Array();
+
+          if (jqXHR.status == 422) { // Validation error
+            response = $.parseJSON(jqXHR.responseText);
+            $.each(response, function(field, error) {              
+              // Field [name=field] now has the error error           
+              $('[name="'+field+'"]').parents('div.form-group').addClass('has-error');                          
+              error_messages.push(error);
+            }); 
+          }
+          else if (jqXHR.status == 500) { // Server error
+            //console.log(jqXHR.responseText);              
+            error_messages.push('An error has occurred; please contact support.');
+          }  
 
           // We now use Handlebars here, to load the error HTML.
           var errors = error_messages.join('<br>');
@@ -53,7 +61,7 @@ $(document).ready(function() {
           
         }
         else {
-          // Major error; it's possible to update Handler.php to provide a nicer error in error.exception
+          // Should no longer here, as we catch 500s above...
           response = $.parseJSON(jqXHR.responseText);
           if (response.error.exception) {
             console.log(errorThrown+': '+response.error.exception);
