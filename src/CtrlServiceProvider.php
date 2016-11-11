@@ -72,7 +72,10 @@ class CtrlServiceProvider extends ServiceProvider{
             File::makeDirectory($ctrl_folder,0777,true); // See http://laravel-recipes.com/recipes/147/creating-a-directory
         }
 
+		// This folder holds the core views used by the CMS...
 		$this->loadViewsFrom(realpath(__DIR__.'/../views'), 'ctrl');
+		// ...and this folder can be used to store custom views if necessary
+		$this->loadViewsFrom(app_path('Ctrl/views'), 'ctrl_custom');
 		$this->setupRoutes($this->app->router);
 
 		// This allows the config file to be published using artisan vendor:publish
@@ -122,6 +125,7 @@ class CtrlServiceProvider extends ServiceProvider{
 
 		// Excel module used when importing, exporting CSV data
 		\App::register('Maatwebsite\Excel\ExcelServiceProvider');
+		
 		// This didn't seem to work, and isn't needed if we "use Maatwebsite\Excel\Facades\Excel;" at the top of the controller
 		// \App::alias('Excel','Maatwebsite\Excel\Facades\Excel');
 
