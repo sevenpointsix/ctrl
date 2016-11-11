@@ -1141,10 +1141,15 @@ class CtrlController extends Controller
 	protected function get_ctrl_class_from_object($object) {	
 
 		$ctrl_class_name = str_replace('App\Ctrl\Models\\','',get_class($object));		
+
 		try {
-		$ctrl_class = CtrlClass::where('name',$ctrl_class_name)->firstOrFail();		
+			$ctrl_class = CtrlClass::where('name',$ctrl_class_name)->firstOrFail();		
 		}
-		catch (\Exception $e) {
+		catch (\Exception $e) {			
+
+		// 	dump(get_class($object));
+		// dump($ctrl_class_name);
+		// exit();
 			trigger_error($e->getMessage());
 		}
 		return $ctrl_class;
@@ -1171,7 +1176,9 @@ class CtrlController extends Controller
 			// load the related object, and then call get_object_title...?
 			if ($title_property->relationship_type == 'belongsTo') {
 				$related_object = $object->{$title_property->name};
-				$title_strings[] = $this->get_object_title($related_object);
+				if (!is_null($related_object)) { // We won't always have a related object, a link may not have a type...
+					$title_strings[] = $this->get_object_title($related_object);
+				}
 			}
 			else {
 				$property = $title_property->name;
