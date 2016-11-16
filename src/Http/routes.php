@@ -2,7 +2,7 @@
 
 // Prefix all route names with ctrl::, all URLs with ctrl/, and enable the 'web' middlewhere (which automatically enables sessions, a global $errors variable, CSRF protection and probably some other stuff).
 
-Route::group(['as' => 'ctrl::','prefix'=>'admin','middleware' => ['web']], function () {
+Route::group(['as' => 'ctrl::','prefix'=>env('CTRL_PREFIX', 'admin'),'middleware' => ['web']], function () {
 	Route::get('/',[
 		'as'=>'dashboard',
 		'uses'=>'CtrlController@dashboard'
