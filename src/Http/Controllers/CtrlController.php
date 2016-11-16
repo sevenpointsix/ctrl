@@ -1236,6 +1236,9 @@ class CtrlController extends Controller
 			elseif (in_array($ctrl_property->field_type,['date','datetime','time'])) {
 				$ctrl_property->template = 'date';
 			}
+			elseif (empty($ctrl_property->field_type)) {
+				trigger_error("No field_type set for propery {$ctrl_property->name}");
+			}
 			else {
 				$ctrl_property->template = $ctrl_property->field_type;
 			}
