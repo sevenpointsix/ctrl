@@ -72,3 +72,12 @@ ul.dropdown-menu>li>a.disabled:hover, ul.dropdown-menu>li>a.disabled:focus
 .cbx {
 	background-color: #fff; /* Give the custom checkboxes a white background */
 }
+
+/* Narrow alerts are handy sometimes */
+.alert.alert-narrow {
+	padding-top: 5px;
+	padding-bottom: 5px;
+}
+.alert.alert-narrow .close {
+	line-height: 0.9em;
+}

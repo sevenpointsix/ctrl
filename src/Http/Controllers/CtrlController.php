@@ -291,6 +291,8 @@ class CtrlController extends Controller
 	public function list_objects(Request $request, $ctrl_class_id, $filter_string = NULL)
 	{		
 
+		if (!$this->can($ctrl_class_id,'list')) return redirect()->route('ctrl::dashboard');
+		
 		// Convert the the $filter parameter into one that makes sense
 		$filter_array = $this->convert_filter_string_to_array($filter_string);			
 		$filter_description = $this->describe_filter($filter_array);
@@ -508,6 +510,37 @@ class CtrlController extends Controller
 		})->download('csv');;
 
 
+	}
+
+	/**
+	 * Generic permissions function that references the permissions module
+	 * @param  integer $ctrlclass_id The ID of the Ctrl Class
+	 * @param  string $action       The action we're trying to carry out
+	 * @return boolean
+	 */
+	protected function can($ctrl_class_id,$action) {
+		$can = true;
+		try {
+			$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
+		}
+		catch (\Exception $e) {
+			trigger_error($e->getMessage());
+		}
+
+        if ($this->module->enabled('permissions')) {
+			$custom_permission = $this->module->run('permissions',[				
+				$ctrl_class->id,
+				$action,
+				// $filter_string
+			]);
+		}
+		if (isset($custom_permission) && !is_null($custom_permission)) {
+			$can = $custom_permission;
+		}
+		else if (!$ctrl_class->can($action)) {
+			$can = false;
+		}
+		return $can;
 	}
 
 	/**

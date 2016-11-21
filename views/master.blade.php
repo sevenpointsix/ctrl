@@ -52,10 +52,10 @@
     <![endif]-->
 
     {{-- ROLLBAR --}}
-    @if (env('ROLLBAR_TOKEN'))
+    @if (env('ROLLBAR_CLIENT_TOKEN'))
       <script>
         var _rollbarConfig = {
-            accessToken: "{{ env('ROLLBAR_TOKEN') }}",
+            accessToken: "{{ env('ROLLBAR_CLIENT_TOKEN') }}",
             captureUncaught: true,
             captureUnhandledRejections: true,
             payload: {
