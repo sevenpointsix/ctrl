@@ -544,7 +544,7 @@ class CtrlController extends Controller
 	}
 
 	/**
-	 * Handle the posted files when importing all objects of a given CtrlClass, as 'files'; called by @import_obects_process
+	 * Handle the posted files when importing all objects of a given CtrlClass, as 'files'; called by @import_objects_process
 	 * @param  integer $ctrl_class_id The ID of the class we're editing
 	 * @param  string $filter_string Are we filtering the list? Currently stored as a ~ delimited list of property=>id comma-separated pairs; see below
 	 *
@@ -604,8 +604,10 @@ class CtrlController extends Controller
 		$csv_file = trim($request->input('csv-import'),'/');
 		$errors = [];
 
+		// Convert .txt files into .csv; this is because Office can export .txt files in UTF8 (UTF16, in fact) but not .csv
+		$converted = $this->convert_txt_to_csv($csv_file);
+		
 		// Work out what headers we need, what the callback functions are, whether we have a "pre-import" function, etc:
-
 		$required_headers = $this->module->run('import_objects',[
 			'get-headers',
 			$ctrl_class_id,
@@ -1164,6 +1166,42 @@ class CtrlController extends Controller
 		}
 		
 		return $object;
+	}
+
+	/**
+	 * Convert a text export from Office 2013 (which can be in UTF8 format, unlike CSV exports from the same) into CSV
+	 * @param  string $csv_file A file path
+	 * @return boolean
+	 */
+	protected function convert_txt_to_csv($csv_file) {
+		// From http://stackoverflow.com/questions/12489033/php-modify-a-single-line-in-a-text-file		
+		
+		$fh = fopen($csv_file,'r+');
+
+		$csv_rows = '';
+
+		$loop = 0;
+		while(!feof($fh)) {
+			$row = fgets($fh);
+			if ($loop++ == 0) { // Check first line to see if this is a tab-delimited file
+				$commas = substr_count($row,',');
+				$tabs   = substr_count($row,"\t");
+				if ($commas >= $tabs) return false; // No need to change this file, it's already comma-delimited as far as we can tell
+			}			
+			// Attempting to remove Windows-style endings while we're here, but the following line doesn't work...
+		    // $csv_rows .= str_replace(["\t","\r"],[',',''],$row);
+
+			// Instead, from http://stackoverflow.com/questions/7836632/how-to-replace-different-newline-styles-in-php-the-smartest-way
+			// Nope, this doesn't work either. Fuck it, we can live with CRLF for now.
+			// $row = preg_replace('~(*BSR_ANYCRLF)\R~', "\n", $row);
+
+		    $csv_rows .= str_replace("\t",',',$row);
+		}
+
+		file_put_contents($csv_file, $csv_rows);
+		fclose($fh); 
+
+		return true;
 	}
 
 	/**
