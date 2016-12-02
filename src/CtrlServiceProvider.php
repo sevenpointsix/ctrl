@@ -68,6 +68,7 @@ class CtrlServiceProvider extends ServiceProvider{
 
 		/* Can I put this here? Just check that we have a Ctrl folder, for models and Modules */
 		$ctrl_folder = app_path('Ctrl/');
+		//dd($ctrl_folder);
         if(!File::exists($ctrl_folder)) {
             File::makeDirectory($ctrl_folder,0777,true); // See http://laravel-recipes.com/recipes/147/creating-a-directory
         }

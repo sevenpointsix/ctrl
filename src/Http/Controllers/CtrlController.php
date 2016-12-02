@@ -444,7 +444,9 @@ class CtrlController extends Controller
 		//dd($can_add);
         $add_link = $can_add ? route('ctrl::edit_object',[$ctrl_class->id,0,$filter_string]) : '';
 
-        $key = 		$key = $this->get_row_buttons($ctrl_class->id,0,true);
+        //$key = 		$key = $this->get_row_buttons($ctrl_class->id,0,true);
+        // Dropping the key, we don't use it; see notes elsewhere
+        $key = false;
 
 		return view('ctrl::list_objects',[
 			'ctrl_class'           => $ctrl_class,
@@ -918,8 +920,8 @@ class CtrlController extends Controller
 					return sprintf('<i class="fa fa-download"></i> <a href="%1$s">%2$s</a>',$file, $basename);
 				}
         	})
-            ->addColumn('action', function ($object) use ($ctrl_class) {
-            	return $this->get_row_buttons($ctrl_class->id, $object->id);
+            ->addColumn('action', function ($object) use ($ctrl_class, $filter_string) {
+            	return $this->get_row_buttons($ctrl_class->id, $object->id, $filter_string);
             })       
             // Is this the best place to filter results if necessary?
             // I think so. See: http://datatables.yajrabox.com/eloquent/custom-filter
@@ -986,11 +988,15 @@ class CtrlController extends Controller
 	 * @param  $key Are we drawing a key, or returning actual buttons?
 	 * @return string HTML
 	 */
-	protected function get_row_buttons($ctrl_class_id,$object_id, $key = false) {
+	// protected function get_row_buttons($ctrl_class_id,$object_id, $key = false) {
+
+	// Right. I'm dropping $key, partly because we don't really use it (it looks rubbish) and partly because passing in $key is really clunky
+	// If we ever do need to format buttons differently for a "key", this function needs to be split into two; one to retrieve the buttons, and one to display them
+	protected function get_row_buttons($ctrl_class_id,$object_id, $filter_string = null) {
 
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();	
 
-    	$edit_link   = route('ctrl::edit_object',[$ctrl_class->id,$object_id]); 
+    	$edit_link   = route('ctrl::edit_object',[$ctrl_class->id,$object_id,$filter_string]); 
     	$delete_link = route('ctrl::delete_object',[$ctrl_class->id,$object_id]);
 
     	// Do we have any filtered lists?
@@ -1098,7 +1104,7 @@ class CtrlController extends Controller
         	$can_reorder = false;	
         }
     	
-    	if ($key) {
+    	if (!empty($key)) { // No longer used, see notes elsewhere
     		$template = 'ctrl::tables.row-buttons-key';
     	}
     	else {
@@ -1505,6 +1511,7 @@ class CtrlController extends Controller
 		$back_link        = route('ctrl::list_objects',[$ctrl_class->id,$filter_string]);
 		*/
 		// Do we have an unfiltered list we can link back to?
+
         if ($filter_array) {
         	// dd($filter_array);
         	// $filter_array[0]['ctrl_property_id'] is now the ID of the property that links back to the "parent" list, so:
@@ -1756,7 +1763,7 @@ class CtrlController extends Controller
    		$request->session()->flash('messages', $messages);	
         
 		if ($ctrl_class->can('list')) {      
-        $redirect = route('ctrl::list_objects',[$ctrl_class->id,$filter_string]);
+        	$redirect = route('ctrl::list_objects',[$ctrl_class->id,$filter_string]);
         }
         else {
   			$redirect = route('ctrl::dashboard');

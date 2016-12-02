@@ -486,7 +486,9 @@ $(function() {
 			@if ($filter_description)
 				<p class="navbar-text">Showing all {{ $ctrl_class->get_plural() }} {!! $filter_description !!}.</p>
 			@endif
+			@if ($key) {{-- No longer used, looks rubbish and needs a rethink --}}
 			<a data-toggle="modal" data-target="#help" class="btn btn-default navbar-btn navbar-right"><i class="fa fa-question"></i> Help</a>
+			@endif
 			 
 	      <ul class="nav navbar-nav navbar-right">
 
