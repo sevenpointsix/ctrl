@@ -1182,6 +1182,8 @@ class CtrlController extends Controller
 	protected function convert_txt_to_csv($csv_file) {
 		// From http://stackoverflow.com/questions/12489033/php-modify-a-single-line-in-a-text-file		
 		
+		ini_set("memory_limit",-1); // mb_convert_encoding takes up loads of memory... 
+
 		// How is the current file encoded? Note that this is different to the value separator;
 		// but Office exports tab-delimited files as UTF-16, which we can't run through INFILE, so we need to convert it
 		$current_encoding = $this->detect_utf_encoding($csv_file);
@@ -1204,12 +1206,13 @@ class CtrlController extends Controller
 			// Instead, from http://stackoverflow.com/questions/7836632/how-to-replace-different-newline-styles-in-php-the-smartest-way
 			// Nope, this doesn't work either. Fuck it, we can live with CRLF for now.
 			// $row = preg_replace('~(*BSR_ANYCRLF)\R~', "\n", $row);
-
-		    $csv_rows .= str_replace("\t",',',$row);
+			
+			$csv_row = str_replace("\t",',',$row);
+		    $csv_rows .= $csv_row;
 		}
-
+		
 		$csv_rows = mb_convert_encoding($csv_rows, 'UTF-8',$current_encoding);
-		file_put_contents($csv_file, $csv_rows);
+		file_put_contents($csv_file, $csv_rows);		
 		fclose($fh); 
 
 		return true;
