@@ -240,7 +240,8 @@ class CtrlController extends Controller
 				$query->orderBy($first_header_property->foreign_key);
 			}
 			else {
-				$query->orderByRaw("INSTR({$first_header_property->name}, '$search_term'), {$first_header_property->name}");
+				//$query->orderByRaw("INSTR({$first_header_property->name}, '$search_term'), {$first_header_property->name}");
+				$query->orderByRaw("INSTR(?, ?), ?",[$first_header_property->name,$search_term,$first_header_property->name]);
 			}
 
 			$objects = $query->take(20)->get();	// Limits the dropdown to 20 items; this may need to be adjusted
