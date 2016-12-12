@@ -348,7 +348,7 @@ class CtrlController extends Controller
         		// Get around a problem with datatables if there's no relationship defined
         		// See https://datatables.net/manual/tech-notes/4
         		$column->defaultContent = 'None'; // We can't filter the list to show all "None" items though... not yet.
-        		$th_columns[] = '<th data-search-dropdown="true">'.$header->label.'</th>';
+        		$th_columns[] = '<th data-search-dropdown="true" data-orderable="false">'.$header->label.'</th>';
         	}
         	else {
         		$column->data = $header->name;
@@ -366,7 +366,7 @@ class CtrlController extends Controller
         		}
         		else if ($header->field_type == 'checkbox') { // We convert these to Yes/No values, so allow a search dropdown...        			
 	        		// $column->defaultContent = 'None'; // Necessary..?
-        			$th_columns[] = '<th data-search-dropdown="true">'.$header->label.'</th>';
+        			$th_columns[] = '<th data-search-dropdown="true" data-orderable="false">'.$header->label.'</th>';
         		}
         		else {
         			$th_columns[] = '<th data-search-text="true">'.$header->label.'</th>';

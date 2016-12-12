@@ -274,13 +274,20 @@ $(function() {
                 var column_title = $(column.header()).text();
                 if (column_searchable !== 'true') return false; // Ignore columns not marked as searcahble                  		
                 if (column.data().unique().length == 1) {
-                	column.orderable = false; // Attempting to remove the "order" option on this column, but this doesn't work...
+                	// column.orderable = false; // Attempting to remove the "order" option on this column, but this doesn't work...
                 	// return false; // Ignore columns with only one unique value
-                	// This is confusing I think... it looks like a bug:                	
-                	select_html = '<select class="form-control" disabled onclick="stopPropagation(event);"><option value="">'+column_title+'</option></select>';
+                	// "false" is confusing I think... it looks like a bug:                	
+                	// select_html = '<select class="form-control" disabled onclick="stopPropagation(event);"><option value="">'+column_title+'</option></select>';
+                	// Actually, I'm going to drop this altogether -- this only looks at values in the current view/page, so the dropdown is disabled
+                	// even though there may be rows with other values on subsequent pages
+
+                	// Note that strlen stops the initial dropdown label being cut short
+                	// Note that we also disable sorting on dropdown columns, it seems unnecessary -- just select the one you want!
+
+                	select_html = '<select class="form-control" onclick="stopPropagation(event);" style="min-width: '+column_title.length+'em"><option value="">'+column_title+'</option></select>';
                 }
                 else {
-                	select_html = '<select class="form-control" onclick="stopPropagation(event);"><option value="">'+column_title+'</option></select>';
+                	select_html = '<select class="form-control" onclick="stopPropagation(event);" style="min-width: '+column_title.length+'em"><option value="">'+column_title+'</option></select>';
                 }
 
                 var select = $(select_html)
