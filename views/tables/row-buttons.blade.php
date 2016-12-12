@@ -56,7 +56,15 @@
 	  	@endif
 	  @endif
 	
-	 
+	@forelse ($custom_buttons as $custom_button)
+		<div class="btn-group">				
+			<a href="{{ $custom_button['link'] }}" class="btn btn-sm @if ($custom_button['count'] == 0) btn-default @else btn-warning @endif {{ $custom_button['class'] }}" rel="{{ $custom_button['rel'] }}"  data-toggle="tooltip" data-placement="bottom" title="{{ $custom_button['title'] }}">
+		    @if ($custom_button['icon'])<i class="{{ $custom_button['icon'] }}"></i>@else<i class="fa fa-bars"></i>@endif
+		  </a>
+		</div>
+	@empty
+		<!-- No custom buttons -->
+	@endforelse
 	
 </div>
 

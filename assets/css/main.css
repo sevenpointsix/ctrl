@@ -1,3 +1,24 @@
+/* Core header, footer stuff */
+html {
+  position: relative;
+  min-height: 100%;
+}
+body {          
+  margin-bottom: 70px;
+  padding-top: 50px;
+}
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 50px;
+  background-color: #f5f5f5;
+}
+.footer .text-muted {
+  margin: 15px 0;
+}
+
 
 .page-header h1 img {
 	/* Line-up the header on the dashboad */

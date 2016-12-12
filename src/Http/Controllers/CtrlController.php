@@ -1074,8 +1074,9 @@ class CtrlController extends Controller
 			}
 			*/
 
-			$filter_add_title = 'Add '.$this->a_an($filter_ctrl_class->get_singular()).' '.$filter_ctrl_class->get_singular();
-			$filter_add_link  = route('ctrl::edit_object',[$filter_ctrl_property->related_to_id,0,$filtered_list_string]); // TODO check permissions here; can we add items?
+			// No longer used
+			// $filter_add_title = 'Add '.$this->a_an($filter_ctrl_class->get_singular()).' '.$filter_ctrl_class->get_singular();
+			// $filter_add_link  = route('ctrl::edit_object',[$filter_ctrl_property->related_to_id,0,$filtered_list_string]); // TODO check permissions here; can we add items?
 
 			// New: always link to the filtered list, regardless of whether we have any related items:
 			$filter_list_link  = route('ctrl::list_objects',[$filter_ctrl_property->related_to_id,$filtered_list_string]);
@@ -1087,12 +1088,20 @@ class CtrlController extends Controller
     			'title'      => $filter_list_title, // A generic title, only used by the key at the moment
     			// 'list_title' => $filter_list_title, // Not used
     			'list_link'  => $filter_list_link,
-    			'add_title'  => $filter_add_title,
-    			'add_link'   => $filter_add_link,
+    			// 'add_title'  => $filter_add_title, // No longer used
+    			// 'add_link'   => $filter_add_link, // No longer used
     		];
 
     	}
 
+    	// Any custom buttons?
+    	if ($this->module->enabled('custom_buttons')) {
+			$custom_buttons = $this->module->run('custom_buttons',[
+				$ctrl_class_id,
+				$object_id,
+				$filter_string
+			]);
+		}
     	
     	// Add a "reorder" button to the key
     	// see: https://github.com/laravel/framework/issues/1436
@@ -1117,6 +1126,7 @@ class CtrlController extends Controller
     		'edit_link'           => $edit_link,
     		'delete_link'         => $delete_link,
     		'filtered_list_links' => $filtered_list_links,
+    		'custom_buttons'      => isset($custom_buttons) ? $custom_buttons : false,
     		'can_reorder'         => $can_reorder
     	]);            	
        	return $buttons;
