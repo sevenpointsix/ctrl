@@ -280,6 +280,7 @@ $(function() {
                 	// select_html = '<select class="form-control" disabled onclick="stopPropagation(event);"><option value="">'+column_title+'</option></select>';
                 	// Actually, I'm going to drop this altogether -- this only looks at values in the current view/page, so the dropdown is disabled
                 	// even though there may be rows with other values on subsequent pages
+                	// Aargh -- no, this problem exists because of the each() function below -- FIX ME!
 
                 	// Note that strlen stops the initial dropdown label being cut short
                 	// Note that we also disable sorting on dropdown columns, it seems unnecessary -- just select the one you want!
@@ -301,8 +302,10 @@ $(function() {
                             .draw();
                     } );
                 column.data().unique().sort().each( function ( d, j ) {
-                	if (!d || d == 'None') return false; /* OMIT empty values as we can't yet search for "missing" relationships; see notes in CtrlController. Is 'None' always going to represent a missing relationship...? */                	
-                    select.append( '<option value="'+d+'">'+d+'</option>' )
+                	/* Not sure this is still needed if we pass in 'j' as the value...?
+                	if (!d || d == 'None') return false; /* OMIT empty values as we can't yet search for "missing" relationships; see notes in CtrlController. Is 'None' always going to represent a missing relationship...?
+                	*/     
+                    select.append( '<option value="'+j+'">'+d+'</option>' )
                 } );
             } );    
         

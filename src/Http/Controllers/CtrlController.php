@@ -949,7 +949,7 @@ class CtrlController extends Controller
 							$query->join($filter_ctrl_property->pivot_table, 'id', '=', $filter_ctrl_property->pivot_table.'.'.$filter_ctrl_property->local_key)            
                     			  ->where($filter_ctrl_property->pivot_table.'.'.$filter_ctrl_property->foreign_key,$related_object->id);							
 
-	            	}
+	            		}
 	            	}
 	            	//$query->where('title','LIKE',"%related%");	                
 	            }	            
@@ -1017,7 +1017,7 @@ class CtrlController extends Controller
     		 */
     		try {
     			if ($filter_ctrl_property->relationship_type == 'hasMany') {
-    		$inverse_filter_ctrl_property = CtrlProperty::where('ctrl_class_id',$filter_ctrl_property->related_to_id)
+    				$inverse_filter_ctrl_property = CtrlProperty::where('ctrl_class_id',$filter_ctrl_property->related_to_id)
     														->where('related_to_id',$filter_ctrl_property->ctrl_class_id)
     														->where('foreign_key',$filter_ctrl_property->foreign_key) // Necessary?
     														->firstOrFail();
@@ -1027,6 +1027,9 @@ class CtrlController extends Controller
     														->where('related_to_id',$filter_ctrl_property->ctrl_class_id)
     														->where('pivot_table',$filter_ctrl_property->pivot_table)
     														->firstOrFail();
+    			}
+    			else {
+    				throw new Exception('Cannot set up a filtered list for a '.$filter_ctrl_property->relationship_type.' relationship.');
     			}
     		
     		}
@@ -1264,10 +1267,6 @@ class CtrlController extends Controller
 			$ctrl_class = CtrlClass::where('name',$ctrl_class_name)->firstOrFail();		
 		}
 		catch (\Exception $e) {			
-
-		// 	dump(get_class($object));
-		// dump($ctrl_class_name);
-		// exit();
 			trigger_error($e->getMessage());
 		}
 		return $ctrl_class;

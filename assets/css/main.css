@@ -19,7 +19,6 @@ body {
   margin: 15px 0;
 }
 
-
 .page-header h1 img {
 	/* Line-up the header on the dashboad */
 	height: 50px;
@@ -101,4 +100,9 @@ ul.dropdown-menu>li>a.disabled:hover, ul.dropdown-menu>li>a.disabled:focus
 }
 .alert.alert-narrow .close {
 	line-height: 0.9em;
+}
+
+/* Prevent the datatables spinner from disappearing behind the header input fields */
+#data-table_processing {
+	z-index: 10000;
 }
