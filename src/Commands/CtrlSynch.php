@@ -19,7 +19,8 @@ class CtrlSynch extends Command
     //protected $signature = 'ctrl:synch {action?}';
     protected $signature = 'ctrl:synch
                         {action? : Whether to update files, data or everything}
-                        {--wipe : Whether the database should be wiped first}';
+                        {--wipe : Whether the database should be wiped first}
+                        {--force : Force through some errors identified by the "tidy" action}';
 
     /**
      * The console command description.
@@ -48,22 +49,26 @@ class CtrlSynch extends Command
 
         $action = $this->argument('action');
         $wipe   = $this->option('wipe'); 
+        $force  = $this->option('force');
 
         if ($action == 'files') {
-            $this->tidy_up();
+            $this->tidy_up($force);
             $this->generate_model_files();
         }
         else if ($action == 'data') {
             $this->populate_ctrl_tables($wipe);            
-            $this->tidy_up();
+            $this->tidy_up($force);
+        }
+        else if ($action == 'tidy') {
+            $this->tidy_up($force);
         }
         else if ($action == 'all') {
             $this->populate_ctrl_tables($wipe);
-            $this->tidy_up();
+            $this->tidy_up($force);
             $this->generate_model_files();
         }
         else {
-            $this->line('Usage: php artisan ctrl:synch files|data|all --wipe');
+            $this->line('Usage: php artisan ctrl:synch files|data|tidy|all --wipe');
         }      
         
     }
@@ -89,7 +94,7 @@ class CtrlSynch extends Command
         // Get the current database name (from https://octobercms.com/forum/post/howto-get-the-default-database-name-in-eloquentlaravel-config)
         $database_name = Config::get('database.connections.'.Config::get('database.default').'.database');
         $tables = DB::select('SHOW TABLES');
-        $ignore_tables = ['ctrl_classes','ctrl_properties','migrations','password_resets','revisions'];         
+        $ignore_tables = ['ctrl_classes','ctrl_properties','migrations','password_resets','revisions','jobs','failed_jobs'];         
         foreach ($tables as $table) {           
             $table_name = $table->{'Tables_in_'.$database_name};
 
@@ -367,7 +372,6 @@ class CtrlSynch extends Command
 
             if ($pass == 1) $tables_processed++;
         }
-        
         $this->info("$tables_processed tables and $columns_processed columns processed");
     }
 
@@ -475,15 +479,75 @@ class CtrlSynch extends Command
 
     /**
      * Tidy up some known issues that can occur with the database; floating records etc
+     * @param  $force Forcibly delete (eg) columns that appear to be redundant. Without this, we just identify them
      *
      * @return Response
      */
-    public function tidy_up()
+    public function tidy_up($force = null)
     {
         // Remove any CTRL Properties that no longer have a parent class (ie, where the parent class has since been deleted)
         DB::delete('DELETE FROM ctrl_properties WHERE ctrl_class_id NOT IN (SELECT id FROM ctrl_classes);');
 
         // Remove any CTRL Properties that no longer have a related class (ie, where the related class has since been deleted)
         DB::delete('DELETE FROM ctrl_properties WHERE related_to_id NOT IN (SELECT id FROM ctrl_classes);');
+
+        // Now check for redundant (deleted?) classes and properties; classes without a table, properties without a column
+        $missing_tables = false;
+        $ctrl_classes = \Sevenpointsix\Ctrl\Models\CtrlClass::get();
+        foreach ($ctrl_classes as $ctrl_class) {
+            $table = DB::select("SHOW TABLES like '{$ctrl_class->table_name}'");
+            if (!$table) {
+                $this->error("The table for the class {$ctrl_class->name} ('{$ctrl_class->table_name}') appears not to exist");
+                $missing_tables = true;
+            }
+        }
+        if (!$missing_tables) $this->info("All tables present and correct");
+
+        $missing_columns = false;
+        $ctrl_properties = \Sevenpointsix\Ctrl\Models\CtrlProperty::get();
+        foreach ($ctrl_properties as $ctrl_property) {
+            if (in_array($ctrl_property->relationship_type,['belongsToMany'])) { // belongsToMany, has $ctrl_property->pivot_table
+                $table_name = $ctrl_property->pivot_table;
+                // Check foreign key and local key
+                foreach (['foreign_key','local_key'] as $key) {
+                    $table_column = DB::select("SHOW COLUMNS FROM {$table_name} LIKE '{$ctrl_property->$key}'");
+                    if (!$table_column) {
+                        $this->error("The {$ctrl_property->relationship_type} column for {$ctrl_property->ctrl_class->name}::{$ctrl_property->$key} (from the pivot table '{$table_name}') appears not to exist");
+                        $missing_columns = true;
+                    }
+                }
+            }
+            else if (in_array($ctrl_property->relationship_type,['hasMany'])) { // hasMany, has a key in a related table, as per $ctrl_property->related_to_id
+                $table_name = $ctrl_property->related_ctrl_class->table_name;    
+                $table_column = DB::select("SHOW COLUMNS FROM {$table_name} LIKE '{$ctrl_property->foreign_key}'");
+                if (!$table_column) {
+                    $this->error("The {$ctrl_property->relationship_type} column for {$ctrl_property->ctrl_class->name}::{$ctrl_property->foreign_key} (from the table '{$table_name}') appears not to exist");
+                    $missing_columns = true;
+                }
+            }
+            else if (in_array($ctrl_property->relationship_type,['belongsTo'])) { // belongsTo, has a join column (eg _id)
+                $table_name = $ctrl_property->ctrl_class->table_name;    
+                $table_column = DB::select("SHOW COLUMNS FROM {$table_name} LIKE '{$ctrl_property->foreign_key}'");
+                if (!$table_column) {
+                    $this->error("The {$ctrl_property->relationship_type} column for {$ctrl_property->ctrl_class->name}::{$ctrl_property->foreign_key} (from the table '{$table_name}') appears not to exist");
+                    $missing_columns = true;
+                }
+            }
+            else {
+                $table_name = $ctrl_property->ctrl_class->table_name;    
+                $table_column = DB::select("SHOW COLUMNS FROM {$table_name} LIKE '{$ctrl_property->name}'");
+                if (!$table_column) {
+                    $this->error("The standard column for {$ctrl_property->ctrl_class->name}::{$ctrl_property->name} (from the table '{$table_name}') appears not to exist");
+                    $missing_columns = true;
+                    if ($force) {
+                        // We only forcibly delete "standard" columns for now, I need to run further tests on this
+                        $ctrl_property->delete();
+                        $this->info("Property deleted!");
+                    }
+                }
+            }
+        }
+        if (!$missing_columns) $this->info("All columns present and correct");
+
     }
 }
