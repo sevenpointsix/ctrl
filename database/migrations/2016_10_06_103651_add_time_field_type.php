@@ -3,7 +3,7 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class AddTimeType extends Migration
+class AddTimeFieldType extends Migration
 {
     /**
      * Run the migrations.
