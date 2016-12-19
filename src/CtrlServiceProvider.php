@@ -95,7 +95,9 @@ class CtrlServiceProvider extends ServiceProvider{
 	        	// We could potentially just use 'vendor/ctrl'; check best practice here.
 	    ], 'public');
 
-
+	    $this->publishes([
+            realpath(__DIR__.'/../database/migrations') => database_path('/migrations')
+        ], 'migrations');
 
 	}
 
