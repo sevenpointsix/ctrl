@@ -253,10 +253,20 @@ class CtrlSynch extends Command
                             continue;
                         }
 
+                        // Now -- if the inverse table name matches the current table name, this is a parent/child property (ie, page_id within the pages table);l
+                        if ($inverse_table_name == $standard_table) {
+                            $ctrl_property_name         = 'parent'; //str_replace('_id', '', $column_name);
+                            $inverse_ctrl_property_name = 'children';
+                        }
+                        else {
+                            $ctrl_property_name         = str_replace('_id', '', $column_name);
+                            $inverse_ctrl_property_name = strtolower($ctrl_class->name);
+                        }
+
                         $ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrNew([                      
                             'ctrl_class_id'     => $ctrl_class->id,
                             'related_to_id'     => $inverse_ctrl_class->id,
-                            'name'              => str_replace('_id', '', $column_name),
+                            'name'              => $ctrl_property_name,
                             'relationship_type' => 'belongsTo',
                             'foreign_key'       => $column_name,
                             'local_key'         => 'id'                            
@@ -275,7 +285,7 @@ class CtrlSynch extends Command
                         // We do need to create the inverse property though:
                     
                         $inverse_ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrNew([
-                            'name'              => strtolower($ctrl_class->name),
+                            'name'              => $inverse_ctrl_property_name,
                                 // 'name' here could possibly be ascertained in other ways; TBC
                             'ctrl_class_id'     => $inverse_ctrl_class->id,
                             'related_to_id'     => $ctrl_class->id,
