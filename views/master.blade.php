@@ -22,27 +22,13 @@
 
     <link rel="stylesheet" href="{{ asset('assets/vendor/ctrl/css/main.css') }}">
 
+    @if (view()->exists('ctrl_custom::custom_css'))
+      @include('ctrl_custom::custom_css')  
+    @endif
+
     <!-- Fix header and footer -->
     <style>
-    html {
-      position: relative;
-      min-height: 100%;
-    }
-    body {          
-      margin-bottom: 70px;
-      padding-top: 50px;
-    }
-    .footer {
-      position: absolute;
-      bottom: 0;
-      width: 100%;
-      /* Set the fixed height of the footer here */
-      height: 50px;
-      background-color: #f5f5f5;
-    }
-    .footer .text-muted {
-      margin: 15px 0;
-    }
+    
 	   </style>
 
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -52,10 +38,10 @@
     <![endif]-->
 
     {{-- ROLLBAR --}}
-    @if (env('ROLLBAR_TOKEN'))
+    @if (env('ROLLBAR_CLIENT_TOKEN'))
       <script>
         var _rollbarConfig = {
-            accessToken: "{{ env('ROLLBAR_TOKEN') }}",
+            accessToken: "{{ env('ROLLBAR_CLIENT_TOKEN') }}",
             captureUncaught: true,
             captureUnhandledRejections: true,
             payload: {
@@ -137,6 +123,10 @@
     <script src="{{ asset('assets/vendor/ctrl/js/main.js') }}"></script>
     
     @yield('js')
+
+    @if (view()->exists('ctrl_custom::custom_js'))
+      @include('ctrl_custom::custom_js')  
+    @endif
 
     @include('ctrl::notify')
 

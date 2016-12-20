@@ -23,6 +23,14 @@ class CtrlProperty extends Model
     }
 
     /**
+     * Get the *related* class for this property
+     */
+    public function related_ctrl_class()
+    {
+        return $this->belongsTo('Sevenpointsix\Ctrl\Models\CtrlClass','related_to_id','id');
+    }
+
+    /**
      * Get the name of the form field that corresponds to this property
      * This is very closely related to the "column name" in the database; universally perhaps?
      * It may be preferable to actually store this in the database, 

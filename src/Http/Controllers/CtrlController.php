@@ -240,7 +240,8 @@ class CtrlController extends Controller
 				$query->orderBy($first_header_property->foreign_key);
 			}
 			else {
-				$query->orderByRaw("INSTR({$first_header_property->name}, '$search_term'), {$first_header_property->name}");
+				//$query->orderByRaw("INSTR({$first_header_property->name}, '$search_term'), {$first_header_property->name}");
+				$query->orderByRaw("INSTR(?, ?), ?",[$first_header_property->name,$search_term,$first_header_property->name]);
 			}
 
 			$objects = $query->take(20)->get();	// Limits the dropdown to 20 items; this may need to be adjusted
@@ -291,6 +292,8 @@ class CtrlController extends Controller
 	public function list_objects(Request $request, $ctrl_class_id, $filter_string = NULL)
 	{		
 
+		if (!$this->can($ctrl_class_id,'list')) return redirect()->route('ctrl::dashboard');
+		
 		// Convert the the $filter parameter into one that makes sense
 		$filter_array = $this->convert_filter_string_to_array($filter_string);			
 		$filter_description = $this->describe_filter($filter_array);
@@ -345,7 +348,7 @@ class CtrlController extends Controller
         		// Get around a problem with datatables if there's no relationship defined
         		// See https://datatables.net/manual/tech-notes/4
         		$column->defaultContent = 'None'; // We can't filter the list to show all "None" items though... not yet.
-        		$th_columns[] = '<th data-search-dropdown="true">'.$header->label.'</th>';
+        		$th_columns[] = '<th data-search-dropdown="true" data-orderable="false">'.$header->label.'</th>';
         	}
         	else {
         		$column->data = $header->name;
@@ -363,7 +366,7 @@ class CtrlController extends Controller
         		}
         		else if ($header->field_type == 'checkbox') { // We convert these to Yes/No values, so allow a search dropdown...        			
 	        		// $column->defaultContent = 'None'; // Necessary..?
-        			$th_columns[] = '<th data-search-dropdown="true">'.$header->label.'</th>';
+        			$th_columns[] = '<th data-search-dropdown="true" data-orderable="false">'.$header->label.'</th>';
         		}
         		else {
         			$th_columns[] = '<th data-search-text="true">'.$header->label.'</th>';
@@ -442,7 +445,9 @@ class CtrlController extends Controller
 		//dd($can_add);
         $add_link = $can_add ? route('ctrl::edit_object',[$ctrl_class->id,0,$filter_string]) : '';
 
-        $key = 		$key = $this->get_row_buttons($ctrl_class->id,0,true);
+        //$key = 		$key = $this->get_row_buttons($ctrl_class->id,0,true);
+        // Dropping the key, we don't use it; see notes elsewhere
+        $key = false;
 
 		return view('ctrl::list_objects',[
 			'ctrl_class'           => $ctrl_class,
@@ -511,7 +516,38 @@ class CtrlController extends Controller
 	}
 
 	/**
-	 * Handle the posted files when importing all objects of a given CtrlClass, as 'files'; called by @import_obects_process
+	 * Generic permissions function that references the permissions module
+	 * @param  integer $ctrlclass_id The ID of the Ctrl Class
+	 * @param  string $action       The action we're trying to carry out
+	 * @return boolean
+	 */
+	protected function can($ctrl_class_id,$action) {
+		$can = true;
+		try {
+			$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
+		}
+		catch (\Exception $e) {
+			trigger_error($e->getMessage());
+		}
+
+        if ($this->module->enabled('permissions')) {
+			$custom_permission = $this->module->run('permissions',[				
+				$ctrl_class->id,
+				$action,
+				// $filter_string
+			]);
+		}
+		if (isset($custom_permission) && !is_null($custom_permission)) {
+			$can = $custom_permission;
+		}
+		else if (!$ctrl_class->can($action)) {
+			$can = false;
+		}
+		return $can;
+	}
+
+	/**
+	 * Handle the posted files when importing all objects of a given CtrlClass, as 'files'; called by @import_objects_process
 	 * @param  integer $ctrl_class_id The ID of the class we're editing
 	 * @param  string $filter_string Are we filtering the list? Currently stored as a ~ delimited list of property=>id comma-separated pairs; see below
 	 *
@@ -571,8 +607,10 @@ class CtrlController extends Controller
 		$csv_file = trim($request->input('csv-import'),'/');
 		$errors = [];
 
+		// Convert .txt files into .csv; this is because Office can export .txt files in UTF8 (UTF16, in fact) but not .csv
+		$converted = $this->convert_txt_to_csv($csv_file);
+		
 		// Work out what headers we need, what the callback functions are, whether we have a "pre-import" function, etc:
-
 		$required_headers = $this->module->run('import_objects',[
 			'get-headers',
 			$ctrl_class_id,
@@ -883,8 +921,8 @@ class CtrlController extends Controller
 					return sprintf('<i class="fa fa-download"></i> <a href="%1$s">%2$s</a>',$file, $basename);
 				}
         	})
-            ->addColumn('action', function ($object) use ($ctrl_class) {
-            	return $this->get_row_buttons($ctrl_class->id, $object->id);
+            ->addColumn('action', function ($object) use ($ctrl_class, $filter_string) {
+            	return $this->get_row_buttons($ctrl_class->id, $object->id, $filter_string);
             })       
             // Is this the best place to filter results if necessary?
             // I think so. See: http://datatables.yajrabox.com/eloquent/custom-filter
@@ -911,7 +949,7 @@ class CtrlController extends Controller
 							$query->join($filter_ctrl_property->pivot_table, 'id', '=', $filter_ctrl_property->pivot_table.'.'.$filter_ctrl_property->local_key)            
                     			  ->where($filter_ctrl_property->pivot_table.'.'.$filter_ctrl_property->foreign_key,$related_object->id);							
 
-	            	}
+	            		}
 	            	}
 	            	//$query->where('title','LIKE',"%related%");	                
 	            }	            
@@ -951,11 +989,15 @@ class CtrlController extends Controller
 	 * @param  $key Are we drawing a key, or returning actual buttons?
 	 * @return string HTML
 	 */
-	protected function get_row_buttons($ctrl_class_id,$object_id, $key = false) {
+	// protected function get_row_buttons($ctrl_class_id,$object_id, $key = false) {
+
+	// Right. I'm dropping $key, partly because we don't really use it (it looks rubbish) and partly because passing in $key is really clunky
+	// If we ever do need to format buttons differently for a "key", this function needs to be split into two; one to retrieve the buttons, and one to display them
+	protected function get_row_buttons($ctrl_class_id,$object_id, $filter_string = null) {
 
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();	
 
-    	$edit_link   = route('ctrl::edit_object',[$ctrl_class->id,$object_id]); 
+    	$edit_link   = route('ctrl::edit_object',[$ctrl_class->id,$object_id,$filter_string]); 
     	$delete_link = route('ctrl::delete_object',[$ctrl_class->id,$object_id]);
 
     	// Do we have any filtered lists?
@@ -975,7 +1017,7 @@ class CtrlController extends Controller
     		 */
     		try {
     			if ($filter_ctrl_property->relationship_type == 'hasMany') {
-    		$inverse_filter_ctrl_property = CtrlProperty::where('ctrl_class_id',$filter_ctrl_property->related_to_id)
+    				$inverse_filter_ctrl_property = CtrlProperty::where('ctrl_class_id',$filter_ctrl_property->related_to_id)
     														->where('related_to_id',$filter_ctrl_property->ctrl_class_id)
     														->where('foreign_key',$filter_ctrl_property->foreign_key) // Necessary?
     														->firstOrFail();
@@ -985,6 +1027,9 @@ class CtrlController extends Controller
     														->where('related_to_id',$filter_ctrl_property->ctrl_class_id)
     														->where('pivot_table',$filter_ctrl_property->pivot_table)
     														->firstOrFail();
+    			}
+    			else {
+    				throw new Exception('Cannot set up a filtered list for a '.$filter_ctrl_property->relationship_type.' relationship.');
     			}
     		
     		}
@@ -1032,8 +1077,9 @@ class CtrlController extends Controller
 			}
 			*/
 
-			$filter_add_title = 'Add '.$this->a_an($filter_ctrl_class->get_singular()).' '.$filter_ctrl_class->get_singular();
-			$filter_add_link  = route('ctrl::edit_object',[$filter_ctrl_property->related_to_id,0,$filtered_list_string]); // TODO check permissions here; can we add items?
+			// No longer used
+			// $filter_add_title = 'Add '.$this->a_an($filter_ctrl_class->get_singular()).' '.$filter_ctrl_class->get_singular();
+			// $filter_add_link  = route('ctrl::edit_object',[$filter_ctrl_property->related_to_id,0,$filtered_list_string]); // TODO check permissions here; can we add items?
 
 			// New: always link to the filtered list, regardless of whether we have any related items:
 			$filter_list_link  = route('ctrl::list_objects',[$filter_ctrl_property->related_to_id,$filtered_list_string]);
@@ -1045,12 +1091,20 @@ class CtrlController extends Controller
     			'title'      => $filter_list_title, // A generic title, only used by the key at the moment
     			// 'list_title' => $filter_list_title, // Not used
     			'list_link'  => $filter_list_link,
-    			'add_title'  => $filter_add_title,
-    			'add_link'   => $filter_add_link,
+    			// 'add_title'  => $filter_add_title, // No longer used
+    			// 'add_link'   => $filter_add_link, // No longer used
     		];
 
     	}
 
+    	// Any custom buttons?
+    	if ($this->module->enabled('custom_buttons')) {
+			$custom_buttons = $this->module->run('custom_buttons',[
+				$ctrl_class_id,
+				$object_id,
+				$filter_string
+			]);
+		}
     	
     	// Add a "reorder" button to the key
     	// see: https://github.com/laravel/framework/issues/1436
@@ -1063,7 +1117,7 @@ class CtrlController extends Controller
         	$can_reorder = false;	
         }
     	
-    	if ($key) {
+    	if (!empty($key)) { // No longer used, see notes elsewhere
     		$template = 'ctrl::tables.row-buttons-key';
     	}
     	else {
@@ -1075,6 +1129,7 @@ class CtrlController extends Controller
     		'edit_link'           => $edit_link,
     		'delete_link'         => $delete_link,
     		'filtered_list_links' => $filtered_list_links,
+    		'custom_buttons'      => isset($custom_buttons) ? $custom_buttons : [],
     		'can_reorder'         => $can_reorder
     	]);            	
        	return $buttons;
@@ -1134,6 +1189,72 @@ class CtrlController extends Controller
 	}
 
 	/**
+	 * Convert a text export from Office 2013 (which can be in UTF8 format, unlike CSV exports from the same) into CSV
+	 * @param  string $csv_file A file path
+	 * @return boolean
+	 */
+	protected function convert_txt_to_csv($csv_file) {
+		// From http://stackoverflow.com/questions/12489033/php-modify-a-single-line-in-a-text-file		
+		
+		ini_set("memory_limit",-1); // mb_convert_encoding takes up loads of memory... 
+
+		// How is the current file encoded? Note that this is different to the value separator;
+		// but Office exports tab-delimited files as UTF-16, which we can't run through INFILE, so we need to convert it
+		$current_encoding = $this->detect_utf_encoding($csv_file);
+		
+		$fh = fopen($csv_file,'r+');
+
+		$csv_rows = '';
+
+		$loop = 0;
+		while(!feof($fh)) {
+			$row = fgets($fh);
+			if ($loop++ == 0) { // Check first line to see if this is a tab-delimited file
+				$commas = substr_count($row,',');
+				$tabs   = substr_count($row,"\t");
+				if ($commas >= $tabs) return false; // No need to change this file, it's already comma-delimited as far as we can tell
+			}			
+			// Attempting to remove Windows-style endings while we're here, but the following line doesn't work...
+		    // $csv_rows .= str_replace(["\t","\r"],[',',''],$row);
+
+			// Instead, from http://stackoverflow.com/questions/7836632/how-to-replace-different-newline-styles-in-php-the-smartest-way
+			// Nope, this doesn't work either. Fuck it, we can live with CRLF for now.
+			// $row = preg_replace('~(*BSR_ANYCRLF)\R~', "\n", $row);
+			
+			$csv_row = str_replace("\t",',',$row);
+		    $csv_rows .= $csv_row;
+		}
+		
+		$csv_rows = mb_convert_encoding($csv_rows, 'UTF-8',$current_encoding);
+		file_put_contents($csv_file, $csv_rows);		
+		fclose($fh); 
+
+		return true;
+	}
+
+	// From http://php.net/manual/en/function.mb-detect-encoding.php
+	protected function detect_utf_encoding($filename) {
+
+		// Unicode BOM is U+FEFF, but after encoded, it will look like this.
+		define ('UTF32_BIG_ENDIAN_BOM'   , chr(0x00) . chr(0x00) . chr(0xFE) . chr(0xFF));
+		define ('UTF32_LITTLE_ENDIAN_BOM', chr(0xFF) . chr(0xFE) . chr(0x00) . chr(0x00));
+		define ('UTF16_BIG_ENDIAN_BOM'   , chr(0xFE) . chr(0xFF));
+		define ('UTF16_LITTLE_ENDIAN_BOM', chr(0xFF) . chr(0xFE));
+		define ('UTF8_BOM'               , chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+	    $text = file_get_contents($filename);
+	    $first2 = substr($text, 0, 2);
+	    $first3 = substr($text, 0, 3);
+	    $first4 = substr($text, 0, 3);
+	    
+	    if ($first3 == UTF8_BOM) return 'UTF-8';
+	    elseif ($first4 == UTF32_BIG_ENDIAN_BOM) return 'UTF-32BE';
+	    elseif ($first4 == UTF32_LITTLE_ENDIAN_BOM) return 'UTF-32LE';
+	    elseif ($first2 == UTF16_BIG_ENDIAN_BOM) return 'UTF-16BE';
+	    elseif ($first2 == UTF16_LITTLE_ENDIAN_BOM) return 'UTF-16LE';
+	}
+
+	/**
 	 * Return the ctrl_class object defined by the object $object_id	 
 	 * @param  integer $object_id  The ID of the object
 	 * @return object The resulting object
@@ -1146,10 +1267,6 @@ class CtrlController extends Controller
 			$ctrl_class = CtrlClass::where('name',$ctrl_class_name)->firstOrFail();		
 		}
 		catch (\Exception $e) {			
-
-		// 	dump(get_class($object));
-		// dump($ctrl_class_name);
-		// exit();
 			trigger_error($e->getMessage());
 		}
 		return $ctrl_class;
@@ -1235,6 +1352,9 @@ class CtrlController extends Controller
 			}
 			elseif (in_array($ctrl_property->field_type,['date','datetime','time'])) {
 				$ctrl_property->template = 'date';
+			}
+			elseif (empty($ctrl_property->field_type)) {
+				trigger_error("No field_type set for propery {$ctrl_property->name}");
 			}
 			else {
 				$ctrl_property->template = $ctrl_property->field_type;
@@ -1404,6 +1524,7 @@ class CtrlController extends Controller
 		$back_link        = route('ctrl::list_objects',[$ctrl_class->id,$filter_string]);
 		*/
 		// Do we have an unfiltered list we can link back to?
+
         if ($filter_array) {
         	// dd($filter_array);
         	// $filter_array[0]['ctrl_property_id'] is now the ID of the property that links back to the "parent" list, so:
@@ -1655,7 +1776,7 @@ class CtrlController extends Controller
    		$request->session()->flash('messages', $messages);	
         
 		if ($ctrl_class->can('list')) {      
-        $redirect = route('ctrl::list_objects',[$ctrl_class->id,$filter_string]);
+        	$redirect = route('ctrl::list_objects',[$ctrl_class->id,$filter_string]);
         }
         else {
   			$redirect = route('ctrl::dashboard');

@@ -1,3 +1,23 @@
+/* Core header, footer stuff */
+html {
+  position: relative;
+  min-height: 100%;
+}
+body {          
+  margin-bottom: 70px;
+  padding-top: 50px;
+}
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 50px;
+  background-color: #f5f5f5;
+}
+.footer .text-muted {
+  margin: 15px 0;
+}
 
 .page-header h1 img {
 	/* Line-up the header on the dashboad */
@@ -71,4 +91,18 @@ ul.dropdown-menu>li>a.disabled:hover, ul.dropdown-menu>li>a.disabled:focus
 }
 .cbx {
 	background-color: #fff; /* Give the custom checkboxes a white background */
+}
+
+/* Narrow alerts are handy sometimes */
+.alert.alert-narrow {
+	padding-top: 5px;
+	padding-bottom: 5px;
+}
+.alert.alert-narrow .close {
+	line-height: 0.9em;
+}
+
+/* Prevent the datatables spinner from disappearing behind the header input fields */
+#data-table_processing {
+	z-index: 10000;
 }

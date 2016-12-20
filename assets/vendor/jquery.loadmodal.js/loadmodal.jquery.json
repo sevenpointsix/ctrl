@@ -1,0 +1,26 @@
+{
+    "name": "loadmodal",
+    "title": "Load Modal",
+    "description": "A JQuery plugin to open a Bootstrap modal (dialog) with content loaded via Ajax.",
+    "keywords": [
+        "bootstrap",
+        "modal",
+        "dialog"
+    ],
+    "version": "1.1.21",
+    "author": {
+        "name": "Conan Albrecht",
+        "url": "http://warp.byu.edu/",
+        "email": "ca@byu.edu"
+    },
+    "licenses": [
+        {
+            "type": "MIT",
+        }
+    ],
+    "dependencies": {
+        "jquery": ">=1.5",
+        "bootstrap": ">=3.0"
+    },
+    "homepage": "https://github.com/doconix/jquery.loadmodal.js"
+}
