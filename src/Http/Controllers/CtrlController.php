@@ -1129,7 +1129,7 @@ class CtrlController extends Controller
     		'edit_link'           => $edit_link,
     		'delete_link'         => $delete_link,
     		'filtered_list_links' => $filtered_list_links,
-    		'custom_buttons'      => isset($custom_buttons) ? $custom_buttons : false,
+    		'custom_buttons'      => isset($custom_buttons) ? $custom_buttons : [],
     		'can_reorder'         => $can_reorder
     	]);            	
        	return $buttons;
