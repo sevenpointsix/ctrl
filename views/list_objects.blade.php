@@ -242,7 +242,7 @@ $(function() {
 			// NOTE: this doesn't work! It only works if we change the initialisation function to dataTable, not DataTable, but that breaks everything else! WTF?
 			// No, this works fine in fact -- why did I think it didn't?
 
-		"sPaginationType": "listbox", // see https://datatables.net/plug-ins/pagination/select
+		"sPaginationType": "simple_numbers", // use "listbox" for Argos-style dropdowns, but I'm going off these
 
 		"orderCellsTop": true, // Is this required? It's designed to prevent the click on a search box propagating to the reorder button, but I think we handle this using stopPropagation above
 		dom: "<'row'<'col-sm-12'tr>>" +
