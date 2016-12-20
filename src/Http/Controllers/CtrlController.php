@@ -1305,8 +1305,8 @@ class CtrlController extends Controller
 			else {
 				$column = DB::select("SHOW COLUMNS FROM {$ctrl_property->ctrl_class->table_name} WHERE Field = '{$ctrl_property->name}'");
 				if (!isset($column[0])) {
-					dump("SHOW COLUMNS FROM {$ctrl_property->ctrl_class->table_name} WHERE Field = '{$ctrl_property->name}'");
-					dd($column);
+					// dump("SHOW COLUMNS FROM {$ctrl_property->ctrl_class->table_name} WHERE Field = '{$ctrl_property->name}'");					
+					trigger_error("Cannot locate column {$ctrl_property->name} in table {$ctrl_property->ctrl_class->table_name}");
 				}
 				$type = $column[0]->Type;
 				// Is this an ENUM field?
