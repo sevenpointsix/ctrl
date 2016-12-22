@@ -1814,14 +1814,17 @@ class CtrlController extends Controller
 	    ]);
 	    */
 	    
-		// Not sure if this works or not; will it disable Debugbar if loaded, or should we check class_exists('\Debugbar') or something?
-	    // We need something like this so that we can disable Debugbar when returning Froala AJAX 
-	    if (class_exists('Debugbar')) {
-		    \Debugbar::disable();
-		}
-		else {
-
-		}
+		// We need to disable Debugbar when returning Froala AJAX, if used 	    
+	    if (in_array('Barryvdh\Debugbar\ServiceProvider', config('app.providers'))) {
+	    	// Debugbar enabled (there must be a better way of checking this)
+	    	// but in order to disable it, we also need to have enabled the Facade...
+	    	if (!array_key_exists('Debugbar', config('app.aliases'))) {
+	    		trigger_error("If using Debugbar, the alias must be enabled so that we can in turn disable Debugbar...");
+	    	}
+	    	else {
+	    		\Debugbar::disable();	
+	    	}
+	    }
 
 	    $response = new \StdClass;
 
