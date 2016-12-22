@@ -1814,7 +1814,14 @@ class CtrlController extends Controller
 	    ]);
 	    */
 	    
-	    \Debugbar::disable(); // Will this kick off if we've not installed DebugBar on the main site? We need it so that we can disable it when returning Froala AJAX 
+		// Not sure if this works or not; will it disable Debugbar if loaded, or should we check class_exists('\Debugbar') or something?
+	    // We need something like this so that we can disable Debugbar when returning Froala AJAX 
+	    if (class_exists('Debugbar')) {
+		    \Debugbar::disable();
+		}
+		else {
+
+		}
 
 	    $response = new \StdClass;
 
