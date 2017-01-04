@@ -958,8 +958,10 @@ class CtrlController extends Controller
 		// Known issue, that I'm struggling to resolve; if we have a dropdown to search related fields, but there's no relationship for an object, we can't select the "empty" value and show all items without a relationship. TODO.
 
         $datatable = Datatables::of($objects)  
-        	->setRowId('id') // For reordering
-        	->editColumn('order', '<i class="fa fa-reorder"></i>') // Set the displayed value of the order column to just show the icon        	        	
+        	->setRowId('id') // For reordering        	
+        	->editColumn('order', function($object) { // Set the displayed value of the order column to just show the icon        	        	
+        		return '<i class="fa fa-reorder"></i>';
+        	}) // Set the displayed value of the order column to just show the icon        	        	
         	// ->editColumn('src', '<div class="media"><div class="media-left"><a href="{{$src}}" data-toggle="lightbox" data-title="{{$src}}"><img class="media-object" src="{{$src}}" height="30"></a></div><div class="media-body" style="vertical-align: middle">{{$src}}</div></div>') // Draw the actual image, if this is an image field
         	->editColumn('src', function($object) {
 	    		if ($src = $object->src) { // If we have a "src" column, assume (for now!) that we render it as an image. We could probably load the corresponding ctrlproperty here and confirm this:
@@ -1931,6 +1933,17 @@ class CtrlController extends Controller
 	{
 
 		// This code is very, very similar to froala_upload, but we'll keep them separate for future flexibility
+
+		if (in_array('Barryvdh\Debugbar\ServiceProvider', config('app.providers'))) {
+	    	// Debugbar enabled (there must be a better way of checking this)
+	    	// but in order to disable it, we also need to have enabled the Facade...
+	    	if (!array_key_exists('Debugbar', config('app.aliases'))) {
+	    		trigger_error("If using Debugbar, the alias must be enabled so that we can in turn disable Debugbar...");
+	    	}
+	    	else {
+	    		\Debugbar::disable();	
+	    	}
+	    }
 
 		$response = new \StdClass;
 		
