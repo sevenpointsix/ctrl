@@ -350,10 +350,11 @@ class CtrlController extends Controller
 
         		// Get around a problem with datatables if there's no relationship defined
         		// See https://datatables.net/manual/tech-notes/4
+				$column->defaultContent = 'None'; // We can't filter the list to show all "None" items though... not yet.
 
         		// Only set data-search-dropdown (which converts the header to a dropdown) if we would have fewer than 50 items in the list:
         		if ($related_objects::count() < 50) {
-        			$column->defaultContent = 'None'; // We can't filter the list to show all "None" items though... not yet.
+        			
         			$th_columns[] = '<th data-search-dropdown="true" data-orderable="false">'.$header->label.'</th>';
         		}
         		else {
