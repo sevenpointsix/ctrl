@@ -1652,6 +1652,19 @@ class CtrlController extends Controller
 	 */
 	public function save_object(Request $request, $ctrl_class_id, $object_id = NULL, $filter_string = NULL)
 	{		
+
+		// We need to disable Debugbar when returning Froala AJAX, if used 	    
+	    if (in_array('Barryvdh\Debugbar\ServiceProvider', config('app.providers'))) {
+	    	// Debugbar enabled (there must be a better way of checking this)
+	    	// but in order to disable it, we also need to have enabled the Facade...
+	    	if (!array_key_exists('Debugbar', config('app.aliases'))) {
+	    		trigger_error("If using Debugbar, the alias must be enabled so that we can in turn disable Debugbar...");
+	    	}
+	    	else {
+	    		\Debugbar::disable();	
+	    	}
+	    }
+		
 		// dd($_POST);
 		try {
 			$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();				
