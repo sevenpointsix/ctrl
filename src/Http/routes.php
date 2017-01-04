@@ -60,6 +60,10 @@ Route::group(['as' => 'ctrl::','prefix'=>env('CTRL_PREFIX', 'admin'),'middleware
 		'as'=>'get_data',
 		'uses'=>'CtrlController@get_data'
 	]);
+	Route::match(['get', 'post'],'dropdowns/{ctrl_class_id}/{column_header?}',[ // 'get' while testing
+		'as'=>'populate_datatables_dropdowns',
+		'uses'=>'CtrlController@populate_datatables_dropdowns'
+	]);
 
 	Route::post('reorder/{ctrl_class_id}',[
 		'as'=>'reorder_objects',

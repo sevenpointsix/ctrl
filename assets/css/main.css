@@ -106,3 +106,8 @@ ul.dropdown-menu>li>a.disabled:hover, ul.dropdown-menu>li>a.disabled:focus
 #data-table_processing {
 	z-index: 10000;
 }
+
+/* Limit the size of the file-preview-image used by Krajee; is there a better way of doing this? Review http://plugins.krajee.com/file-input */
+.file-preview-image {
+	max-width: 100%;
+}

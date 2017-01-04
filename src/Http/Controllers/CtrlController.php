@@ -330,6 +330,9 @@ class CtrlController extends Controller
         		// Note that this doesn't yet handle hasMany relationships, I don't think?
         		// We also haven't allowed for classes with multiple "string" values;
         		// we may have to utilise something from http://datatables.yajrabox.com/eloquent/dt-row for that
+
+        		$related_objects = $this->get_object_from_ctrl_class_id($header->related_to_id);        		
+    		
         		$related_ctrl_class = CtrlClass::where('id',$header->related_to_id)->firstOrFail();	
         		$string = $related_ctrl_class->ctrl_properties()->whereRaw(
 				   'find_in_set(?, flags)',
@@ -347,8 +350,15 @@ class CtrlController extends Controller
 
         		// Get around a problem with datatables if there's no relationship defined
         		// See https://datatables.net/manual/tech-notes/4
-        		$column->defaultContent = 'None'; // We can't filter the list to show all "None" items though... not yet.
-        		$th_columns[] = '<th data-search-dropdown="true" data-orderable="false">'.$header->label.'</th>';
+
+        		// Only set data-search-dropdown (which converts the header to a dropdown) if we would have fewer than 50 items in the list:
+        		if ($related_objects::count() < 50) {
+        			$column->defaultContent = 'None'; // We can't filter the list to show all "None" items though... not yet.
+        			$th_columns[] = '<th data-search-dropdown="true" data-orderable="false">'.$header->label.'</th>';
+        		}
+        		else {
+        			$th_columns[] = '<th data-search-text="true">'.$header->label.'</th>';
+        		}
         	}
         	else {
         		$column->data = $header->name;
@@ -830,6 +840,55 @@ class CtrlController extends Controller
 			'save_link'        => $save_link,
 			'form_field'       => $upload_field,
 		]);
+	}
+
+	/**
+	 * Populate the dropdown filters used by datatables
+	 * This is required because the automatic way to do it is to take unique values from the column, but on the given page of the table only
+	 * This means that the dropdown list is usually truncated
+	 * @param  integer $ctrl_class_id The ID of the class we're editing
+	 * @param  string $filter Optional list filter, passed in from the datatables Ajax call; NOT CURRENTLY USED 
+	 * 
+	 * @return [type]                [description]
+	 * 
+	 */
+	public function populate_datatables_dropdowns(Request $request, $ctrl_class_id, $filter_string = NULL) {
+
+		/*		
+		OK. THis is partly written. I was trying to build this for the Argos products:brand column, but then I realised that we have 5000 brands, and listing them all in a dropdown won't work. Instead, I need to abandon the dropdown altogether, and make it a searchable field.
+		However, this does have potential, if we're listing items with only 10 or 20 related items, but with the old problem that not all related values appear on page one of the table.
+		We'll need to get this function to return valid JSON data, and then use this data to populate the dropdowns; see list_objects.blade.php.
+		*/
+
+		$filter_array = $this->convert_filter_string_to_array($filter_string);	
+		try {
+			$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();				
+		}
+		catch (\Exception $e) {
+			trigger_error($e->getMessage());
+		}
+		$class      = $ctrl_class->get_class();
+
+		$data_src = $request->input('data_src');
+		list($related_ctrl_class_name,$related_ctrl_property_name) = explode('.', $data_src);
+
+		// This should give us an array that looks like ['brand','title']
+		
+		// So, load all "title" values of the "brand" property for the current ctrl_class:
+		
+		$related_ctrl_property = CtrlProperty::where('name',$related_ctrl_class_name)
+												->where('ctrl_class_id',$ctrl_class->id)
+												->first();				
+		if (is_null($related_ctrl_property)) trigger_error("Cannot load related_ctrl_property");
+	
+		$related_ctrl_class = CtrlClass::where('id',$related_ctrl_property->related_to_id)->first();
+		if (is_null($related_ctrl_class)) trigger_error("Cannot load related_ctrl_class");
+
+		$related_items = DB::table($related_ctrl_class->table_name)->select($related_ctrl_property_name)->distinct()->get();
+
+		foreach ($related_items as $related_item) {
+			dd($related_item);
+		}
 	}
 
 	/**
@@ -1568,7 +1627,7 @@ class CtrlController extends Controller
 	{		
 		// dd($_POST);
 		try {
-		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();				
+			$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();				
 		}
 		catch (\Exception $e) {
 			trigger_error($e->getMessage());

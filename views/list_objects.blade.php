@@ -258,7 +258,7 @@ $(function() {
         rowReorder: { update: false }, // Prevents the data from being redrawn after we've reordered; is this what we want? Depends if we get the Ajax saving sorted
         @endif
         drawCallback: function( settings ) {
-        	$('.dropdown-toggle').dropdown(); // Refresh Bootstrap dropdowna        	
+        	$('.dropdown-toggle').dropdown(); // Refresh Bootstrap dropdowns       	
         	init_table_buttons();
     	},
     	/* No longer necessary, we've removed the main search input
@@ -289,24 +289,49 @@ $(function() {
                 }
                 else {
                 	select_html = '<select class="form-control" onclick="stopPropagation(event);" style="min-width: '+column_title.length+'em"><option value="">'+column_title+'</option></select>';
-                }
-
+                }                
                 var select = $(select_html)
                     .appendTo( $(column.header()).empty() )
                     .on( 'change', function () {
-                        var val = $.fn.dataTable.util.escapeRegex(
+                    	var val = $.fn.dataTable.util.escapeRegex(
                             $(this).val()
-                        );                        
+                        );  
+                    	// Why regex these? Surely a dropdown will be a list of values that match records exactly?
+                    	/* Regex version...
                         column
                             .search( val ? '^'+val+'$' : '', true, false )
                             .draw();
+                           */
+                         // Non reg-ex version
+                        column
+                            .search( val, false, false ) // input, regex, smart : see https://datatables.net/reference/api/column().search()
+                            .draw();
                     } );
-                column.data().unique().sort().each( function ( d, j ) {
-                	/* Not sure this is still needed if we pass in 'j' as the value...?
-                	if (!d || d == 'None') return false; /* OMIT empty values as we can't yet search for "missing" relationships; see notes in CtrlController. Is 'None' always going to represent a missing relationship...?
-                	*/     
-                    select.append( '<option value="'+j+'">'+d+'</option>' )
-                } );
+                /*
+                	OK, this doesn't work, as it just populates the dropdown with all the UNIQUE values in the column for the given page of the table
+                	So, if we have three "brands" listed on page one, but 40 brands in total (all shown on subsequent pages of the table), we end up
+                	with only three in the dropdown. 
+                	Can we use console.log(column.dataSrc()); (eg, brand.title) to load these via Ajax...? I can't see any other way of doing it :-(
+                */
+                // Right, this is a WIP: we'll stick with the 'unique' approach for now, but the Ajax is almost there. See CtrlController::populate_datatables_dropdowns
+                dropdown_approach = 'unique'; // Could be 'ajax'
+                if (dropdown_approach == 'unique') {
+	                column.data().unique().sort().each( function ( d, j ) {
+	                    select.append( '<option value="'+d+'">'+d+'</option>' )
+	                } );
+	            }
+	            else if (dropdown_approach == 'ajax') {
+	                var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
+					$.ajax({
+					    url: '{!! route('ctrl::populate_datatables_dropdowns',[$ctrl_class->id,$filter_string]) !!}',			    
+					    type: 'POST',
+						data: {_token: CSRF_TOKEN, data_src: column.dataSrc()},
+					    dataType: 'JSON',
+					    success: function (data) {
+					       console.log(data);
+					    }
+					});                
+				}
             } );    
         
         }        
