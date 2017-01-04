@@ -314,7 +314,7 @@ $(function() {
                 	Can we use console.log(column.dataSrc()); (eg, brand.title) to load these via Ajax...? I can't see any other way of doing it :-(
                 */
                 // Right, this is a WIP: we'll stick with the 'unique' approach for now, but the Ajax is almost there. See CtrlController::populate_datatables_dropdowns
-                dropdown_approach = 'unique'; // Could be 'ajax'
+                dropdown_approach = 'ajax'; // Could be 'ajax'
                 if (dropdown_approach == 'unique') {
 	                column.data().unique().sort().each( function ( d, j ) {
 	                	// We're going to assume that Yes/No values in this dropdown correspond to TINYINT values; is there a better way to check this?
@@ -332,13 +332,16 @@ $(function() {
 	            }
 	            else if (dropdown_approach == 'ajax') {
 	                var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
+	                var data_src = column.dataSrc();	                
 					$.ajax({
 					    url: '{!! route('ctrl::populate_datatables_dropdowns',[$ctrl_class->id,$filter_string]) !!}',			    
 					    type: 'POST',
-						data: {_token: CSRF_TOKEN, data_src: column.dataSrc()},
+						data: {_token: CSRF_TOKEN, data_src: data_src},
 					    dataType: 'JSON',
 					    success: function (data) {
-					       console.log(data);
+					        $.each(data.options, function(d, j) {					        	
+							    select.append( '<option value="'+d+'">'+j+'</option>' )
+							});
 					    }
 					});                
 				}

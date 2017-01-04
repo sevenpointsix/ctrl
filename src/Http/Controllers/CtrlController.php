@@ -871,25 +871,49 @@ class CtrlController extends Controller
 		$class      = $ctrl_class->get_class();
 
 		$data_src = $request->input('data_src');
-		list($related_ctrl_class_name,$related_ctrl_property_name) = explode('.', $data_src);
+		$options = [];
 
-		// This should give us an array that looks like ['brand','title']
+		if (strpos($data_src, '.')) { // Suggests a related property, like brand.title
 		
-		// So, load all "title" values of the "brand" property for the current ctrl_class:
+			list($related_ctrl_class_name,$related_ctrl_property_name) = explode('.', $data_src);
+
+			// This should give us an array that looks like ['brand','title']
+			
+			// So, load all "title" values of the "brand" property for the current ctrl_class:
+			
+			$related_ctrl_property = CtrlProperty::where('name',$related_ctrl_class_name)
+													->where('ctrl_class_id',$ctrl_class->id)
+													->first();				
+			if (is_null($related_ctrl_property)) trigger_error("Cannot load related_ctrl_property");
 		
-		$related_ctrl_property = CtrlProperty::where('name',$related_ctrl_class_name)
-												->where('ctrl_class_id',$ctrl_class->id)
-												->first();				
-		if (is_null($related_ctrl_property)) trigger_error("Cannot load related_ctrl_property");
-	
-		$related_ctrl_class = CtrlClass::where('id',$related_ctrl_property->related_to_id)->first();
-		if (is_null($related_ctrl_class)) trigger_error("Cannot load related_ctrl_class");
+			$related_ctrl_class = CtrlClass::where('id',$related_ctrl_property->related_to_id)->first();
+			if (is_null($related_ctrl_class)) trigger_error("Cannot load related_ctrl_class");
 
-		$related_items = DB::table($related_ctrl_class->table_name)->select($related_ctrl_property_name)->distinct()->get();
+			$related_items = DB::table($related_ctrl_class->table_name)->select($related_ctrl_property_name)->distinct()->get();
 
-		foreach ($related_items as $related_item) {
-			dd($related_item);
+			// WIP, untested
+			foreach ($related_items as $related_item) {
+				$options[] = $related_item->$related_ctrl_property_name;
+			}
 		}
+		else {
+			$distinct_values = DB::table($ctrl_class->table_name)->select($data_src)->distinct()->get();
+
+			foreach ($distinct_values as $distinct_value) {
+				$options[] = $distinct_value->$data_src;
+			}
+
+			if ($options == [1,0] || $options == [0,1]) {
+				$options = [0=>'No',1=>'Yes'];
+			}
+		}
+
+		$status = 200;
+		$json = [
+            'options' => $options                
+        ];
+       	return \Response::json($json, $status);
+
 	}
 
 	/**
