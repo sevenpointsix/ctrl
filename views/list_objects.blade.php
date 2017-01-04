@@ -317,7 +317,17 @@ $(function() {
                 dropdown_approach = 'unique'; // Could be 'ajax'
                 if (dropdown_approach == 'unique') {
 	                column.data().unique().sort().each( function ( d, j ) {
-	                    select.append( '<option value="'+d+'">'+d+'</option>' )
+	                	// We're going to assume that Yes/No values in this dropdown correspond to TINYINT values; is there a better way to check this?
+	                	if (d == 'No') {
+	                		v = 0;
+	                	}
+	                	else if (d == 'Yes') {
+	                		v = 1;
+	                	}
+	                	else {
+	                		v = d;
+	                	}
+	                    select.append( '<option value="'+v+'">'+d+'</option>' )
 	                } );
 	            }
 	            else if (dropdown_approach == 'ajax') {
