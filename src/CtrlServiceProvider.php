@@ -26,7 +26,8 @@ class CtrlServiceProvider extends ServiceProvider{
 
 	// Add the artisan command; from http://stackoverflow.com/questions/28492394/laravel-5-creating-artisan-command-for-packages. See @register()
 	protected $commands = [
-       \Sevenpointsix\Ctrl\Commands\CtrlSynch::class
+       \Sevenpointsix\Ctrl\Commands\CtrlSynch::class,
+       \Sevenpointsix\Ctrl\Commands\CtrlTables::class
     ];
 
 	public function boot()
