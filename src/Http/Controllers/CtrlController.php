@@ -981,6 +981,15 @@ class CtrlController extends Controller
 
 		// Known issue, that I'm struggling to resolve; if we have a dropdown to search related fields, but there's no relationship for an object, we can't select the "empty" value and show all items without a relationship. TODO.
 
+		// WIP. This is very niche, but if someone searches for "None" on a searchable relationship field (eg, product:brand on Argos), can we match "empty" values?
+		/* No, drop this, it doesn't work at all:
+		foreach ($_GET['columns'] as &$column) {
+			if (!empty($column['searchable']) && $column['search']['value'] == 'None') {
+				$column['search']['value'] = '';
+			}
+		}
+		*/
+
         $datatable = Datatables::of($objects)  
         	->setRowId('id') // For reordering        	
         	->editColumn('order', function($object) { // Set the displayed value of the order column to just show the icon        	        	
