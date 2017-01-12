@@ -1538,11 +1538,27 @@ class CtrlController extends Controller
 				}
 			}
 
-			// Build the form_field anddd it to the tabs
+			// Build the form_field and it to the tabs
 
 			$tab_name = $ctrl_property->fieldset;
+			if ($this->module->enabled('hide_fieldset')) {
+				if ($this->module->run('hide_fieldset',[
+					$tab_name					
+				])) {
+					continue;
+				}
+			}
+
+
 			$tab_icon = 'fa fa-list';
-			$tab_text = '';
+			if ($this->module->enabled('custom_fieldset_icon')) {
+				$tab_icon = $this->module->run('custom_fieldset_icon',[
+					$tab_name,
+					$tab_icon // Acts as the default
+				]);
+			}
+			
+			$tab_text = 'esttestest';
 
 			if (!isset($tabbed_form_fields[$tab_name])) {
 				$tabbed_form_fields[$tab_name] = [

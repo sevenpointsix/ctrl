@@ -213,4 +213,39 @@
 			*/
 		}
 
+		/**
+		 * Hide a fieldset
+		 * @param  Request  $request	 
+		 * @param  string $tab_name The name of the tab (fieldset)		 
+		 * @return boolean
+		 */
+		protected function hide_fieldset($tab_name) {
+			
+			/* For example...
+			$user = \Auth::user();				
+			if ($user && $user->ctrl_group != 'repairs' && $tab_name == 'Repairs') {
+				return true;
+			}		
+			*/
+
+			return false;
+		}
+
+		/**
+		 * Get a custom fieldset icon
+		 * @param  Request  $request	 
+		 * @param  string $tab_name The name of the tab (fieldset)		 
+		 * @return string The icon class (such as, 'fa fa-list')
+		 */
+		protected function custom_fieldset_icon($tab_name, $default) {
+			
+			/* For example...
+			if ($tab_name == 'Repairs') {
+				return 'fa fa-wrench';
+			}		
+			*/
+
+			return $default;
+		}
+
 	}
