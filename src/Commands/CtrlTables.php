@@ -89,7 +89,10 @@ class CtrlTables extends Command
             $password = sprintf('-p\'%s\'',$password);
         }
 
-        $command = sprintf('mysqldump %s -u %s %s ctrl_classes ctrl_properties > %s', $database, $user, $password, $this->sql_file);
+        // Is this always the correct local path?
+        // Note that we exclude LOCK TABLES from the export file (--skip-add-locks) and also omit to lock tables DURING the import (--skip-lock-tables)
+        // because the MySQL user won't always have permission to lock tables...
+        $command = sprintf('/usr/local/mysql/bin/mysqldump --skip-add-locks --skip-lock-tables  %s -u %s %s ctrl_classes ctrl_properties > %s', $database, $user, $password, $this->sql_file);
 
         exec($command);
 
@@ -102,7 +105,10 @@ class CtrlTables extends Command
      * @return none
      */
     public function import() {
-         DB::unprepared(File::get($this->sql_file));
+         $response = DB::unprepared(File::get($this->sql_file));
+         if ($response) { // Bizarrely, I'm getting true on error, false on success. WTF.
+            $this->error("Possible error?");
+         }
          $this->info("Data file imported");
     }
 }
