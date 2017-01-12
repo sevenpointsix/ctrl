@@ -1558,7 +1558,7 @@ class CtrlController extends Controller
 				]);
 			}
 			
-			$tab_text = 'esttestest';
+			$tab_text = '';
 
 			if (!isset($tabbed_form_fields[$tab_name])) {
 				$tabbed_form_fields[$tab_name] = [
