@@ -359,7 +359,10 @@ $(function() {
                 $('input', table.column(colIdx).header()).val(colSearch.search);
             }
         });
-        table.draw();
+        // This breaks the table as pagination isn't maintained
+        // table.draw();
+        // Adding 'page' seems to work, but is it even necessary?
+        // table.draw('page');
     }
 
     // Set up some click events on the table buttons, "delete" only for now
