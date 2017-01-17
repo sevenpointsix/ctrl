@@ -233,6 +233,26 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 					<hr />
 
 				@if ($layout_version == 3)
+
+					@if (!empty($custom_menu_links))
+						<div class="btn-group-mixed-width" style="margin-bottom: 1em">
+						@foreach ($custom_menu_links as $custom_menu_title=>$custom_links)
+							@foreach ($custom_links as $custom_link)
+							<div class="btn-group btn-group-justified" role="group">
+							  <div class="btn-group wide" role="group">
+							    <a type="button" class="btn btn-default" data-toggle="tooltip" data-placement="right" title="{{ $custom_link['list_title'] }}" href="{{ $custom_link['list_link'] }}"><i class="fa {{ $custom_link['icon'] }}  fa-fw"></i> {{ $custom_menu_title }}</a>
+							  </div>				
+							  @if (!empty($custom_link['add_title']))
+							  <div class="btn-group narrow" role="group" style="width: .1%;">
+							    <a type="button" class="btn btn-info" data-toggle="tooltip" data-placement="right" title="{{ $custom_link['add_title'] }}" href="{{ $custom_link['add_link'] }}"><i class="fa fa-plus"></i></a>
+							  </div>
+							  @endif
+						  	</div>
+						  	@endforeach
+						@endforeach
+						</div>
+					@endif
+
 					<div class="btn-group-mixed-width">
 					@foreach ($menu_links as $menu_title=>$links)
 						{{-- As above, is there any need to show $menu_title here? --}}

@@ -88,7 +88,7 @@ class CtrlController extends Controller
 			];		
 		}
 
-		View::share ( 'menu_links', $menu_links );
+		View::share ('menu_links', $menu_links );
 
 
 		$this->_check_login(); // Check that the user is logged in, if necessary
@@ -174,11 +174,17 @@ class CtrlController extends Controller
 				'import_link' => (!empty($import_link)) ? $import_link : false
 			];		
 		}
+		
+		// Add some custom links above the main set of links; we could theoretically use the manipulate_dom module for this:
+		if ($this->module->enabled('custom_dashboard_links')) {
+			$custom_menu_links = $this->module->run('custom_dashboard_links');
+		}		
 
 		$view = view('ctrl::dashboard',[			
 			'logo'                => config('ctrl.logo'),
 			'layout_version'      => 3, // As I play around with layouts...
-			'import_export_links' => $import_export_links
+			'import_export_links' => $import_export_links,
+			'custom_menu_links'   => !empty($custom_menu_links) ? $custom_menu_links : []
 		]);
 
 		// Manipulate the dashboard to add custom content if necessary:

@@ -258,4 +258,24 @@
 			return false;
 		}
 
+		/**
+		 * Add some custom links above the main set of links; we could theoretically use the manipulate_dom module for this:		
+		 * @return array an array of links, see below
+		 */
+		protected function custom_dashboard_links() {			
+			/* Format of array is:
+			$menu_links['TITLE'][] = [
+				'icon'       => ($icon = $ctrl_class->get_icon()) ? '<i class="'.$icon.' fa-fw"></i> ' : '',
+				'add_link'   => $add_link, // optional
+				'add_title'  => $add_title,  // optional
+				'list_link'  => $list_link,
+				'list_title' => $list_title
+			];
+			*/
+			$custom_dashboard_links = [];
+			return $custom_dashboard_links;
+		}
+
+		
+
 	}
