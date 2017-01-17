@@ -248,4 +248,14 @@
 			return $default;
 		}
 
+		/**
+		 * Override the ability to reorder a table (by default, any table with an "order" column can be reordered)
+		 * @param  int $ctrlclass_id  The ID of the CtrlClass we're listing
+		 * @param  string $filter_string Any filters we've applied to the list
+		 * @return boolean true if we don't want to reorder the list
+		 */
+		protected function prevent_reordering( $ctrl_class_id,$filter_string = NULL) {			
+			return false;
+		}
+
 	}

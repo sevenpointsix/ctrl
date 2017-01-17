@@ -243,7 +243,12 @@ $(function() {
 			// No, this works fine in fact -- why did I think it didn't?
 
 		"sPaginationType": "simple_numbers", // use "listbox" for Argos-style dropdowns, but I'm going off these
-
+		@if ($page_length === false)		
+        "paging": false,
+       	@else ($page_length)
+        "pageLength": {{ $page_length }},
+        @endif
+		
 		"orderCellsTop": true, // Is this required? It's designed to prevent the click on a search box propagating to the reorder button, but I think we handle this using stopPropagation above
 		dom: "<'row'<'col-sm-12'tr>>" +
 			 "<'row'<'col-sm-5'i><'col-sm-7'p>>",

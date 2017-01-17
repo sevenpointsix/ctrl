@@ -296,6 +296,7 @@ class CtrlController extends Controller
 		
 		// Convert the the $filter parameter into one that makes sense
 		$filter_array = $this->convert_filter_string_to_array($filter_string);			
+
 		$filter_description = $this->describe_filter($filter_array);
 
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();		
@@ -323,6 +324,15 @@ class CtrlController extends Controller
         foreach ($headers as $header) {
 
         	// We could exclude the column here if it's found in the $filter array; but really, we'd be unlikely to have a filterable column as a header anyway. Implement this if it becomes necessary.
+        	// Aha, this IS necessary; for example, when we want to only show the "Carousel" categories on Argos.
+        	$make_searchable = true;
+        	foreach ($filter_array as $filter) {
+        		if ($header->id == $filter['ctrl_property_id']) {
+        			// This header (a header being a CTRL Property) exists in the filter array, so don't allow it to be searchable
+        			$make_searchable = false;
+        			break;
+        		}
+        	}
 
         	$column = new \StdClass;
         	if ($header->relationship_type) {
@@ -353,12 +363,11 @@ class CtrlController extends Controller
 				$column->defaultContent = 'None'; // We can't filter the list to show all "None" items though... not yet.
 
         		// Only set data-search-dropdown (which converts the header to a dropdown) if we would have fewer than 50 items in the list:
-        		if ($related_objects::count() < 50) {
-        			
-        			$th_columns[] = '<th data-search-dropdown="true" data-orderable="false">'.$header->label.'</th>';
+        		if ($related_objects::count() < 50) {        			
+        			$th_columns[] = '<th data-search-dropdown="'.($make_searchable ? 'true' : 'false').'" data-orderable="false">'.$header->label.'</th>';
         		}
         		else {
-        			$th_columns[] = '<th data-search-text="true">'.$header->label.'</th>';
+        			$th_columns[] = '<th data-search-text="'.($make_searchable ? 'true' : 'false').'">'.$header->label.'</th>';
         		}
         	}
         	else {
@@ -368,6 +377,19 @@ class CtrlController extends Controller
         			// "Important! To avoid ambiguous column name error, it is advised to declare your column name as table.column just like on how you declare it when using a join statements."
         		if ($header->name == 'order') {
         			// A special case, we use this to allow the table to be reordered
+
+        			// Allow us to override this with a module:
+        			if ($this->module->enabled('prevent_reordering')) {
+						$prevent_reordering = $this->module->run('prevent_reordering',[
+							$ctrl_class->id,
+							$filter_string
+						]);
+						if ($prevent_reordering) {
+							continue; // This will omit to add the column to the headers or the JS
+						}
+					}
+
+
         			$th_columns[]          = '<th width="1" data-order-rows="true" _data-orderable="false" >'.$header->label.'</th>';
         			$column->orderSequence = ['asc'];
         				// I think it makes no sense to allow the "order" column to be reordered; it just confuses the user, as dragging and dropping items doesn't then have the expected results
@@ -377,10 +399,10 @@ class CtrlController extends Controller
         		}
         		else if ($header->field_type == 'checkbox') { // We convert these to Yes/No values, so allow a search dropdown...        			
 	        		// $column->defaultContent = 'None'; // Necessary..?
-        			$th_columns[] = '<th data-search-dropdown="true" data-orderable="false">'.$header->label.'</th>';
+        			$th_columns[] = '<th data-search-dropdown="'.($make_searchable ? 'true' : 'false').'" data-orderable="false">'.$header->label.'</th>';
         		}
         		else {
-        			$th_columns[] = '<th data-search-text="true">'.$header->label.'</th>';
+        			$th_columns[] = '<th data-search-text="'.($make_searchable ? 'true' : 'false').'">'.$header->label.'</th>';
         		}
         	
         	}
@@ -417,7 +439,7 @@ class CtrlController extends Controller
         // see: https://github.com/laravel/framework/issues/1436
     	$class  = $ctrl_class->get_class();
     	$table = with(new $class)->getTable();    	
-    	if (Schema::hasColumn($table, 'order')) {
+    	if (Schema::hasColumn($table, 'order') && empty($prevent_reordering)) {
         // if (Schema::hasColumn($ctrl_class->getTable(), 'order')) {
         	$can_reorder = true;
         }
@@ -430,8 +452,11 @@ class CtrlController extends Controller
         	// dd($filter_array);
         	// $filter_array[0]['ctrl_property_id'] is now the ID of the property that links back to the "parent" list, so:
         	$unfiltered_ctrl_property = CtrlProperty::where('id',$filter_array[0]['ctrl_property_id'])->firstOrFail();
-        	$unfiltered_ctrl_class    = CtrlClass::where('id',$unfiltered_ctrl_property->related_to_id)->firstOrFail();
-        	$unfiltered_list_link     = route('ctrl::list_objects',[$unfiltered_ctrl_class->id]);
+        	// This only applies if we are filtering on a relationship property, so:
+        	if (!empty($unfiltered_ctrl_property->relationship_type)) {
+        		$unfiltered_ctrl_class    = CtrlClass::where('id',$unfiltered_ctrl_property->related_to_id)->firstOrFail();
+        		$unfiltered_list_link     = route('ctrl::list_objects',[$unfiltered_ctrl_class->id]);
+        	}
         }
 
         // Should we display a "View all" link? ie, is this list filtered, and are we allowed to list ALL items?
@@ -460,6 +485,9 @@ class CtrlController extends Controller
         // Dropping the key, we don't use it; see notes elsewhere
         $key = false;
 
+        // Per-page: could add a module here, but for now, just remove all pagination if we can reorder the table
+        $page_length = ($can_reorder) ? false: 10; // 10 being the default
+
 		return view('ctrl::list_objects',[
 			'ctrl_class'           => $ctrl_class,
 			'th_columns'           => implode("\n",$th_columns),
@@ -470,7 +498,8 @@ class CtrlController extends Controller
 			'show_all_link'        => (!empty($show_all_link) ? $show_all_link : false),
 			'can_reorder'          => $can_reorder,
 			'add_link'             => $add_link,
-			'key'                  => $key
+			'key'                  => $key,
+			'page_length'          => $page_length
 		]);
 	}
 
@@ -1026,25 +1055,31 @@ class CtrlController extends Controller
 	            	foreach ($filter_array as $filter) {
 						$filter_ctrl_property = CtrlProperty::where('id',$filter['ctrl_property_id'])->firstOrFail(); // This throws a 404 if not found; not sure that's strictly what we want
 						
+						if (!empty($filter_ctrl_property->relationship_type)) {
 							$related_ctrl_class = CtrlClass::where('id',$filter_ctrl_property->related_to_id)->firstOrFail(); // As above
 							$related_class      = $related_ctrl_class->get_class();
 							$related_object     = $related_class::where('id',$filter['value'])->firstOrFail();
 
-						if ($filter_ctrl_property->relationship_type == 'belongsTo') {
-							// Duplication of code from @describe_filter here							
-							$query->where($filter_ctrl_property->foreign_key,$related_object->id);
-						}						
-						else if ($filter_ctrl_property->relationship_type == 'belongsToMany') {							
-							// We need to join the query here, to generate something like this (from Argos, listing products related to a cached profile)
-							/*
-							$query->join('product_profile_cache', 'id', '=', $filter_ctrl_property->join_table.'product_profile_cache.product_id')            
-                    			  ->where('product_profile_cache.profile_id',$related_object->id);							
-							 */                    		
-							// Technically 'id' here is 'products.id'; is 'id' always unambiguous?
-							$query->join($filter_ctrl_property->pivot_table, 'id', '=', $filter_ctrl_property->pivot_table.'.'.$filter_ctrl_property->local_key)            
-                    			  ->where($filter_ctrl_property->pivot_table.'.'.$filter_ctrl_property->foreign_key,$related_object->id);							
+							if ($filter_ctrl_property->relationship_type == 'belongsTo') {
+								// Duplication of code from @describe_filter here							
+								$query->where($filter_ctrl_property->foreign_key,$related_object->id);
+							}						
+							else if ($filter_ctrl_property->relationship_type == 'belongsToMany') {							
+								// We need to join the query here, to generate something like this (from Argos, listing products related to a cached profile)
+								/*
+								$query->join('product_profile_cache', 'id', '=', $filter_ctrl_property->join_table.'product_profile_cache.product_id')            
+	                    			  ->where('product_profile_cache.profile_id',$related_object->id);							
+								 */                    		
+								// Technically 'id' here is 'products.id'; is 'id' always unambiguous?
+								$query->join($filter_ctrl_property->pivot_table, 'id', '=', $filter_ctrl_property->pivot_table.'.'.$filter_ctrl_property->local_key)            
+	                    			  ->where($filter_ctrl_property->pivot_table.'.'.$filter_ctrl_property->foreign_key,$related_object->id);							
 
-	            		}
+		            		}
+		            	}
+		            	else {
+		            		// Filter by property...
+		            		$query->where($filter_ctrl_property->name,$filter['value']);
+		            	}
 	            	}
 	            	//$query->where('title','LIKE',"%related%");	                
 	            }	            
@@ -2268,7 +2303,7 @@ class CtrlController extends Controller
 		return view('ctrl::ctrl');
 	}
 
-	protected function convert_filter_string_to_array($filter_string) {
+	public function convert_filter_string_to_array($filter_string) {
 		$filter_array = [];
 		if (!empty($filter_string)) {
 			$filters = explode('~', $filter_string);
