@@ -67,8 +67,9 @@
     <script type="text/javascript">
         {{-- Based on http://www.southcoastweb.co.uk/jquery-select2-v4-ajaxphp-tutorial --}}
         {{-- @if (count($field['values']) >= 10) --}}
-        @if ($ajax_source)
-            $('#{{ $field['id'] }}').select2({
+        @if ($ajax_source) {{-- Now always true, in later versions of the CMS --}}
+            // var select2_{{ $field['id'] }} = $('#{{ $field['id'] }}').select2({
+            var select2_{{ $field['id'] }} = $('#{{ $field['id'] }}').select2({
                 ajax: {
                     url: "{{ route('ctrl::get_select2',['ctrl_class_name'=>$field['related_ctrl_class_name']]) }}",
                     dataType: 'json',
@@ -87,9 +88,33 @@
                         };
                     },
                     cache: true
-                },
+                }
                 //minimumInputLength: 1
             });   
+            $(document).ready(function() {   
+
+                $('#{{ $field['id'] }}').next('span.select2').find('input.select2-search__field').bind('paste', function(e) {
+                    e.preventDefault();
+                    var text = (e.originalEvent || e).clipboardData.getData('text/plain') || prompt('Paste something..');                    
+                    var values = text.split(',');
+                    // We now have a list of pasted values; for example, 1384828,1075670 
+                    values.forEach(function(v) {                        
+                        // Now, use Ajax to look up the ID of each matching catalogue number:
+                        // We could configure @get_select2 to accept a comma-delimited string and return multiple values, which would speed this up (as we'd only have one ajax call)
+                        $.ajax ({
+                            url: "{{ route('ctrl::get_select2',['ctrl_class_name'=>$field['related_ctrl_class_name']]) }}",
+                            dataType: 'json',
+                            data: {q: v }
+                        }).done(function(d) {
+                            if (d[0].id) {
+                                var $option = $("<option selected></option>").val(d[0].id).text(v);
+                                $('#{{ $field['id'] }}').append($option).trigger('change');
+                            }
+                        });                            
+                    });
+                    select2_{{ $field['id'] }}.select2('close');
+                });
+            });
         @else
             $('#{{ $field['id'] }}').select2();   
         @endif
