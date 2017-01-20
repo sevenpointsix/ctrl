@@ -54,7 +54,7 @@ class CtrlServiceProvider extends ServiceProvider{
 						$message = [
 							'Running `artisan vendor publish --force` will override CTRL config files!',
 							'If you really wish to do this, please add the flag `--ctrl`.',
-							'Otherwise, to publish CSS files only, use the argument `--tag=public`.'
+							'Otherwise, to publish CSS files only, add the argument `--tag=public`.'
 						];
 						$maxlen = max(array_map('strlen', $message)); // Nice, http://stackoverflow.com/questions/1762191/how-to-get-the-length-of-longest-string-in-an-array
 						$divider = str_repeat('*',$maxlen);
