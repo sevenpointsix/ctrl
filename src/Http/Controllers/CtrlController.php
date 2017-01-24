@@ -1430,7 +1430,7 @@ class CtrlController extends Controller
 			if ($title_property->relationship_type == 'belongsTo') {
 				$related_object = $object->{$title_property->name};
 				if (!is_null($related_object)) { // We won't always have a related object, a link may not have a type...
-					$title_strings[] = $this->get_object_title($related_object);
+					$title_strings[] = '('.$this->get_object_title($related_object).')'; // Not sure that brackets will always be appropriate
 				}
 			}
 			else {
@@ -1438,7 +1438,7 @@ class CtrlController extends Controller
 				$title_strings[] = $object->$property;
 			}
 		}
-
+		
 		return implode(' ', $title_strings);
 		
 	}
