@@ -104,6 +104,7 @@
 
 
 	/* Add a "Clear search" button, from http://stackoverflow.com/questions/20062218/how-do-i-clear-a-search-box-with-an-x-in-bootstrap-3 */
+
 	span.input-group-addon.clear-search {
 		background-color: transparent;
 		z-index: 100;
@@ -117,7 +118,9 @@
 	    cursor:pointer;
 	    color:#aaa;
 	}
-	/* this needs code adding to actually clear the field */
+	div.input-group-sm span.input-group-addon.clear-search {
+		top:0px;
+	}
 
 	th:focus { /* It's possible to "select" the <th> for some reason, which is confusing */
 		outline: none;
@@ -224,11 +227,16 @@ $(function() {
 	*/
 
 	// Add text search inputs to each column, from https://datatables.net/examples/api/multi_filter.html
-    $('#data-table thead th').each( function () {
+    $('#data-table thead th').each( function () {    	
     	var column_searchable = $(this).attr('data-search-text');                    	
         var column_title = $(this).text();
         if (column_searchable === 'true') {
-        	$(this).html('<div class="input-group"><span class="input-group-addon"><i class="fa fa-search"></i></span><input type="text" class="form-control" placeholder="'+column_title+'" onclick="stopPropagation(event);" /><span class="input-group-addon clear-search" onclick="stopPropagation(event);"><i class="fa fa-remove"></i></span></div>');
+        	if ($('#data-table thead th').length > 5) { // If we have more than five columns, make them smaller for legibility:
+        		$(this).html('<div class="input-group input-group-sm"><input type="text" class="form-control" placeholder="'+column_title+'" onclick="stopPropagation(event);" /><span class="input-group-addon clear-search" onclick="stopPropagation(event);"><i class="fa fa-remove"></i></span></div>');
+        	}
+        	else {
+        		$(this).html('<div class="input-group"><span class="input-group-addon"><i class="fa fa-search"></i></span><input type="text" class="form-control" placeholder="'+column_title+'" onclick="stopPropagation(event);" /><span class="input-group-addon clear-search" onclick="stopPropagation(event);"><i class="fa fa-remove"></i></span></div>');
+        	}
         }
     } );
 
@@ -278,19 +286,9 @@ $(function() {
                 var column_searchable = $(column.header()).attr('data-search-dropdown');                
                 var column_title = $(column.header()).text();
                 if (column_searchable !== 'true') return false; // Ignore columns not marked as searcahble                  		
-                if (column.data().unique().length == 1) {
-                	// column.orderable = false; // Attempting to remove the "order" option on this column, but this doesn't work...
-                	// return false; // Ignore columns with only one unique value
-                	// "false" is confusing I think... it looks like a bug:                	
-                	// select_html = '<select class="form-control" disabled onclick="stopPropagation(event);"><option value="">'+column_title+'</option></select>';
-                	// Actually, I'm going to drop this altogether -- this only looks at values in the current view/page, so the dropdown is disabled
-                	// even though there may be rows with other values on subsequent pages
-                	// Aargh -- no, this problem exists because of the each() function below -- FIX ME!
-
-                	// Note that strlen stops the initial dropdown label being cut short
-                	// Note that we also disable sorting on dropdown columns, it seems unnecessary -- just select the one you want!
-
-                	select_html = '<select class="form-control" onclick="stopPropagation(event);" style="min-width: '+column_title.length+'em"><option value="">'+column_title+'</option></select>';
+                
+                if ($('#data-table thead th').length > 5) { // If we have more than five columns, make them smaller for legibility (as above)
+                	select_html = '<select class="form-control input-sm" onclick="stopPropagation(event);" style="min-width: '+column_title.length+'em"><option value="">'+column_title+'</option></select>';
                 }
                 else {
                 	select_html = '<select class="form-control" onclick="stopPropagation(event);" style="min-width: '+column_title.length+'em"><option value="">'+column_title+'</option></select>';
