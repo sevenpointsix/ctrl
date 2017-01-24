@@ -90,6 +90,26 @@
                 });
                 select2_{{ $field['id'] }}.select2('close');
             });
+
+
+            // From: https://github.com/select2/select2/issues/3320#issuecomment-230882847
+            var $element = $('select');
+            // Select2 4.0 incorrectly toggles the dropdown when clearing and removing options.
+            // Fix this by canceling the select2:opening/closing events that occur immediately after a select2:unselect event.
+            $element.on('select2:unselect', function() {
+              function cancelAndRemove(event) {
+                event.preventDefault()
+                removeEvents()
+              }
+              function removeEvents() {
+                $element.off('select2:opening', cancelAndRemove)
+                $element.off('select2:closing', cancelAndRemove)
+              }
+              $element.on('select2:opening', cancelAndRemove)
+              $element.on('select2:closing', cancelAndRemove)
+              setTimeout(removeEvents, 0)
+            });
+
         });
    
     </script>
