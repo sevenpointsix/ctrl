@@ -1099,9 +1099,9 @@ class CtrlController extends Controller
 
         // Can we filter certain columns here though? Try this:
         foreach ($headers as $header) {
+        	$property = $header->name;
 			if ($header->field_type == 'checkbox') {
-				// Convert checkboxes to yes/no
-				$property = $header->name;
+				// Convert checkboxes to yes/no				
 				$datatable->editColumn($property, function($object) use ($property) {
 		    		if ($object->$property) {
 		    			return 'Yes';
@@ -1109,6 +1109,16 @@ class CtrlController extends Controller
 					else {
 						return 'No';
 					}
+	        	});
+			}
+			else if ($header->field_type == 'date') {
+				$datatable->editColumn($property, function($object) use ($property) {
+		    		return \Carbon\Carbon::parse($object->$property)->format('jS F Y');
+	        	});
+			}
+			else if ($header->field_type == 'datetime') {
+				$datatable->editColumn($property, function($object) use ($property) {
+		    		return \Carbon\Carbon::parse($object->$property)->format('jS F Y \a\t H:i');
 	        	});
 			}
 		}
