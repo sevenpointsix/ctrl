@@ -72,7 +72,8 @@
             $('#{{ $field['id'] }}').next('span.select2').find('input.select2-search__field').bind('paste', function(e) {
                 e.preventDefault();
                 var text = (e.originalEvent || e).clipboardData.getData('text/plain') || prompt('Paste something..');                    
-                var values = text.split(',');
+                var values = text.split(/,\s+/);
+                console.log(values);
                 // We now have a list of pasted values; for example, 1384828,1075670 
                 values.forEach(function(v) {                        
                     // Now, use Ajax to look up the ID of each matching catalogue number:
@@ -129,10 +130,12 @@
             color: #a00;
         }
         .select2-container--bootstrap .select2-selection__clear,
-            .select2-container--bootstrap .select2-selection__clear:hover {
+            .select2-container--bootstrap .select2-selection__clear:hover,
+            .select2-container--bootstrap .select2-selection--multiple .select2-selection__clear,            
+            .select2-container--bootstrap .select2-selection--multiple .select2-selection__clear:hover {
             font: normal normal normal 18px/1 FontAwesome;
             color: #fff;
-            margin-top: 1px;
+            margin-top: 7px;
         }
         </style>
         @endpush
