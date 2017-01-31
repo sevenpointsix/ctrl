@@ -72,8 +72,7 @@
             $('#{{ $field['id'] }}').next('span.select2').find('input.select2-search__field').bind('paste', function(e) {
                 e.preventDefault();
                 var text = (e.originalEvent || e).clipboardData.getData('text/plain') || prompt('Paste something..');                    
-                var values = text.split(/,\s+/);
-                console.log(values);
+                var values = text.split(/,\s+/);                
                 // We now have a list of pasted values; for example, 1384828,1075670 
                 values.forEach(function(v) {                        
                     // Now, use Ajax to look up the ID of each matching catalogue number:
