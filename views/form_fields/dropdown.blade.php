@@ -68,11 +68,13 @@
             theme: "bootstrap"
         });   
         $(document).ready(function() {   
-
-            $('#{{ $field['id'] }}').next('span.select2').find('input.select2-search__field').bind('paste', function(e) {
+            // $('#{{ $field['id'] }}').next('span.select2').find('input.select2-search__field').bind('paste', function(e) {
+            // Woot:
+            $('#{{ $field['id'] }}').next('span.select2').on('paste','input.select2-search__field', function(e) {
                 e.preventDefault();
                 var text = (e.originalEvent || e).clipboardData.getData('text/plain') || prompt('Paste something..');                    
-                var values = text.split(/,\s+/);                
+                var values = text.split(/,[\s\r]+/);
+                console.log(values);                
                 // We now have a list of pasted values; for example, 1384828,1075670 
                 values.forEach(function(v) {                        
                     // Now, use Ajax to look up the ID of each matching catalogue number:
@@ -82,7 +84,7 @@
                         dataType: 'json',
                         data: {q: v }
                     }).done(function(d) {
-                        if (d[0].id) {
+                        if (d[0] && d[0].id) {
                             var $option = $("<option selected></option>").val(d[0].id).text(v);
                             $('#{{ $field['id'] }}').append($option).trigger('change');
                         }
