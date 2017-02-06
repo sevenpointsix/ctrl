@@ -153,10 +153,14 @@ class CtrlSynch extends Command
                 if (!$ctrl_class->exists) {
                     // This is a new model, so set some default values:
                     $ctrl_class->table_name = $standard_table; 
+                    $ctrl_class->singular = '';
+                    $ctrl_class->plural = '';
+                    $ctrl_class->description = '';
                     // Set some default permissions, icons and menu items (?) here
                     $ctrl_class->permissions = implode(',',array('list','add','edit','delete'));
                     $ctrl_class->icon        = 'fa-toggle-right';
                     // Let's leave menu_title for now
+                    $ctrl_class->order = 0;
                 } 
 
                 $ctrl_class->save();
@@ -230,6 +234,10 @@ class CtrlSynch extends Command
                             $ctrl_property->order = $column_order++;
 
                             $ctrl_property->label    = ucfirst(str_replace('_',' ',$ctrl_property->name));
+
+                            $ctrl_property->foreign_key = '';
+                            $ctrl_property->local_key = '';
+                            $ctrl_property->pivot_table = '';
 
                             // There are some columns we rarely want to display as editable fields
                             $exclude_fields_from_form = ['created_at','updated_at','deleted_at','url','uri'];
