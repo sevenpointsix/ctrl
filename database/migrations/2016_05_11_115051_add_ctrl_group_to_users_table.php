@@ -12,9 +12,11 @@ class AddCtrlGroupToUsersTable extends Migration
      */
     public function up()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('ctrl_group',10);
-        });
+        if (!Schema::hasColumn('users', 'ctrl_group')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->string('ctrl_group',10);
+            });
+        }
     }
 
     /**

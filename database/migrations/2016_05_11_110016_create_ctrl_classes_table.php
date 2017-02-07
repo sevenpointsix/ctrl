@@ -12,24 +12,26 @@ class CreateCtrlClassesTable extends Migration
      */
     public function up()
     {
-        Schema::create('ctrl_classes', function (Blueprint $table) {
-            $table->increments('id');
+        if (!Schema::hasTable('ctrl_classes')) {
+            Schema::create('ctrl_classes', function (Blueprint $table) {
+                $table->increments('id');
 
-            $table->string('name');
-            $table->string('table_name');
-            $table->string('singular');
-            $table->string('plural');
-            $table->string('description');
-            $table->enum('permissions', [])->nullable(); // *** SEE BELOW
-            $table->string('menu_title');
-            $table->string('icon');
-            $table->integer('order');
+                $table->string('name');
+                $table->string('table_name');
+                $table->string('singular');
+                $table->string('plural');
+                $table->string('description');
+                $table->enum('permissions', [])->nullable(); // *** SEE BELOW
+                $table->string('menu_title');
+                $table->string('icon');
+                $table->integer('order');
 
-            $table->timestamps();
-        });
+                $table->timestamps();
+            });
 
-        // A good solution to creating SET columns, from http://laravel.io/forum/06-18-2014-what-is-the-mysql-datatype-set-equivalent-in-laravel-schema
-        DB::statement("ALTER TABLE `ctrl_classes` CHANGE `permissions` `permissions` SET('list','add','edit','delete','view','copy','export','import','preview');");
+            // A good solution to creating SET columns, from http://laravel.io/forum/06-18-2014-what-is-the-mysql-datatype-set-equivalent-in-laravel-schema
+            DB::statement("ALTER TABLE `ctrl_classes` CHANGE `permissions` `permissions` SET('list','add','edit','delete','view','copy','export','import','preview');");
+        }
     }
 
     /**
