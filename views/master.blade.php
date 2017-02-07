@@ -13,7 +13,10 @@
     <!-- Bootstrap core CSS -->
     <link href="{{ asset('assets/vendor/ctrl/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
     <!-- Font Awesome -->
+    {{-- Use the CDN... see https://cdn.fontawesome.com/embed-codes, login as chris@sevenpointsix.io
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
+    --}}
+    <script src="https://use.fontawesome.com/ededc99dd3.js"></script>
     <!-- Animate.css, used by notify -->
     <link rel="stylesheet" href="{{ asset('assets/vendor/ctrl/vendor/animate.css/animate.min.css') }}">
 
