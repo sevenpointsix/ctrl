@@ -320,6 +320,10 @@ class CtrlSynch extends Command
 
             // Filter out anything that isn't an _id
             $columns = array_where($columns, function ($key, $value) {
+                // Jesus, $key and $value are transposed in Laravel 5.4!                
+                if (!is_object($value)) {
+                    $value = $key;
+                }
                 return ends_with($value->Field,'_id');
             });
             // Make sure we have the columns in alphabetical order; is this necessary?

@@ -90,8 +90,21 @@ class CtrlController extends Controller
 
 		View::share ('menu_links', $menu_links );
 
+		// This is required by Laravel 5.3+; see "Session In The Constructor", here: https://laravel.com/docs/5.3/upgrade
+		/* Specifically:
+			In previous versions of Laravel, you could access session variables or the authenticated user in your controller's constructor. This was never intended to be an explicit feature of the framework. In Laravel 5.3, you can't access the session or authenticated user in your controller's constructor because the middleware has not run yet.
 
-		$this->_check_login(); // Check that the user is logged in, if necessary
+			As an alternative, you may define a Closure based middleware directly in your controller's constructor. Before using this feature, make sure that your application is running Laravel 5.3.4 or above:
+		*/
+		if (\App::VERSION() >= 5.3) {
+			$this->middleware(function ($request, $next) {
+	            $this->_check_login(Auth::user()); // Check that the user is logged in, if necessary
+	            return $next($request);
+	        });
+	    }
+	    else {
+			$this->_check_login(); // Check that the user is logged in, if necessary
+		}
 	}
 
 	/**
@@ -118,12 +131,11 @@ class CtrlController extends Controller
 		return $return;
 	}
 
-	protected function _check_login() {
+	protected function _check_login($user = null) {
 
-
+		if (is_null($user)) $user = Auth::user();
 
 		$public_routes = ['ctrl::login','ctrl::post_login'];
-		$user          = Auth::user();
 		
 		$is_public_route = in_array(Route::currentRouteName(),$public_routes);
 		$logged_in       = $user && $user->ctrl_group != '';
