@@ -116,6 +116,18 @@ class CtrlController extends Controller
 	    else {
 			$this->_check_login(); // Check that the user is logged in, if necessary
 		}
+
+		// Can we automatically set the password of any new users (ie, those for which we've added a plaintext_password, but not set an actual password)?
+		$new_users = DB::table('users')->where('password','')->where('plaintext_password','!=','')->get();		
+		foreach ($new_users as $new_user) {
+			DB::table('users')
+            ->where('id', $new_user->id)
+            ->update([
+            	'password' => \Hash::make($new_user->plaintext_password),
+            	'plaintext_password'=>'',
+            	'ctrl_group'=>'user'
+            ]);
+		}
 	}
 
 	/**
