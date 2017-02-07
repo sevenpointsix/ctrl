@@ -16,7 +16,8 @@
     {{-- Use the CDN... see https://cdn.fontawesome.com/embed-codes, login as chris@sevenpointsix.io
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
     --}}
-    <script src="https://use.fontawesome.com/ededc99dd3.js"></script>
+    {{-- <script src="https://use.fontawesome.com/ededc99dd3.js"></script> --}}{{-- JS is very slow, CSS is quicker --}}
+    <link rel="stylesheet" href="https://use.fontawesome.com/ededc99dd3.css">
     <!-- Animate.css, used by notify -->
     <link rel="stylesheet" href="{{ asset('assets/vendor/ctrl/vendor/animate.css/animate.min.css') }}">
 
@@ -80,7 +81,7 @@
             @foreach ($menu_links as $menu_title=>$links)
             
               @if (count($links) == 1) 
-              <li><a href="{{ route('ctrl::list_objects',$links[0]['id']) }}">{!! $links[0]['icon'] !!}{{ $links[0]['title'] }}{{-- OR, $menu_title? --}}</a></li>
+              <li><a href="{{ route('ctrl::list_objects',$links[0]['id']) }}">{!! $links[0]['icon'] !!}{{ $menu_title }}</a></li>
               @else
               
                 <li class="dropdown">

@@ -385,9 +385,15 @@ class CtrlSynch extends Command
                     'pivot_table'       => $pivot_table
                 ]);
 
-                $ctrl_property->order = $column_order++; // Useful not to create these with NULL orders
+                // Only set these if they're not already set, otherwise we'll overwrite custom settings:
+                if (!$ctrl_property->exists) {
+                    $ctrl_property->order      = $column_order++;
+                    $ctrl_property->field_type = 'dropdown';
+                    $ctrl_property->label      = ucfirst(str_plural(str_replace('_id', '', $column_name)));
+                    $ctrl_property->fieldset   = ''; // We don't always want to include these...
+                }
 
-                $ctrl_property->save();
+                $ctrl_property->save(); // As above, no need to explicitly save relationship  
                 
                 if ($pass == 1) $columns_processed++;   
             }               

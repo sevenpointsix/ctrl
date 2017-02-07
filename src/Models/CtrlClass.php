@@ -101,7 +101,8 @@ class CtrlClass extends Model
      * @return boolean          Whether or not the flag is set
      */
     public function flagged($flag) {
-        if (!property_exists($this, 'flags')) return false; // 'flags' is a new field for ctrl_classes, we may not have it if the CTRL database is behind the codebase
+
+        if (!array_key_exists('flags', $this->attributes)) return false; // 'flags' is a new field for ctrl_classes, we may not have it if the CTRL database is behind the codebase
         return (in_array($flag, explode(',',$this->flags)));
     }
 }

@@ -136,6 +136,10 @@
             .select2-container--bootstrap .select2-selection--multiple .select2-selection__clear:hover {
             font: normal normal normal 18px/1 FontAwesome;
             color: #fff;
+            margin-top: 2px; /* Was previously 7px... that seemed too low, but I'm sure it used to look OK. Weird */
+        }
+        /* Aha... */
+        .select2-container--bootstrap .select2-selection--multiple .select2-selection__clear {
             margin-top: 7px;
         }
         </style>

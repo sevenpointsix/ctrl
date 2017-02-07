@@ -4,6 +4,6 @@
     @endif
     @yield('input')    
     @if (!empty($field['tip']))
-    <p class="help-block">{{ $field['tip'] }}</p>
+    <p class="help-block">{!! $field['tip'] !!}</p>
     @endif
 </div>

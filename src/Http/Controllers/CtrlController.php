@@ -48,8 +48,8 @@ class CtrlController extends Controller
 
 		// Build the menu
 		$ctrl_classes = CtrlClass::where('menu_title','!=','')
-					 	->orderBy('menu_title', 'ASC')
 					 	->orderBy('order')
+					 	->orderBy('menu_title', 'ASC')					 	
 					 	->get();
 			
 		$menu_links      = [];
@@ -92,8 +92,8 @@ class CtrlController extends Controller
 				'dashboard'  => $ctrl_class->flagged('dashboard')
 			];
 
-			$menu_links[$ctrl_class->menu_title][] = $link;	
 
+			$menu_links[$ctrl_class->menu_title][] = $link;	
 
 		}
 
@@ -1534,7 +1534,7 @@ class CtrlController extends Controller
 				$ctrl_property->template = 'date';
 			}
 			elseif (empty($ctrl_property->field_type)) {
-				trigger_error("No field_type set for propery {$ctrl_property->name}");
+				trigger_error("No field_type set for property {$ctrl_property->name}");
 			}
 			else {
 				$ctrl_property->template = $ctrl_property->field_type;
