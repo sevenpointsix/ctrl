@@ -232,15 +232,13 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 					</form>
 					<hr />
 
-				@if ($layout_version == 3)
-
-					@if (!empty($custom_menu_links))
+					@if (!empty($custom_dashboard_links))
 						<div class="btn-group-mixed-width" style="margin-bottom: 1em">
-						@foreach ($custom_menu_links as $custom_menu_title=>$custom_links)
+						@foreach ($custom_dashboard_links as $custom_dashboard_title=>$custom_links)
 							@foreach ($custom_links as $custom_link)
 							<div class="btn-group btn-group-justified" role="group">
 							  <div class="btn-group wide" role="group">
-							    <a type="button" class="btn btn-default" data-toggle="tooltip" data-placement="right" title="{{ $custom_link['list_title'] }}" href="{{ $custom_link['list_link'] }}"><i class="fa {{ $custom_link['icon'] }}  fa-fw"></i> {{ $custom_menu_title }}</a>
+							    <a type="button" class="btn btn-default" data-toggle="tooltip" data-placement="right" title="{{ $custom_link['list_title'] }}" href="{{ $custom_link['list_link'] }}"><i class="fa {{ $custom_link['icon'] }}  fa-fw"></i> {{ $custom_dashboard_title }}</a>
 							  </div>				
 							  @if (!empty($custom_link['add_title']))
 							  <div class="btn-group narrow" role="group" style="width: .1%;">
@@ -254,8 +252,8 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 					@endif
 
 					<div class="btn-group-mixed-width">
-					@foreach ($menu_links as $menu_title=>$links)
-						{{-- As above, is there any need to show $menu_title here? --}}
+					@foreach ($dashboard_links as $menu_title=>$links)
+						{{-- Probably no need to show $menu_title here? --}}
 						@foreach ($links as $link)
 						<div class="btn-group btn-group-justified" role="group">
 						  <div class="btn-group wide" role="group">
@@ -269,51 +267,7 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 					@endforeach
 					</div>
 				
-				@elseif ($layout_version == 2)
-					<div id="dashboard-grid">
-						
-						@foreach ($menu_links as $menu_title=>$links)
-
-							@if (count($links) > 1) 
-								{{-- Could echo $menu_title here, but is it really necessary? I quite like the idea of just one big grid... --}}
-							@endif
-							@foreach ($links as $link)
-		  					<div class="btn-group">
-
-							  <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-							    <i class="{{ $link['icon_only'] }} fa-3x fa-fw"></i><br><span class="label label-primary">{{ $link['title'] }}</span>			  
-							  </a>
-							  <ul class="dropdown-menu">
-							  	<li><a @if ($link['list_link']) href="{{ $link['list_link'] }}" @else class="disabled" @endif><i class="fa fa-list fa-fw"></i> {{ $link['list_title'] }}</a></li>			  	
-							    <li><a href="{{ $link['add_link'] }}"><i class="fa fa-plus fa-fw"></i> {{ $link['add_title'] }}</a></li>
-							  </ul>
-							</div>
-							@endforeach
-						@endforeach
-					</div>
-				@elseif ($layout_version == 1)
-					<div class="row no-gutter">
-					@foreach ($menu_links as $menu_title=>$links)
-						<div class="col-md-6">
-							<div class="list-group">
-								@if (count($links) > 1) 
-							  	<div class="list-group-item list-group-item-info"><strong>{{ $menu_title }}</strong></div>					  
-							  	@endif
-							  @foreach ($links as $link)
-								<a href="{{ route('ctrl::list_objects',$link['id']) }}" class="list-group-item">							
-									{{-- Not keen on this <span class="badge">14</span> --}}
-									{{-- I would like to add an "add" button here though. How? --}}							
-									<button class="btn btn-xs btn-success pull-right"  onclick="document.location = '{{ $link['add_link'] }}'; return false"  data-toggle="tooltip" data-placement="bottom" title="{{ $link['add_title'] }}"><i class="fa fa-plus"></i></button>
-									{!! $link['icon'] !!} {{ $link['title'] }}
-								</a>
-								
-
-								@endforeach
-							</div>
-						</div>
-					  @endforeach
-					</div>
-				@endif
+				
 			 	</div>
 			</div>
 		</div>

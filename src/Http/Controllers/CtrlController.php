@@ -52,7 +52,8 @@ class CtrlController extends Controller
 					 	->orderBy('order')
 					 	->get();
 			
-		$menu_links        = [];
+		$menu_links      = [];
+
 		foreach ($ctrl_classes as $ctrl_class) {
 
 			$count_ctrl_class = $ctrl_class->get_class();
@@ -75,8 +76,11 @@ class CtrlController extends Controller
 				$list_title = 'No '.$ctrl_class->get_plural();	
 			}
 			
+			// Note that we flag these links as "dashboard", to add them to the dashboard view
+			// This relies on us having a "dashboard" flag in the ctrl_classes table, and having at least one item flagged as "dashboard"
+			// This is because this flag is new; previously we listed everything on the dashboard, and we retain this old approach if necessary
 
-			$menu_links[$ctrl_class->menu_title][] = [
+			$link = [
 				'id'         => $ctrl_class->id,
 				'title'      => ucwords($ctrl_class->get_plural()),
 				'icon'       => ($icon = $ctrl_class->get_icon()) ? '<i class="'.$icon.' fa-fw"></i> ' : '',
@@ -84,8 +88,13 @@ class CtrlController extends Controller
 				'add_link'   => $add_link,
 				'add_title'  => $add_title,
 				'list_link'  => $list_link,
-				'list_title' => $list_title
-			];		
+				'list_title' => $list_title,
+				'dashboard'  => $ctrl_class->flagged('dashboard')
+			];
+
+			$menu_links[$ctrl_class->menu_title][] = $link;	
+
+
 		}
 
 		View::share ('menu_links', $menu_links );
@@ -185,18 +194,31 @@ class CtrlController extends Controller
 				'export_link' => (!empty($export_link)) ? $export_link : false,
 				'import_link' => (!empty($import_link)) ? $import_link : false
 			];		
+		}		
+
+		$dashboard_links = [];
+		$menu_links = View::shared('menu_links'); // Pulling the shared menu_links view item back from the View; this is a bit clunky
+		foreach ($menu_links as $menu_title=>$links) {
+			foreach ($links as $link) {
+				if ($link['dashboard']) {
+					$dashboard_links[$menu_title][] = $link;
+				}
+			}
 		}
-		
+		if (empty($dashboard_links)) { // The "dashboard" flag is new; if we don't have any, assume (for now) that we're running an older version of the CTRL database
+			$dashboard_links = $menu_links;
+		}
+
 		// Add some custom links above the main set of links; we could theoretically use the manipulate_dom module for this:
 		if ($this->module->enabled('custom_dashboard_links')) {
-			$custom_menu_links = $this->module->run('custom_dashboard_links');
+			$custom_dashboard_links = $this->module->run('custom_dashboard_links');
 		}		
 
 		$view = view('ctrl::dashboard',[			
-			'logo'                => config('ctrl.logo'),
-			'layout_version'      => 3, // As I play around with layouts...
-			'import_export_links' => $import_export_links,
-			'custom_menu_links'   => !empty($custom_menu_links) ? $custom_menu_links : []
+			'logo'                   => config('ctrl.logo'),			
+			'import_export_links'    => $import_export_links,
+			'dashboard_links'        => $dashboard_links,
+			'custom_dashboard_links' => !empty($custom_dashboard_links) ? $custom_dashboard_links : []
 		]);
 
 		// Manipulate the dashboard to add custom content if necessary:

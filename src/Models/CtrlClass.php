@@ -94,4 +94,14 @@ class CtrlClass extends Model
         $permissions = explode(',', $this->permissions);
         return in_array($action,$permissions);
     }
+
+    /**
+     * A shortcut function to quickly check whether a class is flagged $flag; saves calling in_array() etc all the time
+     * @param  string $flag THe flag we want to check
+     * @return boolean          Whether or not the flag is set
+     */
+    public function flagged($flag) {
+        if (!property_exists($this, 'flags')) return false; // 'flags' is a new field for ctrl_classes, we may not have it if the CTRL database is behind the codebase
+        return (in_array($flag, explode(',',$this->flags)));
+    }
 }
