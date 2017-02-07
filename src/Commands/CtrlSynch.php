@@ -577,5 +577,12 @@ class CtrlSynch extends Command
         }
         if (!$missing_columns) $this->info("All columns present and correct");
 
+        // Check for an uploads folder; is this the best place for this?
+        $uploads_folder = app('\Sevenpointsix\Ctrl\Http\Controllers\CtrlController')->uploads_folder;
+        if(!File::exists(public_path($uploads_folder))) {
+            $this->info("Creating uploads folder '$uploads_folder'");
+            File::makeDirectory(public_path($uploads_folder),0777,true); // See http://laravel-recipes.com/recipes/147/creating-a-directory
+        }
+
     }
 }

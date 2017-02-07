@@ -99,6 +99,8 @@ class CtrlController extends Controller
 
 		View::share ('menu_links', $menu_links );
 
+		$this->uploads_folder = 'uploads';
+
 		// This is required by Laravel 5.3+; see "Session In The Constructor", here: https://laravel.com/docs/5.3/upgrade
 		/* Specifically:
 			In previous versions of Laravel, you could access session variables or the authenticated user in your controller's constructor. This was never intended to be an explicit feature of the framework. In Laravel 5.3, you can't access the session or authenticated user in your controller's constructor because the middleware has not run yet.
@@ -2049,7 +2051,7 @@ class CtrlController extends Controller
 				$name = basename($request->file('file')->getClientOriginalName(),".$extension").'-'.rand(11111,99999);
 			}
 			
-			$target_folder = 'uploads';
+			$target_folder = $this->uploads_folder;
 			$target_file   = $name.'.'.$extension;
 			
 			$moved_file      = $request->file('file')->move($target_folder, $target_file);			
@@ -2111,7 +2113,7 @@ class CtrlController extends Controller
 					$name = basename($request->file($field_name)->getClientOriginalName(),".$extension").'-'.rand(11111,99999);
 				}
 				
-				$target_folder = 'uploads';
+				$target_folder = $this->uploads_folder;
 				$target_file   = $name.'.'.$extension;
 				
 				$moved_file      = $request->file($field_name)->move($target_folder, $target_file);			
