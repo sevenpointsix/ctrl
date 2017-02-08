@@ -81,7 +81,7 @@
 	  </div><!-- /.container-fluid -->
 	</nav>
 
-	<div class="ctrl-form">
+	<div id="ctrl-form">
 
 	  <!-- Nav tabs -->
 	  <ul class="nav nav-tabs" role="tablist">

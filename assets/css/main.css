@@ -75,10 +75,10 @@ ul.dropdown-menu>li>a.disabled:hover, ul.dropdown-menu>li>a.disabled:focus
 }
 
 /* Some form styling */
-.ctrl-form ul.nav.nav-tabs {
+#ctrl-form ul.nav.nav-tabs {
 	border-bottom: none;
 }
-.ctrl-form form { /* Give the form a border, background colour, and some padding */
+#ctrl-form form { /* Give the form a border, background colour, and some padding */
 	padding: 15px;
 	background-color: #f9f9f9;
 	border: 1px solid #ddd;
@@ -86,7 +86,7 @@ ul.dropdown-menu>li>a.disabled:hover, ul.dropdown-menu>li>a.disabled:focus
 	border-bottom-right-radius: 4px;
 	border-bottom-left-radius: 4px;
 }
-.ctrl-form .nav-tabs>li.active>a, .ctrl-form .nav-tabs>li.active>a:focus, .ctrl-form .nav-tabs>li.active>a:hover {
+#ctrl-form .nav-tabs>li.active>a, #ctrl-form .nav-tabs>li.active>a:focus, #ctrl-form .nav-tabs>li.active>a:hover {
 	background-color: #f9f9f9; /* Give the tabs the same background colour as the form */
 }
 .cbx {

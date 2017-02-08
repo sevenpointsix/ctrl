@@ -23,7 +23,7 @@ class CtrlSymLink extends Command
      *
      * @var string
      */
-    protected $description = 'Update the symlink that points to another app/Ctrl folder; this is how we can use dev.ctrl-c.ms to manage other sites.';
+    protected $description = 'Update the symlink that points to another app/Ctrl folder; this is how we can use dev.ctrl-c.ms to manage other sites. We also now link to Http/Controllers/Ctrl if it exists, as this is where we should be keeping a Custom Controller.';
 
     /**
      * Create a new command instance.
@@ -69,7 +69,7 @@ class CtrlSymLink extends Command
             exit();
         }
 
-        $ctrl_path = implode('/', [$project_path,$webroot,'app','Ctrl']);
+        $ctrl_path              = implode('/', [$project_path,$webroot,'app','Ctrl']);
 
         if(!File::exists($ctrl_path)) {
             $this->error("$project_folder doesn't seem to contain a valid Ctrl folder");
@@ -88,6 +88,20 @@ class CtrlSymLink extends Command
         $symlink =implode('/',['app','Ctrl']);        
         $this->line("Creating new symlink: ln -s $ctrl_path $symlink");
         symlink ($ctrl_path, $symlink);
+
+        // Also create a symlink to Http/Controllers/Ctrl if it exists; see $description above
+
+        $custom_controller_path = implode('/', [$project_path,$webroot,'app','Http','Controllers','Ctrl']);        
+        $custom_controller_folder = app_path('Http/Controllers/Ctrl');
+        
+        if(File::exists($custom_controller_folder)) {
+            $this->line("Removing existing symlink at $custom_controller_folder");
+            unlink($custom_controller_folder);
+        }
+
+        $symlink =implode('/',['app','Http','Controllers','Ctrl']);        
+        $this->line("Creating new symlink: ln -s $custom_controller_path $symlink");
+        symlink ($custom_controller_path, $symlink);
 
         $this->info('Done');
     }

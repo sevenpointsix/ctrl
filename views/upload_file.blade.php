@@ -35,7 +35,7 @@
 	  </div><!-- /.container-fluid -->
 	</nav>
 
-	<div class="ctrl-form">
+	<div id="ctrl-form">
 
 	  <form class="ajax" method="post" action="{{ $save_link }}">
 	  		  	
