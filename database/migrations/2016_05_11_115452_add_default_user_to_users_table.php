@@ -12,8 +12,8 @@ class AddDefaultUserToUsersTable extends Migration
      */
     public function up()
     {
-        $exists = DB::table('users')->where('email', 'chris@phoenixdigital.agency')->first();
-        if (!$exists) {
+        $exists = DB::table('users')->where('email', 'chris@phoenixdigital.agency')->first();        
+        if ($exists) {
             DB::table('users')
                 ->where('email', 'chris@phoenixdigital.agency')
                 ->update(['ctrl_group' => 'root']);            

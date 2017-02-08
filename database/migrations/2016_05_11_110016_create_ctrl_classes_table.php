@@ -12,6 +12,7 @@ class CreateCtrlClassesTable extends Migration
      */
     public function up()
     {
+        
         if (!Schema::hasTable('ctrl_classes')) {
             Schema::create('ctrl_classes', function (Blueprint $table) {
                 $table->increments('id');

@@ -15,6 +15,7 @@
 
     <select class="form-control" id="{{ $field['id'] }}" style="width: 100%" name="{{ $field['name'] }}">
         {{-- <option value="">None</option> // Replaced by a placeholder value in the select2 config --}}
+        <option value="0"></option> {{-- Not entirely sure why the placeholder in the select2 config is a better choice here, but it works; see below --}}
         @if ($field['value'])
             <option value="{{ $field['value'] }}" selected="selected">{{ $field['values'][$field['value']] }}</option>
         @endif
@@ -64,7 +65,11 @@
             },
             //minimumInputLength: 1
             allowClear: true,
-            placeholder: 'None',
+            // placeholder: 'None',
+            placeholder: {
+                id: '0', // the value of the 'none' option, allows us to remove relationships
+                text: 'None'
+            },
             theme: "bootstrap"
         });   
         $(document).ready(function() {   

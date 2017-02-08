@@ -35,15 +35,6 @@ class CtrlTables extends Command
     public function __construct()
     {
         parent::__construct();
-
-        $folder = app_path('Ctrl/database/');
-        $file   = 'ctrl_tables.sql';
-
-        if(!File::exists($folder)) {
-            File::makeDirectory($folder,0777,true); // See http://laravel-recipes.com/recipes/147/creating-a-directory
-        }
-
-        $this->sql_file = $folder.$file;
     }
 
     /**
@@ -53,6 +44,15 @@ class CtrlTables extends Command
      */
     public function handle()
     {
+
+        $folder = app_path('Ctrl/database/');
+        $file   = 'ctrl_tables.sql';
+
+        if(!File::exists($folder)) {
+            File::makeDirectory($folder,0777,true); // See http://laravel-recipes.com/recipes/147/creating-a-directory
+        }
+
+        $this->sql_file = $folder.$file;
 
         $action = $this->argument('action');
 

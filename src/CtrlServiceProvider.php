@@ -27,7 +27,8 @@ class CtrlServiceProvider extends ServiceProvider{
 	// Add the artisan command; from http://stackoverflow.com/questions/28492394/laravel-5-creating-artisan-command-for-packages. See @register()
 	protected $commands = [
        \Sevenpointsix\Ctrl\Commands\CtrlSynch::class,
-       \Sevenpointsix\Ctrl\Commands\CtrlTables::class
+       \Sevenpointsix\Ctrl\Commands\CtrlTables::class,
+       \Sevenpointsix\Ctrl\Commands\CtrlSymLink::class,
     ];
 
 	public function boot()
@@ -69,8 +70,9 @@ class CtrlServiceProvider extends ServiceProvider{
 
 		/* Can I put this here? Just check that we have a Ctrl folder, for models and Modules */
 		$ctrl_folder = app_path('Ctrl/');
-		//dd($ctrl_folder);
-        if(!File::exists($ctrl_folder)) {
+		
+		// Don't create a Ctrl folder if this is the local ctrl-c.ms site; that site uses symlinks to other folders
+        if(!File::exists($ctrl_folder) && env('APP_URL', false) != 'http://dev.ctrl-c.ms') {
             File::makeDirectory($ctrl_folder,0777,true); // See http://laravel-recipes.com/recipes/147/creating-a-directory
         }
 

@@ -99,7 +99,7 @@ class CtrlController extends Controller
 
 		View::share ('menu_links', $menu_links );
 
-		$this->uploads_folder = 'uploads';
+		$this->uploads_folder = config('ctrl.uploads_folder','uploads');
 
 		// This is required by Laravel 5.3+; see "Session In The Constructor", here: https://laravel.com/docs/5.3/upgrade
 		/* Specifically:
