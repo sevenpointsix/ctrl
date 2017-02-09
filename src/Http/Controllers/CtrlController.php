@@ -1889,7 +1889,7 @@ class CtrlController extends Controller
         }
 
         // Set the URL automatically as well:        
-        if (Schema::hasColumn($ctrl_class->table_name, 'order') && !$object->url) {        	
+        if (Schema::hasColumn($ctrl_class->table_name, 'url') && !$object->url) {        	
         	$title = $this->get_object_title($object);
         	$slug  = str_slug($title);        	
         	$append = 1;
