@@ -1860,7 +1860,7 @@ class CtrlController extends Controller
 			}
 		}
 
-		// dd($_POST);
+		//dd($_POST);
 		
         $object->fill($_POST);
 
@@ -1888,8 +1888,7 @@ class CtrlController extends Controller
 	        }
         }
 
-        // Set the URL automatically as well:
-        
+        // Set the URL automatically as well:        
         if (Schema::hasColumn($ctrl_class->table_name, 'order') && !$object->url) {        	
         	$title = $this->get_object_title($object);
         	$slug  = str_slug($title);        	
@@ -1999,6 +1998,11 @@ class CtrlController extends Controller
 		            */
 		            
 		        }	
+			}
+			// Note: if we're posting a multiple select with nothing selected, the $_POST value doesn't exist; meaning that we can't remove the relationship
+			else if ($related_ctrl_property->relationship_type == 'belongsToMany') {
+				// Try this:
+				$object->$related_field_name()->detach();
 			}
 		}
 

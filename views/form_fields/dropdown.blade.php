@@ -4,7 +4,7 @@
 
     @if (is_array($field['value'])) {{-- Indicates a multiple select --}}    
     <select class="form-control" id="{{ $field['id'] }}" style="width: 100%" name="{{ $field['name'] }}[]" multiple>  
-        {{-- See "Responsive Design" here for a note on the width/100%: https://select2.github.io/examples.html --}}      
+        {{-- See "Responsive Design" here for a note on the width/100%: https://select2.github.io/examples.html --}}              
         @foreach ($field['value'] as $value=>$text)
             <option value="{{ $value }}" selected="selected">{{ $text }}</option>
         @endforeach
