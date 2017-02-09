@@ -78,31 +78,30 @@ class CtrlSymLink extends Command
         }
 
         // OK, we have a valid app/Ctrl folder to link to. Remove the existing one (if present) and then create a new symlink:
-        $ctrl_folder = app_path('Ctrl');
-        if(File::exists($ctrl_folder)) {
-            $this->line("Removing existing symlink at $ctrl_folder");
-            //File::delete($ctrl_path);
-            unlink($ctrl_folder);
+        $symlink = app_path('Ctrl');
+        if (is_link($symlink)) {
+            $this->line("Removing existing symlink at $symlink");
+            unlink($symlink);
         }
-
-        $symlink =implode('/',['app','Ctrl']);        
-        $this->line("Creating new symlink: ln -s $ctrl_path $symlink");
-        symlink ($ctrl_path, $symlink);
+        
+        $this->line("Creating new symlink at ".implode('/',['app','Ctrl']));
+        symlink ($ctrl_path, $symlink); // Effectively ln -s $ctrl_path $symlink
 
         // Also create a symlink to Http/Controllers/Ctrl if it exists; see $description above
 
         $custom_controller_path = implode('/', [$project_path,$webroot,'app','Http','Controllers','Ctrl']);        
-        $custom_controller_folder = app_path('Http/Controllers/Ctrl');
-        
-        if(File::exists($custom_controller_folder)) {
-            $this->line("Removing existing symlink at $custom_controller_folder");
-            unlink($custom_controller_folder);
+        $symlink = app_path('Http/Controllers/Ctrl');
+
+        if (is_link($symlink)) {
+            $this->line("Removing existing symlink at $symlink");
+            unlink($symlink);
         }
 
-        $symlink =implode('/',['app','Http','Controllers','Ctrl']);        
-        $this->line("Creating new symlink: ln -s $custom_controller_path $symlink");
-        symlink ($custom_controller_path, $symlink);
+        if (!File::exists($custom_controller_path)) {
+            $this->line("Creating new symlink at ".implode('/',['app','Http','Controllers','Ctrl']));
+            symlink ($custom_controller_path, $symlink); // Effectively ln -s $custom_controller_path $symlink");
+        }
 
-        $this->info('Done');
+        $this->info('Done. Don\'t forget to switch database in .env if necessary.');        
     }
 }

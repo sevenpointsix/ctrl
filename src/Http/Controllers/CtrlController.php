@@ -493,6 +493,7 @@ class CtrlController extends Controller
         // see: https://github.com/laravel/framework/issues/1436
     	$class  = $ctrl_class->get_class();
     	$table = with(new $class)->getTable();    	
+    	// Why can't we just use $ctrl_class->table_name here?!
     	if (Schema::hasColumn($table, 'order') && empty($prevent_reordering)) {
         // if (Schema::hasColumn($ctrl_class->getTable(), 'order')) {
         	$can_reorder = true;
@@ -1880,10 +1881,29 @@ class CtrlController extends Controller
 	        if (!is_null($nullable) && $nullable == 'YES' && isset($_POST[$column]) && $_POST[$column] === '') {
 	        	$object->$column = null;
 	        }
+	        // Also, if the column ISN'T nullable, and we haven't passed in a value, set the value to '';
+	        // this gets around an issue in Laravel >= 5.3, which uses "strict" MySQL mode and needs columns to have default values
+	        else if (!is_null($nullable) && $nullable == 'NO' && !isset($_POST[$column]) && !$object->$column) {
+	        	$object->$column = '';
+	        }
         }
 
+        // Set the URL automatically as well:
+        
+        if (Schema::hasColumn($ctrl_class->table_name, 'order') && !$object->url) {        	
+        	$title = $this->get_object_title($object);
+        	$slug  = str_slug($title);        	
+        	$append = 1;
+        	while (!is_null(DB::table($ctrl_class->table_name)->where('url', $slug)->first())) {
+        		$slug = str_slug($title .' '.$append++); 
+        		if ($append >= 100) {
+        			trigger_error("Infinite loop");
+        		}
+        	} 
+        	$object->url = $slug;
+        }
+        
         $object->save(); // Save the new object, otherwise we can't save any relationships...
-       
         // Now load any related fields (excluding belongsTo, as this indicates the presence of an _id field)
         $related_ctrl_properties = $ctrl_class->ctrl_properties()
                                               ->where('fieldset','!=','')
@@ -1981,7 +2001,7 @@ class CtrlController extends Controller
 		        }	
 			}
 		}
-		
+
         $object->save();
 
         // Add a custom post_save module
