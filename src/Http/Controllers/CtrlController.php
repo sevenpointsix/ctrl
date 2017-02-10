@@ -295,9 +295,15 @@ class CtrlController extends Controller
 			}
 			else {
 				//$query->orderByRaw("INSTR({$first_header_property->name}, '$search_term'), {$first_header_property->name}");
-				$query->orderByRaw("INSTR(?, ?), ?",[$first_header_property->name,$search_term,$first_header_property->name]);
+				// No, the above was mostly correct; if we escape the field names then the ordering has no effect
+				// $query->orderByRaw("INSTR(?, ?), ?",[$first_header_property->name,$search_term,$first_header_property->name]);
+				$query->orderByRaw("INSTR({$first_header_property->name}, ?), {$first_header_property->name}",[$search_term]);
 			}
-
+/*
+$sql      = str_replace(array('%', '?'), array('%%', '\'%s\''), $query->toSql()); // Will this wrap integers in ''? Does that matter?
+        $bindings = $query->getBindings();
+        die(vsprintf($sql, $bindings).';'); // dd() wraps the query in "", which makes it tricky to copy and paste into Sequel Pro
+*/
 			$objects = $query->take(20)->get();	// Limits the dropdown to 20 items; this may need to be adjusted
 			if (!$objects->isEmpty()) {
 			    foreach ($objects as $object) {
