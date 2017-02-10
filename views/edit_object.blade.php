@@ -126,6 +126,12 @@
 	  </form>
 
 	</div>
+	{{-- Now -- this is only used by Argos, but it might be handy for other projects, so leave it here as a constant element --}}
+	<div id="preview-pane">
+		<div class="error"></div>
+		<div class="loading"><i class="fa fa-refresh fa-spin fa-3x fa-fw"></i></div>
+		<div class="preview"></div>
+	</div>
 
 
 @stop

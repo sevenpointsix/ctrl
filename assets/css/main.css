@@ -111,3 +111,20 @@ ul.dropdown-menu>li>a.disabled:hover, ul.dropdown-menu>li>a.disabled:focus
 .file-preview-image {
 	max-width: 100%;
 }
+
+/* New: preview pane, used only by Argos for now */
+#preview-pane div {	
+	display: none;
+	margin-top: 20px;
+}
+#preview-pane .preview,
+	#preview-pane .loading {
+	border: 1px solid #e7e7e7;
+	background-color: #fafafa;
+	border-radius: 4px;
+	padding: 10px 15px;	
+}
+#preview-pane .loading {
+	text-align: center;
+}
+
