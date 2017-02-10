@@ -97,7 +97,7 @@ class CtrlSymLink extends Command
             unlink($symlink);
         }
 
-        if (!File::exists($custom_controller_path)) {
+        if (File::exists($custom_controller_path)) {
             $this->line("Creating new symlink at ".implode('/',['app','Http','Controllers','Ctrl']));
             symlink ($custom_controller_path, $symlink); // Effectively ln -s $custom_controller_path $symlink");
         }
