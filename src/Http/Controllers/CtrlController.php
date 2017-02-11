@@ -1187,19 +1187,31 @@ $sql      = str_replace(array('%', '?'), array('%%', '\'%s\''), $query->toSql())
 	 * Return the row buttons for the row that holds object $object_id of ctrl_class $ctrl_class_id
 	 * @param  integer $ctrl_class+id
 	 * @param  integer $object_id
-	 * @param  $key Are we drawing a key, or returning actual buttons?
+	 * @param  string $filter_string Optional list filter
+	 * @param  string $scope Indicates where we're displaying buttons; can currently be 'list' or 'edit'(ie, listing or editing objects; 'edit' hides the 'edit' option)
 	 * @return string HTML
 	 */
 	// protected function get_row_buttons($ctrl_class_id,$object_id, $key = false) {
 
 	// Right. I'm dropping $key, partly because we don't really use it (it looks rubbish) and partly because passing in $key is really clunky
 	// If we ever do need to format buttons differently for a "key", this function needs to be split into two; one to retrieve the buttons, and one to display them
-	protected function get_row_buttons($ctrl_class_id,$object_id, $filter_string = null) {
+	protected function get_row_buttons($ctrl_class_id,$object_id, $filter_string = null, $scope = 'list') {
 
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();	
 
-    	$edit_link   = route('ctrl::edit_object',[$ctrl_class->id,$object_id,$filter_string]); 
-    	$delete_link = route('ctrl::delete_object',[$ctrl_class->id,$object_id]);
+		if ($scope != 'edit' && $ctrl_class->can('edit')) {
+    		$edit_link   = route('ctrl::edit_object',[$ctrl_class->id,$object_id,$filter_string]); 
+    	}
+    	else {
+    		$edit_link = false;
+    	}
+
+    	if ($ctrl_class->can('delete')) {
+    		$delete_link = route('ctrl::delete_object',[$ctrl_class->id,$object_id]);
+    	}
+    	else {
+    		$delete_link = false;
+    	}
 
     	// Do we have any filtered lists?
     	$filtered_list_links        = [];
@@ -1757,6 +1769,9 @@ $sql      = str_replace(array('%', '?'), array('%%', '\'%s\''), $query->toSql())
 
 		// Similarly... once we've saved a filtered object, we want to bounce back to a filtered list. This enables it:
 		$save_link        = route('ctrl::save_object',[$ctrl_class->id,$object_id,$filter_string]);
+
+		// NEW: can we repeat the row buttons on the edit page? This makes a lot of sense I think
+		$row_buttons = $this->get_row_buttons($ctrl_class->id, $object->id, $filter_string, 'edit');
 		
 		return view('ctrl::edit_object',[
 			'ctrl_class'         => $ctrl_class,
@@ -1768,6 +1783,7 @@ $sql      = str_replace(array('%', '?'), array('%%', '\'%s\''), $query->toSql())
 			'object'             => $object,
 			'tabbed_form_fields' => $tabbed_form_fields,
 			'hidden_form_fields' => $hidden_form_fields,
+			'row_buttons'		 => $row_buttons
 		]);
 	}
 
