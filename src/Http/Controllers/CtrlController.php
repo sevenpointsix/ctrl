@@ -315,6 +315,9 @@ $sql      = str_replace(array('%', '?'), array('%%', '\'%s\''), $query->toSql())
 			    }
 			}
 		}
+		else {
+			trigger_error("Cannot search the class $ctrl_class_name as no searchable properties are set");
+		}
 
 		$status = 200;
 
