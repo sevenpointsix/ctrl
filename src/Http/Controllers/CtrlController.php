@@ -261,8 +261,7 @@ class CtrlController extends Controller
 
 		$json = [];
 
-		$search_term = $request->input('q');
-
+		$search_term = $request->input('q');		
 		// This is based heavily on get_typeahead
 		$ctrl_class = CtrlClass::where('name',$ctrl_class_name)->firstOrFail();		
 		$class      = $ctrl_class->get_class();
@@ -282,8 +281,10 @@ class CtrlController extends Controller
 			)->orderBy('order')->first();
 
 			$query = $class::query(); // From http://laravel.io/forum/04-13-2015-combine-foreach-loop-and-eloquent-to-perform-a-search
-			foreach ($searchable_properties as $searchable_property) {			
-				$query->orWhere($searchable_property->name,'LIKE',"%$search_term%"); // Or would a %$term% search be better?
+			if (!empty($search_term)) {
+				foreach ($searchable_properties as $searchable_property) {			
+					$query->orWhere($searchable_property->name,'LIKE',"%$search_term%"); // Or would a %$term% search be better?
+				}
 			}
 
 			// $query->orderBy($first_header_property->name);
@@ -293,11 +294,11 @@ class CtrlController extends Controller
 			if ($first_header_property->relationship_type == 'belongsTo') {
 				$query->orderBy($first_header_property->foreign_key);
 			}
-			else {
-				//$query->orderByRaw("INSTR({$first_header_property->name}, '$search_term'), {$first_header_property->name}");
+			else if (!empty($search_term)) {
+				// $query->orderByRaw("INSTR({$first_header_property->name}, '$search_term'), {$first_header_property->name}");
 				// No, the above was mostly correct; if we escape the field names then the ordering has no effect
 				// $query->orderByRaw("INSTR(?, ?), ?",[$first_header_property->name,$search_term,$first_header_property->name]);
-				$query->orderByRaw("INSTR({$first_header_property->name}, ?), {$first_header_property->name}",[$search_term]);
+				$query->orderByRaw("INSTR(`{$first_header_property->name}`, ?), `{$first_header_property->name}`",[$search_term]);
 			}
 /*
 $sql      = str_replace(array('%', '?'), array('%%', '\'%s\''), $query->toSql()); // Will this wrap integers in ''? Does that matter?
