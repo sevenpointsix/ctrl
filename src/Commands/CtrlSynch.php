@@ -5,6 +5,7 @@ namespace Sevenpointsix\Ctrl\Commands;
 use Illuminate\Console\Command;
 
 use DB;
+use Schema;
 use Config;
 use View;
 use File;
@@ -144,6 +145,9 @@ class CtrlSynch extends Command
         $columns_processed = 0; // Could track added/updated counts here, and possibly even 'deleted'
         $ignore_columns = ['id','remember_token']; // Do we ever want to see these fields?
 
+        $column_ordering = []; // Keep all properties of a class in the correct order; previously we reset relationships to 1, which put the form fields in a strange order
+        // UNTESTED so might need fixing the next time we sync!
+
         for ($pass = 1; $pass <= 2; $pass++) { // Properties on pass 1, relationships on pass 2
             foreach ($standard_tables as $standard_table) {
 
@@ -165,8 +169,13 @@ class CtrlSynch extends Command
 
                 $ctrl_class->save();
 
+                 // Has the table been deleted?!
+                if (!Schema::hasTable($standard_table)) {
+                    $this->error("Table $standard_table doesn't exist");
+                }
+        
                 $columns = DB::select("SHOW COLUMNS FROM {$standard_table}");
-                if ($pass == 1) $column_order = 1; // Don't reset this for pass 2, otherwise we end up with two products with order 1, two with order 2, etc.
+                if ($pass == 1) $column_ordering[$model_name] = 1;
                 foreach ($columns as $column) {
 
                     $column_name = $column->Field;
@@ -231,7 +240,8 @@ class CtrlSynch extends Command
                                 $ctrl_property->field_type    = $ctrl_property->get_field_type_from_column($column->Type);
                             }
 
-                            $ctrl_property->order = $column_order++;
+                            // $ctrl_property->order = $column_order++;
+                            $ctrl_property->order = $column_ordering[$model_name]++;
 
                             $ctrl_property->label    = ucfirst(str_replace('_',' ',$ctrl_property->name));
 
@@ -282,7 +292,8 @@ class CtrlSynch extends Command
 
                         // Only set these if they're not already set, otherwise we'll overwrite custom settings:
                         if (!$ctrl_property->exists) {
-                            $ctrl_property->order      = $column_order++;
+                            // $ctrl_property->order      = $column_order++;
+                            $ctrl_property->order      = $column_ordering[$model_name]++;
                             $ctrl_property->field_type = 'dropdown';
                             $ctrl_property->label      = ucfirst(str_replace('_id', '', $column_name));
                             $ctrl_property->fieldset   = 'Details'; // Assume we always want to include simple "belongsTo" relationships on the form
@@ -304,7 +315,8 @@ class CtrlSynch extends Command
                             'local_key'         => 'id'
                         ]);
 
-                        $inverse_ctrl_property->order      = $column_order++; // Useful not to create these with NULL orders
+                        // $inverse_ctrl_property->order      = $column_order++; // Useful not to create these with NULL orders
+                        $inverse_ctrl_property->order = $column_ordering[$model_name]++;
                         $inverse_ctrl_property->save();  // As above, no need to explicitly save relationship
                     }
                     if ($pass == 1) $columns_processed++;   
@@ -316,6 +328,12 @@ class CtrlSynch extends Command
 
         // Now loop through the pivot tables and create the hasMany relationships
         foreach ($pivot_tables as $pivot_table) {
+
+             // Has the table been deleted?!
+            if (!Schema::hasTable($pivot_table)) {
+                $this->error("Pivot table $pivot_table doesn't exist");
+            }
+
             $columns = DB::select("SHOW COLUMNS FROM {$pivot_table}");
 
             // Filter out anything that isn't an _id
@@ -375,7 +393,8 @@ class CtrlSynch extends Command
                 unset($pivot_table_parts[$pivot_key]);
                 $ctrl_property_name = implode('_', $pivot_table_parts);
 
-                $ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrCreate([                       
+                // $ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrCreate([ // Should this be first or New?                      
+                $ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrNew([ // Try it...                      
                     'ctrl_class_id'     => $related_ctrl_class_one->id,
                     'related_to_id'     => $related_ctrl_class_two->id,
                     'name'              => $ctrl_property_name,
@@ -538,44 +557,84 @@ class CtrlSynch extends Command
                 $table_name = $ctrl_property->pivot_table;
                 // Check foreign key and local key
                 foreach (['foreign_key','local_key'] as $key) {
-                    $table_column = DB::select("SHOW COLUMNS FROM {$table_name} LIKE '{$ctrl_property->$key}'");
-                    if (!$table_column) {
-                        $this->error("The {$ctrl_property->relationship_type} column for {$ctrl_property->ctrl_class->name}::{$ctrl_property->$key} (from the pivot table '{$table_name}') appears not to exist");
-                        $missing_columns = true;
+
+                    // Has the table been deleted?!
+                    if (!Schema::hasTable($table_name)) {
+                        $this->error("Pivot table $table_name doesn't exist; deleting this property");
+                        $ctrl_property->delete();
+                        // $missing_columns = true; // Technically shouldn't flag this as an issue if we've resolved it
+                    }
+                    else {
+                        $table_column = DB::select("SHOW COLUMNS FROM {$table_name} LIKE '{$ctrl_property->$key}'");
+                        if (!$table_column) {
+                            $this->error("The {$ctrl_property->relationship_type} column for {$ctrl_property->ctrl_class->name}::{$ctrl_property->$key} (from the pivot table '{$table_name}') appears not to exist");
+                            $missing_columns = true;
+                        }
                     }
                 }
             }
             else if (in_array($ctrl_property->relationship_type,['hasMany'])) { // hasMany, has a key in a related table, as per $ctrl_property->related_to_id
                 $table_name = $ctrl_property->related_ctrl_class->table_name;    
-                $table_column = DB::select("SHOW COLUMNS FROM {$table_name} LIKE '{$ctrl_property->foreign_key}'");
-                if (!$table_column) {
-                    $this->error("The {$ctrl_property->relationship_type} column for {$ctrl_property->ctrl_class->name}::{$ctrl_property->foreign_key} (from the table '{$table_name}') appears not to exist");
+
+                // Has the table been deleted?!
+                if (!Schema::hasTable($table_name)) {
+                    $this->error("Table $table_name doesn't exist");
                     $missing_columns = true;
+                }
+                else {
+                    $table_column = DB::select("SHOW COLUMNS FROM {$table_name} LIKE '{$ctrl_property->foreign_key}'");
+                    if (!$table_column) {
+                        $this->error("The {$ctrl_property->relationship_type} column for {$ctrl_property->ctrl_class->name}::{$ctrl_property->foreign_key} (from the table '{$table_name}') appears not to exist");
+                        $missing_columns = true;
+                    }
                 }
             }
             else if (in_array($ctrl_property->relationship_type,['belongsTo'])) { // belongsTo, has a join column (eg _id)
-                $table_name = $ctrl_property->ctrl_class->table_name;    
-                $table_column = DB::select("SHOW COLUMNS FROM {$table_name} LIKE '{$ctrl_property->foreign_key}'");
-                if (!$table_column) {
-                    $this->error("The {$ctrl_property->relationship_type} column for {$ctrl_property->ctrl_class->name}::{$ctrl_property->foreign_key} (from the table '{$table_name}') appears not to exist");
+                $table_name = $ctrl_property->ctrl_class->table_name;   
+
+                // Has the table been deleted?!
+                if (!Schema::hasTable($table_name)) {
+                    $this->error("Table $table_name doesn't exist");
                     $missing_columns = true;
+                }
+                else {
+
+                    $table_column = DB::select("SHOW COLUMNS FROM {$table_name} LIKE '{$ctrl_property->foreign_key}'");
+                    if (!$table_column) {
+                        $this->error("The {$ctrl_property->relationship_type} column for {$ctrl_property->ctrl_class->name}::{$ctrl_property->foreign_key} (from the table '{$table_name}') appears not to exist");
+                        $missing_columns = true;
+                    }
                 }
             }
             else {
                 $table_name = $ctrl_property->ctrl_class->table_name;    
-                $table_column = DB::select("SHOW COLUMNS FROM {$table_name} LIKE '{$ctrl_property->name}'");
-                if (!$table_column) {
-                    $this->error("The standard column for {$ctrl_property->ctrl_class->name}::{$ctrl_property->name} (from the table '{$table_name}') appears not to exist");
+
+                // Has the table been deleted?!
+                if (!Schema::hasTable($table_name)) {
+                    $this->error("Table $table_name doesn't exist");
                     $missing_columns = true;
-                    if ($force) {
-                        // We only forcibly delete "standard" columns for now, I need to run further tests on this
-                        $ctrl_property->delete();
-                        $this->info("Property deleted!");
+                }
+                else {
+
+                    $table_column = DB::select("SHOW COLUMNS FROM {$table_name} LIKE '{$ctrl_property->name}'");
+                    if (!$table_column) {
+                        $this->error("The standard column for {$ctrl_property->ctrl_class->name}::{$ctrl_property->name} (from the table '{$table_name}') appears not to exist");
+                        $missing_columns = true;
+                        if ($force) {
+                            // We only forcibly delete "standard" columns for now, I need to run further tests on this
+                            $ctrl_property->delete();
+                            $this->info("Property deleted!");
+                        }
                     }
                 }
             }
         }
-        if (!$missing_columns) $this->info("All columns present and correct");
+        if (!$missing_columns) {
+            $this->info("All columns present and correct");
+        }
+        else{
+            $this->error("Some potential problems with columns, tables");
+        }
 
     }
 }
