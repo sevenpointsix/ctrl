@@ -427,7 +427,7 @@ $sql      = str_replace(array('%', '?'), array('%%', '\'%s\''), $query->toSql())
 				$column->defaultContent = 'None'; // We can't filter the list to show all "None" items though... not yet.
 
         		// Only set data-search-dropdown (which converts the header to a dropdown) if we would have fewer than 50 items in the list:
-        		if ($related_objects::count() < 50) {        			
+        		if ($related_objects::count() < 50) {
         			$th_columns[] = '<th data-search-dropdown="'.($make_searchable ? 'true' : 'false').'" data-orderable="false">'.$header->label.'</th>';
         		}
         		else {
@@ -983,12 +983,17 @@ $sql      = str_replace(array('%', '?'), array('%%', '\'%s\''), $query->toSql())
 			$related_ctrl_class = CtrlClass::where('id',$related_ctrl_property->related_to_id)->first();
 			if (is_null($related_ctrl_class)) trigger_error("Cannot load related_ctrl_class");
 
-			$related_items = DB::table($related_ctrl_class->table_name)->select($related_ctrl_property_name)->distinct()->get();
+			$related_items = DB::table($related_ctrl_class->table_name)->select('id',$related_ctrl_property_name)->orderBy($related_ctrl_property_name)->get(); // Previously had ->distinct() here but shouldn't be necessary for related items...
 
 			// WIP, untested
+			// I've refined this to include the correct ->id value, but it's still not quite working...
 			foreach ($related_items as $related_item) {
-				$options[] = $related_item->$related_ctrl_property_name;
+				// $options[$related_item->id] = $related_item->$related_ctrl_property_name;
+				// Or do we need to search by string?
+				// Ah, yes, apparently -- this is flaky though, we should update this to use IDs for relationships
+				$options[$related_item->$related_ctrl_property_name] = $related_item->$related_ctrl_property_name;
 			}
+
 		}
 		else {
 			$distinct_values = DB::table($ctrl_class->table_name)->select($data_src)->distinct()->get();

@@ -299,6 +299,7 @@ $(function() {
                     	var val = $.fn.dataTable.util.escapeRegex(
                             $(this).val()
                         );  
+                        console.log(val);
                     	// Why regex these? Surely a dropdown will be a list of values that match records exactly?
                     	/* Regex version...
                         column
