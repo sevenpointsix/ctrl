@@ -1050,7 +1050,16 @@ $sql      = str_replace(array('%', '?'), array('%%', '\'%s\''), $query->toSql())
 			// Again, see http://datatables.yajrabox.com/eloquent/relationships			
       		// Note that we shouldn't filter the query here; we want this to pull as much information back as possible
       		// so that we can rely on datatables to filter everything for us
-			$objects = $class::with(implode(',', $with))->select($ctrl_class->table_name.'.*');	
+      		
+      		// Fail, we can't implode multiple $with values, we have to pass multiple arguments, which won't work :-(
+			// $objects = $class::with(implode(',', $with))->select($ctrl_class->table_name.'.*');	
+
+			// Try this? I'm pretty sure this works:
+			$objects = $class::select($ctrl_class->table_name.'.*');	
+			foreach ($with as $w) {
+				$objects->with($with);
+			}
+			// TODO: in fact, we could call $class::select() first, and then only run with (if $with) 
 		}
 		else {
 			// $objects    = $class::query(); 
