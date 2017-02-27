@@ -223,8 +223,9 @@
                 if (div.find('[autofocus]').length > 0) {
                     div.find('[autofocus]').get(0).focus();
                 // do we have any tabbable elements in the dialog content area?
-                }else if (div.find('.modal-body').find(':tabbable').length > 0) {
-                    div.find('.modal-body').find(':tabbable').get(0).focus();
+                // 7.6; changed from :tabbable, which was surely incorrect? jQuery threw errors anyway. Plus, is 'tabbable' a Bootstrap 2 thing?
+                }else if (div.find('.modal-body').find('.tabbable').length > 0) {
+                    div.find('.modal-body').find('.tabbable').get(0).focus();
                 // do we have a close button?
                 }else if (options.CloseButton) {
                     div.find('.close').get(0).focus();
