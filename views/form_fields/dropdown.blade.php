@@ -77,12 +77,12 @@
             $('#{{ $field['id'] }}').next('span.select2').on('paste','input.select2-search__field', function(e) {
                 e.preventDefault();
                 var text = (e.originalEvent || e).clipboardData.getData('text/plain') || prompt('Paste something..');                    
-                var values = text.split(/,[\s\r]+/);
-                console.log(values);                
+                var values = text.split(/[,\s\r]+/);
                 // We now have a list of pasted values; for example, 1384828,1075670 
                 values.forEach(function(v) {                        
                     // Now, use Ajax to look up the ID of each matching catalogue number:
                     // We could configure @get_select2 to accept a comma-delimited string and return multiple values, which would speed this up (as we'd only have one ajax call)
+                    console.log(v+'!');
                     $.ajax ({
                         url: "{{ route('ctrl::get_select2',['ctrl_class_name'=>$field['related_ctrl_class_name']]) }}",
                         dataType: 'json',
