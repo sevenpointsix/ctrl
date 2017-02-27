@@ -430,7 +430,7 @@ $sql      = str_replace(array('%', '?'), array('%%', '\'%s\''), $query->toSql())
 				$column->defaultContent = 'None'; // We can't filter the list to show all "None" items though... not yet.
 
         		// Only set data-search-dropdown (which converts the header to a dropdown) if we would have fewer than 50 items in the list:
-        		if ($related_objects::count() < 50) {        			
+        		if ($related_objects::count() < 50) {
         			$th_columns[] = '<th data-search-dropdown="'.($make_searchable ? 'true' : 'false').'" data-orderable="false">'.$header->label.'</th>';
         		}
         		else {
@@ -986,12 +986,17 @@ $sql      = str_replace(array('%', '?'), array('%%', '\'%s\''), $query->toSql())
 			$related_ctrl_class = CtrlClass::where('id',$related_ctrl_property->related_to_id)->first();
 			if (is_null($related_ctrl_class)) trigger_error("Cannot load related_ctrl_class");
 
-			$related_items = DB::table($related_ctrl_class->table_name)->select($related_ctrl_property_name)->distinct()->get();
+			$related_items = DB::table($related_ctrl_class->table_name)->select('id',$related_ctrl_property_name)->orderBy($related_ctrl_property_name)->get(); // Previously had ->distinct() here but shouldn't be necessary for related items...
 
 			// WIP, untested
+			// I've refined this to include the correct ->id value, but it's still not quite working...
 			foreach ($related_items as $related_item) {
-				$options[] = $related_item->$related_ctrl_property_name;
+				// $options[$related_item->id] = $related_item->$related_ctrl_property_name;
+				// Or do we need to search by string?
+				// Ah, yes, apparently -- this is flaky though, we should update this to use IDs for relationships
+				$options[$related_item->$related_ctrl_property_name] = $related_item->$related_ctrl_property_name;
 			}
+
 		}
 		else {
 			$distinct_values = DB::table($ctrl_class->table_name)->select($data_src)->distinct()->get();
@@ -1053,7 +1058,16 @@ $sql      = str_replace(array('%', '?'), array('%%', '\'%s\''), $query->toSql())
 			// Again, see http://datatables.yajrabox.com/eloquent/relationships			
       		// Note that we shouldn't filter the query here; we want this to pull as much information back as possible
       		// so that we can rely on datatables to filter everything for us
-			$objects = $class::with(implode(',', $with))->select($ctrl_class->table_name.'.*');	
+      		
+      		// Fail, we can't implode multiple $with values, we have to pass multiple arguments, which won't work :-(
+			// $objects = $class::with(implode(',', $with))->select($ctrl_class->table_name.'.*');	
+
+			// Try this? I'm pretty sure this works:
+			$objects = $class::select($ctrl_class->table_name.'.*');	
+			foreach ($with as $w) {
+				$objects->with($with);
+			}
+			// TODO: in fact, we could call $class::select() first, and then only run with (if $with) 
 		}
 		else {
 			// $objects    = $class::query(); 
