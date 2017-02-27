@@ -300,6 +300,9 @@ class CtrlController extends Controller
 				// $query->orderByRaw("INSTR(?, ?), ?",[$first_header_property->name,$search_term,$first_header_property->name]);
 				$query->orderByRaw("INSTR(`{$first_header_property->name}`, ?), `{$first_header_property->name}`",[$search_term]);
 			}
+			else {
+				$query->orderBy($first_header_property->name);
+			}
 /*
 $sql      = str_replace(array('%', '?'), array('%%', '\'%s\''), $query->toSql()); // Will this wrap integers in ''? Does that matter?
         $bindings = $query->getBindings();
