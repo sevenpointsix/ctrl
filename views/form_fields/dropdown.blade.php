@@ -82,17 +82,18 @@
                 values.forEach(function(v) {                        
                     // Now, use Ajax to look up the ID of each matching catalogue number:
                     // We could configure @get_select2 to accept a comma-delimited string and return multiple values, which would speed this up (as we'd only have one ajax call)
-                    console.log(v+'!');
-                    $.ajax ({
-                        url: "{{ route('ctrl::get_select2',['ctrl_class_name'=>$field['related_ctrl_class_name']]) }}",
-                        dataType: 'json',
-                        data: {q: v }
-                    }).done(function(d) {
-                        if (d[0] && d[0].id) {
-                            var $option = $("<option selected></option>").val(d[0].id).text(v);
-                            $('#{{ $field['id'] }}').append($option).trigger('change');
-                        }
-                    });                            
+                    if (v) { // Skip empty values:
+                        $.ajax ({
+                            url: "{{ route('ctrl::get_select2',['ctrl_class_name'=>$field['related_ctrl_class_name']]) }}",
+                            dataType: 'json',
+                            data: {q: v }
+                        }).done(function(d) {
+                            if (d[0] && d[0].id) {
+                                var $option = $("<option selected></option>").val(d[0].id).text(v);
+                                $('#{{ $field['id'] }}').append($option).trigger('change');
+                            }
+                        });  
+                    }                          
                 });
                 select2_{{ $field['id'] }}.select2('close');
             });

@@ -113,7 +113,7 @@ ul.dropdown-menu>li>a.disabled:hover, ul.dropdown-menu>li>a.disabled:focus
 }
 
 /* New: preview pane, used only by Argos for now */
-#preview-pane div {	
+#preview-pane > div { /* Note immediate child, to avoid hiding the alert within the error div */
 	display: none;
 	margin-top: 20px;
 }
