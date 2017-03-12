@@ -10,11 +10,18 @@
         @endforeach
     </select>
 
+    @elseif (empty($field['related_ctrl_class_name']))  {{-- Indicates an enum field, no need for select2 --}}    
+    <select class="form-control enum" id="{{ $field['id'] }}" style="width: 100%" name="{{ $field['name'] }}">  
+        @foreach ($field['values'] as $value=>$text)
+            <option value="{{ $value }}" @if ($field['value'] == $value) selected="selected" @endif>{{ $text }}</option>
+        @endforeach
+    </select>
+
     @else
 
     <select class="form-control" id="{{ $field['id'] }}" style="width: 100%" name="{{ $field['name'] }}">
         {{-- <option value="">None</option> // Replaced by a placeholder value in the select2 config --}}
-        <option value="0"></option> {{-- Not entirely sure why the placeholder in the select2 config is a better choice here, but it works; see below --}}
+        <option value="0"></option> {{-- Not entirely sure why the placeholder in the select2 config is a better choice here, but it works; see below --}}        
         @if ($field['value'])
             <option value="{{ $field['value'] }}" selected="selected">{{ $field['values'][$field['value']] }}</option>
         @endif
@@ -42,7 +49,7 @@
     <script type="text/javascript">
         {{-- Based on http://www.southcoastweb.co.uk/jquery-select2-v4-ajaxphp-tutorial --}}
         // var select2_{{ $field['id'] }} = $('#{{ $field['id'] }}').select2({
-        var select2_{{ $field['id'] }} = $('#{{ $field['id'] }}').select2({
+        var select2_{{ $field['id'] }} = $('#{{ $field['id'] }}:not(.enum)').select2({
             ajax: {
                 url: "{{ route('ctrl::get_select2',['ctrl_class_name'=>$field['related_ctrl_class_name']]) }}",
                 dataType: 'json',

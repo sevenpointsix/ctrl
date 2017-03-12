@@ -1579,8 +1579,10 @@ $sql      = str_replace(array('%', '?'), array('%%', '\'%s\''), $query->toSql())
 		$hidden_form_fields = [];
 
 		foreach ($ctrl_properties as $ctrl_property) {
-
-			unset($value); // Reset $value , $values
+ 			
+ 			// Reset $value, $values
+			unset($value);
+			unset($related_ctrl_class);
 			$values = [];
 
 			// Adjust the field type, mainly to handle relationships and multiple dropdowns
@@ -1673,17 +1675,23 @@ $sql      = str_replace(array('%', '?'), array('%%', '\'%s\''), $query->toSql())
 				}
 				$type = $column[0]->Type;
 				// Is this an ENUM field?
-				preg_match("/enum\((.*)\)/", $type, $matches);				
+
+				preg_match("/enum\((.*)\)/", $type, $matches);					
 				if ($matches) {					
 					// Convert 'One','Two','Three' into an array
+
 					$enums = explode("','",trim($matches[1],"'"));
+						
 					$loop = 1;
 					foreach ($enums as $enum) {
 						// Note that apostrophes are doubled-up when exported from SHOW COLUMNS
-						$value = str_replace("''","'",$enum);					
-						$values[$loop++] = $value;
+						$enum_value = str_replace("''","'",$enum);					
+						// $values[$loop++] = $value;
+						// Hmmm. Since we switched to Ajax select2 lists, I think we've broken ENUM selects...
+						$values[$enum_value] = $enum_value;
 					}
 				}
+
 			}
 
 			// Build the form_field and it to the tabs
@@ -1734,6 +1742,7 @@ $sql      = str_replace(array('%', '?'), array('%%', '\'%s\''), $query->toSql())
 			*/
 
 		}		
+		// dd($tabbed_form_fields);
 
 		// TODO: right, we need to add something here that allows us to customise the list of form fields
 		// I think we need to use a serviceprovider and inject it into this main controlller
