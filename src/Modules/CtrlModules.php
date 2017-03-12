@@ -232,6 +232,24 @@
 		}
 
 		/**
+		 * Hide a menu item
+		 * @param  Request  $request	 
+		 * @param  object $ctrl_class The CtrlClass of the menu item
+		 * @return boolean
+		 */
+		protected function hide_menu_item($ctrl_class) {
+			
+			/* For example...
+			$user = \Auth::user();				
+			if ($user && $user->ctrl_group != 'repairs' && $tab_name == 'Repairs') {
+				return true;
+			}		
+			*/
+
+			return false;
+		}
+
+		/**
 		 * Get a custom fieldset icon
 		 * @param  Request  $request	 
 		 * @param  string $tab_name The name of the tab (fieldset)		 

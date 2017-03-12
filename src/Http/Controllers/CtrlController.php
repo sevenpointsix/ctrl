@@ -56,6 +56,15 @@ class CtrlController extends Controller
 
 		foreach ($ctrl_classes as $ctrl_class) {
 
+
+			if ($this->module->enabled('hide_menu_item')) {
+				if ($this->module->run('hide_menu_item',[
+					$ctrl_class					
+				])) {
+					continue;
+				}
+			}
+
 			$count_ctrl_class = $ctrl_class->get_class();
 
 			if (!class_exists($count_ctrl_class)) {
