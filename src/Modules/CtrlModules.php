@@ -241,7 +241,7 @@
 			
 			/* For example...
 			$user = \Auth::user();				
-			if ($user && $user->ctrl_group != 'repairs' && $tab_name == 'Repairs') {
+			if ($user && $user->ctrl_group != 'repairs' && $ctrl_class->menu_title == 'Repairs') {
 				return true;
 			}		
 			*/
