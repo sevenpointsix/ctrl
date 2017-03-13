@@ -294,6 +294,27 @@
 			return $custom_dashboard_links;
 		}
 
+		/**
+		 * Add some custom validation rules
+		 * @param  object $ctrl_class The CtrlClass of the menu item
+		 * @param  array $validation The current validation rules, as $field_name=>$rules
+		 * @param  array $messages Any current error messages, as $field_name.$error=>$error_message (for example, $messages["$field_name.date"] = "The &ldquo;{$ctrl_property->label}&rdquo; field must be a valid date";)
+		 * @return array An array consisting of [$validation,$messages]
+		 */
+		protected function custom_validation($ctrl_class,$validation,$messages) {			
+			
+			/* For example,			
+			if ($ctrl_class->name == 'Repairuser') {
+				 // Pipes are clumsy here; should we use an array instead? We need to explode the current rules first, as the main CtrlController uses pipes:
+				$current_rules = !empty($validation['password']) ? explode('|', $validation['password']) : [];
+				$validation['password'][] = 'regex:/^[1-9]{4}$/';
+				$messages['password.regex'] = "The &ldquo;password&rdquo; field must consist of four digits, excluding zeros";
+			}
+			*/
+			
+			return [$validation,$messages];
+		}
+
 		
 
 	}

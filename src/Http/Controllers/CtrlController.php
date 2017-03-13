@@ -1890,11 +1890,21 @@ $sql      = str_replace(array('%', '?'), array('%%', '\'%s\''), $query->toSql())
 				$validation[$field_name][] = 'date_format:g:i\ A';
 				$messages["$field_name.date"] = "The &ldquo;{$ctrl_property->label}&rdquo; field must be a valid time";
 			}
-
+			
 			if (!empty($validation[$field_name])) {
 				$validation[$field_name] = implode('|', $validation[$field_name]);
 			}
 		}
+
+		if ($this->module->enabled('custom_validation')) {
+        	// We may eventually need to patch this into the validation...? Or would that imply the need for a validation (or pre_save) module?
+			list ($validation,$messages) = $this->module->run('custom_validation',[				
+				$ctrl_class,
+				$validation,
+				$messages
+			]);
+		}
+
 		if ($validation) {
 			$this->validate($request, $validation, $messages);
 	    }

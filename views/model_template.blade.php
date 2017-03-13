@@ -8,9 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 @endif
 
-@if ($model_name == 'User')
 use Hash;
-@endif
 
 class {{ $model_name }} extends Model
 {
@@ -80,9 +78,8 @@ class {{ $model_name }} extends Model
     }
     @endforeach    
 
-    {{-- Mutators for the User class, these handle passwords and groups (although the latter needs refining) --}}
-    @if ($model_name == 'User')
-/**
+    {{-- Set a password mutator so that we never show the password; is there any harm including this for *all* models? --}}
+    /**
      * Don't retrieve the password
      *
      * @param  string  $value
@@ -104,6 +101,9 @@ class {{ $model_name }} extends Model
         // return Hash::make($value);
         if (!empty($value)) $this->attributes['password']  = Hash::make($value);
     }
+
+    {{-- Mutators for the User class to handle groups --}}
+    @if ($model_name == 'User')
 
     /**
      * Stick everyone in a "user" group by default; this needs refining, we've not really tackled "groups" on this version of CTRL yet
