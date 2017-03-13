@@ -56,6 +56,7 @@
                 delay: 250,
                 data: function (params) {
                     return {
+                        editing: '{{ $ctrl_class->name }}', // Only necessary if we're using a custom_select2 module
                         q: params.term // search term
                     };
                 },
@@ -93,7 +94,10 @@
                         $.ajax ({
                             url: "{{ route('ctrl::get_select2',['ctrl_class_name'=>$field['related_ctrl_class_name']]) }}",
                             dataType: 'json',
-                            data: {q: v }
+                            data: {
+                                editing: '{{ $ctrl_class->name }}', // Only necessary if we're using a custom_select2 module
+                                q: v
+                            }
                         }).done(function(d) {
                             if (d[0] && d[0].id) {
                                 var $option = $("<option selected></option>").val(d[0].id).text(v);

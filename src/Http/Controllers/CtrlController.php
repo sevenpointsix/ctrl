@@ -263,17 +263,23 @@ class CtrlController extends Controller
 
 	/**
 	 * Generate JSON data to populate a select2 box using Ajax
-	 * @param  string $related_ctrl_class The name of the Ctrl class defining the related objects we're loading
+	 * @param  string $ctrl_class_name The name of the Ctrl class defining the objects we're loading
 	 * @return json                       JSON data with id, text pairs
 	 */
 	public function get_select2(Request $request,$ctrl_class_name) {
 
 		$json = [];
+		
+		// This is all based heavily on get_typeahead
 
-		$search_term = $request->input('q');		
-		// This is based heavily on get_typeahead
 		$ctrl_class = CtrlClass::where('name',$ctrl_class_name)->firstOrFail();		
 		$class      = $ctrl_class->get_class();
+
+		// It's useful to know what class we're actually editing as well; this was a late addition
+		// as it's only needed if we need to customise the returned data using a Module
+		if ($editing = $request->input('editing')) {
+			$editing_ctrl_class = CtrlClass::where('name',$editing)->firstOrFail();					
+		}
 
 		// What are the searchable columns?
 		$searchable_properties = $ctrl_class->ctrl_properties()->whereRaw(
@@ -284,16 +290,30 @@ class CtrlController extends Controller
 
 		if (!$searchable_properties->isEmpty()) {
 
+			$search_term = $request->input('q');	
+
 			$first_header_property = $ctrl_class->ctrl_properties()->whereRaw(
 			   '(find_in_set(?, flags))',
 			   ['header']		   
 			)->orderBy('order')->first();
 
 			$query = $class::query(); // From http://laravel.io/forum/04-13-2015-combine-foreach-loop-and-eloquent-to-perform-a-search
+
+			if ($this->module->enabled('custom_select2')) {
+				$query = $this->module->run('custom_select2',[
+					$ctrl_class,
+					$query,
+					$editing_ctrl_class,					
+					$search_term
+				]);
+			}
+
 			if (!empty($search_term)) {
-				foreach ($searchable_properties as $searchable_property) {			
-					$query->orWhere($searchable_property->name,'LIKE',"%$search_term%"); // Or would a %$term% search be better?
-				}
+				$query->where(function($query) use ($searchable_properties,$search_term) {
+					foreach ($searchable_properties as $searchable_property) {			
+						$query->orWhere($searchable_property->name,'LIKE',"%$search_term%"); // Or would a %$term% search be better?
+					}
+				});
 			}
 
 			// $query->orderBy($first_header_property->name);
@@ -312,11 +332,14 @@ class CtrlController extends Controller
 			else {
 				$query->orderBy($first_header_property->name);
 			}
-/*
-$sql      = str_replace(array('%', '?'), array('%%', '\'%s\''), $query->toSql()); // Will this wrap integers in ''? Does that matter?
-        $bindings = $query->getBindings();
-        die(vsprintf($sql, $bindings).';'); // dd() wraps the query in "", which makes it tricky to copy and paste into Sequel Pro
-*/
+
+			$dump_query = false;
+			if ($dump_query) {
+				$sql = str_replace(array('%', '?'), array('%%', '\'%s\''), $query->toSql()); // Will this wrap integers in ''? Does that matter?
+        		$bindings = $query->getBindings();
+        		die(vsprintf($sql, $bindings).';'); // dd() wraps the query in "", which makes it tricky to copy and paste into Sequel Pro
+        	}
+
 			$objects = $query->take(20)->get();	// Limits the dropdown to 20 items; this may need to be adjusted
 			if (!$objects->isEmpty()) {
 			    foreach ($objects as $object) {
@@ -328,7 +351,7 @@ $sql      = str_replace(array('%', '?'), array('%%', '\'%s\''), $query->toSql())
 			}
 		}
 		else {
-			trigger_error("Cannot search the class $ctrl_class_name as no searchable properties are set");
+			trigger_error("Cannot search the class $class as no searchable properties are set");
 		}
 
 		$status = 200;
@@ -1509,8 +1532,8 @@ $sql      = str_replace(array('%', '?'), array('%%', '\'%s\''), $query->toSql())
 		try {
 			$ctrl_class = CtrlClass::where('name',$ctrl_class_name)->firstOrFail();		
 		}
-		catch (\Exception $e) {			
-			trigger_error($e->getMessage());
+		catch (\Exception $e) {
+			trigger_error("Cannot load class by name $ctrl_class_name; {$e->getMessage()}");
 		}
 		return $ctrl_class;
 		
@@ -1734,6 +1757,7 @@ $sql      = str_replace(array('%', '?'), array('%%', '\'%s\''), $query->toSql())
 				'template'                => $ctrl_property->template,
 				'label'                   => $ctrl_property->label,
 				'tip'                     => $ctrl_property->tip,
+				'ctrl_class_name'		  => $ctrl_class->name,
 				'related_ctrl_class_name' => (!empty($related_ctrl_class) ? $related_ctrl_class->name : false)
 			];
 			/*
