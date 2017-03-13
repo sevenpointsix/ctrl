@@ -315,6 +315,26 @@
 			return [$validation,$messages];
 		}
 
+		/**
+		 * Customise the get_select2 function for a given ctrl_class; this allows us to filter or manipulate the autocomplete
+		 * @param  object $ctrl_class 	The CtrlClass of objects that we're listing for select2
+		 * @param  query $query      	The Eloquent query that we're building up
+		 * @param  object $editing 	  	The CtrlClass of objects that we're *editing* in the CMS
+		 * @param  string $search_term  The search term that we're using, in case that's relevant
+		 * @return query              	The Eloquent $query, modified if necessary
+		 */
+		protected function custom_select2($ctrl_class,$query, $editing, $search_term) {
+
+			/* For example:
+			if ($ctrl_class->name == 'Repairuser' && $editing->name == 'Repairmessage') {
+				$query->where('repairagent_id',0);
+			}
+			*/
+
+			return $query;
+
+		}
+
 		
 
 	}
