@@ -157,6 +157,8 @@ class CtrlController extends Controller
 		$import_export_links = [];
 		foreach ($ctrl_classes as $ctrl_class) {
 
+			$import_link = $export_link = false;
+
 			if ($ctrl_class->can('export')) {
 				$export_link  = route('ctrl::export_objects',[$ctrl_class->id]); // This omits the filter string; will we ever use this? Possible from an existing (filtered) list...
 			}
