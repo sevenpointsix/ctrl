@@ -335,6 +335,66 @@
 
 		}
 
+		/**
+		 * Export objects to a CSV file; very similar in some ways to the import module
+		 * @param  string $action        There are various things that this function can ask for; headers, callbacks and so on
+		 * @return various				 Various; can be an array of headers, a function definition, and so on. Depends on context.
+		 */
+		protected function export_objects($action, $ctrl_class_id) {
+
+			try {
+				$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
+			}
+			catch (\Exception $e) {
+				trigger_error($e->getMessage());
+			}
+			
+			switch ($ctrl_class->name) {
+				case 'Example':						
+					$pre_export_function = function($ctrl_class_id) {
+							
+						try {
+							$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
+						}
+						catch (\Exception $e) {
+							trigger_error($e->getMessage());
+						}
+						
+						$data = DB::table('_custom_table')->get();
+
+						// $data here is a collection of objects; convert it to an array of arrays for the Excel export:
+						// i.e., [['id'=>1,'title'=>'Item 1'],['id'=>2,'title'=>'Item 2'],...]
+						$data = json_decode(json_encode($data), true);
+
+						$filename = 'export-'.str_slug($ctrl_class->get_plural());
+
+						\Maatwebsite\Excel\Facades\Excel::create($filename, function($excel) use ($data) {
+						    $excel->sheet('sheet_1', function($sheet) use ($data) {
+				        		$sheet->fromArray($data);
+				    		});	
+						})->download('csv');
+
+					};
+					break;
+				case 'Example2':											
+					$headers = ['id','title'];
+					break;
+				default:
+					return false;
+			}
+
+			if ($action == 'get-headers') {
+				return (!empty($headers)) ? $headers : false;
+			}						
+			else if ($action == 'get-pre-export-function') {
+				return (!empty($pre_export_function)) ? $pre_export_function : false;
+			}
+			else {
+				dd("Unrecognised action $action");
+			}
+		}
+
+
 		
 
 	}

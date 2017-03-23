@@ -201,6 +201,8 @@ class CtrlController extends Controller
 		$import_export_links = [];
 		foreach ($ctrl_classes as $ctrl_class) {
 
+			$import_link = $export_link = false;
+
 			if ($ctrl_class->can('export')) {
 				$export_link  = route('ctrl::export_objects',[$ctrl_class->id]); // This omits the filter string; will we ever use this? Possible from an existing (filtered) list...
 			}
@@ -610,8 +612,51 @@ class CtrlController extends Controller
 	 *
 	 * @return Response
 	 */
-	public function export_objects(Request $request, $ctrl_class_id, $filter_string = NULL) {
-		dd("Export option, not yet written");
+	public function export_objects(Request $request, $ctrl_class_id) {
+				
+		// Check that we can specifically export this class:
+		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();		
+		if (!$ctrl_class->can('export')) {
+			\App::abort(403, 'Access denied'); // As above
+		}
+
+		// Run the pre-import-function if necessary; this can either prep data, or truncate tables,
+		// or (in the case of the Argos CAT sheet) bypass the Excel import altogether		
+
+		if ($pre_export_function = $this->module->run('export_objects',[
+			'get-pre-export-function',
+			$ctrl_class->id
+		])) {
+			if ($response = $pre_export_function($ctrl_class->id)) {
+				return $response;
+			}
+		}
+
+		// This is all very basic, although we can customise the headers
+		// and run a pre-export function (that could modify data, for example)
+		
+		$headers = $this->module->run('export_objects',[
+			'get-headers',
+			$ctrl_class->id,
+			// $filter_string
+		]);
+
+		$class   = $ctrl_class->get_class();
+		
+		if (!empty($headers)) {			
+			$objects = $class::select($headers)->get();
+		}
+		else {
+			$objects = $class::get();
+		}
+
+		$filename = 'export-'.str_slug($ctrl_class->get_plural());
+
+		\Maatwebsite\Excel\Facades\Excel::create($filename, function($excel) use ($objects) {
+		    $excel->sheet('sheet_1', function($sheet) use ($objects) {
+        		$sheet->fromModel($objects);
+    		});	
+		})->download('csv');
 	}
 
 	/**
@@ -915,8 +960,8 @@ class CtrlController extends Controller
 			// This can only happen if someone is fucking around with the URL, so just bail on them.
 			\App::abort(403, 'Access denied');
 		}
-		// Should also check that we can import ctrlclass_id...
-
+		
+		// Check that we can specifically import this class:
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();		
 		if (!$ctrl_class->can('import')) {
 			\App::abort(403, 'Access denied'); // As above
@@ -1322,8 +1367,8 @@ class CtrlController extends Controller
 
 			// Need to vary this if we're counting belongsToMany:
 			if ($filter_ctrl_property->relationship_type == 'hasMany') {
-			$count_objects    = $count_class::where($inverse_filter_ctrl_property->foreign_key,$filtered_list_array['value']);
-			$count            = $count_objects->count();
+				$count_objects    = $count_class::where($inverse_filter_ctrl_property->foreign_key,$filtered_list_array['value']);
+				$count            = $count_objects->count();
 			}
 			else if ($filter_ctrl_property->relationship_type == 'belongsToMany') {
 				$count = DB::table($filter_ctrl_property->pivot_table)->where($inverse_filter_ctrl_property->foreign_key,$filtered_list_array['value'])->count();				

@@ -284,12 +284,12 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 						  	</div>
 							@if (!empty($import_export_link['import_link']))
 							<div class="btn-group narrow" role="group">
-								<a href="{{ $import_export_link['import_link'] }}" type="button" class="btn btn-success" data-toggle="tooltip" data-placement="bottom" title="Import"><i class="fa fa-upload"></i></a>
+								<a href="{{ $import_export_link['import_link'] }}" type="button" class="btn btn-success" data-toggle="tooltip" data-placement="bottom" title="Import"><i class="fa fa-upload fa-fw"></i></a>
 							</div>
 						  	@endif
 						  	@if (!empty($import_export_link['export_link']))
 						  	<div class="btn-group narrow" role="group">
-						    	<a href="{{ $import_export_link['export_link'] }}" type="button" class="btn btn-success" data-toggle="tooltip" data-placement="bottom" title="Export"><i class="fa fa-download"></i></a>
+						    	<a href="{{ $import_export_link['export_link'] }}" type="button" class="btn btn-success" data-toggle="tooltip" data-placement="bottom" title="Export"><i class="fa fa-download fa-fw"></i></a>
 						  	</div>
 						  @endif
 						</div>	
