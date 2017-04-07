@@ -1,6 +1,6 @@
 <?php namespace Sevenpointsix\Ctrl\Http\Controllers;
 /**
- * 
+ *
  * @author Chris Gibson <chris@sevenpointsix.com>
  * Heavily based on https://github.com/jaiwalker/setup-laravel5-package
  */
@@ -34,7 +34,7 @@ class CtrlController extends Controller
 {
 
 	protected $ctrlModules; // Based on http://stackoverflow.com/a/30373386/1463965
-	
+
 	public function __construct(CtrlModules $ctrlModules) {
 		// Note that we don't need to call the parent __construct() here
 
@@ -49,9 +49,9 @@ class CtrlController extends Controller
 		// Build the menu
 		$ctrl_classes = CtrlClass::where('menu_title','!=','')
 					 	->orderBy('order')
-					 	->orderBy('menu_title', 'ASC')					 	
+					 	->orderBy('menu_title', 'ASC')
 					 	->get();
-			
+
 		$menu_links      = [];
 
 		foreach ($ctrl_classes as $ctrl_class) {
@@ -59,7 +59,7 @@ class CtrlController extends Controller
 
 			if ($this->module->enabled('hide_menu_item')) {
 				if ($this->module->run('hide_menu_item',[
-					$ctrl_class					
+					$ctrl_class
 				])) {
 					continue;
 				}
@@ -78,13 +78,13 @@ class CtrlController extends Controller
 
 			if ($count > 0) {
 				$list_link  = route('ctrl::list_objects',$ctrl_class->id);
-				$list_title = 'View '.$count.' '.($count == 1 ? $ctrl_class->get_singular() : $ctrl_class->get_plural());	
+				$list_title = 'View '.$count.' '.($count == 1 ? $ctrl_class->get_singular() : $ctrl_class->get_plural());
 			}
 			else {
 				$list_link  = false;
-				$list_title = 'No '.$ctrl_class->get_plural();	
+				$list_title = 'No '.$ctrl_class->get_plural();
 			}
-			
+
 			// Note that we flag these links as "dashboard", to add them to the dashboard view
 			// This relies on us having a "dashboard" flag in the ctrl_classes table, and having at least one item flagged as "dashboard"
 			// This is because this flag is new; previously we listed everything on the dashboard, and we retain this old approach if necessary
@@ -102,7 +102,7 @@ class CtrlController extends Controller
 			];
 
 
-			$menu_links[$ctrl_class->menu_title][] = $link;	
+			$menu_links[$ctrl_class->menu_title][] = $link;
 
 		}
 
@@ -127,7 +127,7 @@ class CtrlController extends Controller
 		}
 
 		// Can we automatically set the password of any new users (ie, those for which we've added a plaintext_password, but not set an actual password)?
-		$new_users = DB::table('users')->where('password','')->where('plaintext_password','!=','')->get();		
+		$new_users = DB::table('users')->where('password','')->where('plaintext_password','!=','')->get();
 		foreach ($new_users as $new_user) {
 			DB::table('users')
             ->where('id', $new_user->id)
@@ -168,22 +168,22 @@ class CtrlController extends Controller
 		if (is_null($user)) $user = Auth::user();
 
 		$public_routes = ['ctrl::login','ctrl::post_login'];
-		
+
 		$is_public_route = in_array(Route::currentRouteName(),$public_routes);
 		$logged_in       = $user && $user->ctrl_group != '';
 
 		if (!$is_public_route && !$logged_in) {
-			// The user is required to log in to see this page					
+			// The user is required to log in to see this page
 			Redirect::to(route('ctrl::login'))->send();
 		}
 		else {
-			// The user doesn't need to be logged in to see this page				
+			// The user doesn't need to be logged in to see this page
 			// Note that we redirect logged in users AWAY from /login (etc) in the actual controller method (eg @login)
 		}
 	}
 
 	/**
-	 * Show the dashboard to the user. 
+	 * Show the dashboard to the user.
 	 *
 	 * @return Response
 	 */
@@ -192,12 +192,12 @@ class CtrlController extends Controller
 		// Can we import, export any classes
 		$ctrl_classes = CtrlClass::whereRaw(
 			   '(find_in_set(?, permissions))',
-			   ['import']		   
+			   ['import']
 			)->orWhereRaw(
 			   '(find_in_set(?, permissions))',
-			   ['export']		   
-			)->get();		
-			
+			   ['export']
+			)->get();
+
 		$import_export_links = [];
 		foreach ($ctrl_classes as $ctrl_class) {
 
@@ -206,10 +206,10 @@ class CtrlController extends Controller
 			if ($ctrl_class->can('export')) {
 				$export_link  = route('ctrl::export_objects',[$ctrl_class->id]); // This omits the filter string; will we ever use this? Possible from an existing (filtered) list...
 			}
-			
+
 			if ($ctrl_class->can('import')) {
 				$import_link  = route('ctrl::import_objects',[$ctrl_class->id]); // As above, this omits the filter string; will we ever use this?
-			}			
+			}
 
 			$import_export_links[] = [
 				'id'          => $ctrl_class->id,
@@ -218,8 +218,8 @@ class CtrlController extends Controller
 				'icon_only'   => ($icon = $ctrl_class->get_icon()) ? $icon : '',
 				'export_link' => (!empty($export_link)) ? $export_link : false,
 				'import_link' => (!empty($import_link)) ? $import_link : false
-			];		
-		}		
+			];
+		}
 
 		$dashboard_links = [];
 		$menu_links = View::shared('menu_links'); // Pulling the shared menu_links view item back from the View; this is a bit clunky
@@ -237,10 +237,10 @@ class CtrlController extends Controller
 		// Add some custom links above the main set of links; we could theoretically use the manipulate_dom module for this:
 		if ($this->module->enabled('custom_dashboard_links')) {
 			$custom_dashboard_links = $this->module->run('custom_dashboard_links');
-		}		
+		}
 
-		$view = view('ctrl::dashboard',[			
-			'logo'                   => config('ctrl.logo'),			
+		$view = view('ctrl::dashboard',[
+			'logo'                   => config('ctrl.logo'),
 			'import_export_links'    => $import_export_links,
 			'dashboard_links'        => $dashboard_links,
 			'custom_dashboard_links' => !empty($custom_dashboard_links) ? $custom_dashboard_links : []
@@ -258,7 +258,7 @@ class CtrlController extends Controller
 				'dashboard'
 			]);
 		}
-		
+
 		return $view;
 	}
 
@@ -271,32 +271,32 @@ class CtrlController extends Controller
 	public function get_select2(Request $request,$ctrl_class_name) {
 
 		$json = [];
-		
+
 		// This is all based heavily on get_typeahead
 
-		$ctrl_class = CtrlClass::where('name',$ctrl_class_name)->firstOrFail();		
+		$ctrl_class = CtrlClass::where('name',$ctrl_class_name)->firstOrFail();
 		$class      = $ctrl_class->get_class();
 
 		// It's useful to know what class we're actually editing as well; this was a late addition
 		// as it's only needed if we need to customise the returned data using a Module
 		if ($editing = $request->input('editing')) {
-			$editing_ctrl_class = CtrlClass::where('name',$editing)->firstOrFail();					
+			$editing_ctrl_class = CtrlClass::where('name',$editing)->firstOrFail();
 		}
 
 		// What are the searchable columns?
 		$searchable_properties = $ctrl_class->ctrl_properties()->whereRaw(
 		   '(find_in_set(?, flags))',
-		   ['search']		   
+		   ['search']
 		)->whereNull('relationship_type')->get();
-			// I have no idea how to include searchable related columns in the query builder below...		
+			// I have no idea how to include searchable related columns in the query builder below...
 
 		if (!$searchable_properties->isEmpty()) {
 
-			$search_term = $request->input('q');	
+			$search_term = $request->input('q');
 
 			$first_header_property = $ctrl_class->ctrl_properties()->whereRaw(
 			   '(find_in_set(?, flags))',
-			   ['header']		   
+			   ['header']
 			)->orderBy('order')->first();
 
 			$query = $class::query(); // From http://laravel.io/forum/04-13-2015-combine-foreach-loop-and-eloquent-to-perform-a-search
@@ -305,14 +305,14 @@ class CtrlController extends Controller
 				$query = $this->module->run('custom_select2',[
 					$ctrl_class,
 					$query,
-					$editing_ctrl_class,					
+					$editing_ctrl_class,
 					$search_term
 				]);
 			}
 
 			if (!empty($search_term)) {
 				$query->where(function($query) use ($searchable_properties,$search_term) {
-					foreach ($searchable_properties as $searchable_property) {			
+					foreach ($searchable_properties as $searchable_property) {
 						$query->orWhere($searchable_property->name,'LIKE',"%$search_term%"); // Or would a %$term% search be better?
 					}
 				});
@@ -347,7 +347,7 @@ class CtrlController extends Controller
 			    foreach ($objects as $object) {
 			    	$result            = new \StdClass;
 			    	$result->id        = $object->id;
-			    	$result->text      = $this->get_object_title($object);			    	
+			    	$result->text      = $this->get_object_title($object);
 			    	$json[]            = $result;
 			    }
 			}
@@ -391,30 +391,30 @@ class CtrlController extends Controller
 	 * @return Response
 	 */
 	public function list_objects(Request $request, $ctrl_class_id, $filter_string = NULL)
-	{		
+	{
 
 		if (!$this->can($ctrl_class_id,'list')) return redirect()->route('ctrl::dashboard');
-		
+
 		// Convert the the $filter parameter into one that makes sense
-		$filter_array = $this->convert_filter_string_to_array($filter_string);			
+		$filter_array = $this->convert_filter_string_to_array($filter_string);
 
 		$filter_description = $this->describe_filter($filter_array);
 
-		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();		
+		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
 
 		// We need to include the correct header columns on the table
 		// (Search in set code here: http://stackoverflow.com/questions/28055363/laravel-eloquent-find-in-array-from-sql)
 		// Some minor duplication of code from get_data here:
 		$headers = $ctrl_class->ctrl_properties()->whereRaw(
 		   '(find_in_set(?, flags) or find_in_set(?, flags))', // Note that the bracket grouping is required: http://stackoverflow.com/questions/27193509/laravel-eloquent-whereraw-sql-clause-returns-all-rows-when-using-or-operator
-		   ['header','search']		   
+		   ['header','search']
 		)->get();
-		
+
 		/*
-		We need to basically recreate something like this for the JS column definitions		 
+		We need to basically recreate something like this for the JS column definitions
 			{ data: 'title', name: 'title' },
             { data: 'one.title', name: 'one.title',"defaultContent": '<!-- NONE -->' },
-            { data: 'action', name: 'action' }, 
+            { data: 'action', name: 'action' },
         ... and this in the HTML:
 			<th>Title</th>
             <th>One</th>
@@ -442,12 +442,12 @@ class CtrlController extends Controller
         		// We also haven't allowed for classes with multiple "string" values;
         		// we may have to utilise something from http://datatables.yajrabox.com/eloquent/dt-row for that
 
-        		$related_objects = $this->get_object_from_ctrl_class_id($header->related_to_id);        		
-    		
-        		$related_ctrl_class = CtrlClass::where('id',$header->related_to_id)->firstOrFail();	
+        		$related_objects = $this->get_object_from_ctrl_class_id($header->related_to_id);
+
+        		$related_ctrl_class = CtrlClass::where('id',$header->related_to_id)->firstOrFail();
         		$string = $related_ctrl_class->ctrl_properties()->whereRaw(
 				   'find_in_set(?, flags)',
-				   ['string']				   
+				   ['string']
 				)->firstOrFail();
 				$value = $header->name.'.'.$string->name; // $header->name might not always hold true here?
         		$column->data = $value;
@@ -498,17 +498,17 @@ class CtrlController extends Controller
         					// We still have a bug whereby the sort icon disappears from the order column when we sort by another column though...?
         			$column->className      = "reorder";
         		}
-        		else if ($header->field_type == 'checkbox') { // We convert these to Yes/No values, so allow a search dropdown...        			
+        		else if ($header->field_type == 'checkbox') { // We convert these to Yes/No values, so allow a search dropdown...
 	        		// $column->defaultContent = 'None'; // Necessary..?
         			$th_columns[] = '<th data-search-dropdown="'.($make_searchable ? 'true' : 'false').'" data-orderable="false">'.$header->label.'</th>';
         		}
         		else {
         			$th_columns[] = '<th data-search-text="'.($make_searchable ? 'true' : 'false').'">'.$header->label.'</th>';
         		}
-        	
+
         	}
-        	$js_columns[] = $column;        	
-        	
+        	$js_columns[] = $column;
+
         }
         // dd($js_columns);
         if ($this->module->enabled('custom_columns')) {
@@ -525,7 +525,7 @@ class CtrlController extends Controller
 		        $th_columns[] = sprintf('<th %s>%s</th>',($details['searchable'] ? 'data-search-text="true"' : ''),$details['table_heading']);
 			}
 		}
-        
+
 
         // Add the "action" column
         $action_column       = new \StdClass;
@@ -539,14 +539,14 @@ class CtrlController extends Controller
 
         // see: https://github.com/laravel/framework/issues/1436
     	$class  = $ctrl_class->get_class();
-    	$table = with(new $class)->getTable();    	
+    	$table = with(new $class)->getTable();
     	// Why can't we just use $ctrl_class->table_name here?!
     	if (Schema::hasColumn($table, 'order') && empty($prevent_reordering)) {
         // if (Schema::hasColumn($ctrl_class->getTable(), 'order')) {
         	$can_reorder = true;
         }
         else {
-        	$can_reorder = false;	
+        	$can_reorder = false;
         }
 
         // Do we have an unfiltered list we can link back to?
@@ -566,9 +566,9 @@ class CtrlController extends Controller
         	$show_all_link = route('ctrl::list_objects',$ctrl_class->id);
         }
 
-        $can_add           = true;  
+        $can_add           = true;
         if ($this->module->enabled('permissions')) {
-			$custom_permission = $this->module->run('permissions',[				
+			$custom_permission = $this->module->run('permissions',[
 				$ctrl_class->id,
 				'add',
 				// $filter_string
@@ -613,15 +613,15 @@ class CtrlController extends Controller
 	 * @return Response
 	 */
 	public function export_objects(Request $request, $ctrl_class_id) {
-				
+
 		// Check that we can specifically export this class:
-		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();		
+		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
 		if (!$ctrl_class->can('export')) {
 			\App::abort(403, 'Access denied'); // As above
 		}
 
 		// Run the pre-import-function if necessary; this can either prep data, or truncate tables,
-		// or (in the case of the Argos CAT sheet) bypass the Excel import altogether		
+		// or (in the case of the Argos CAT sheet) bypass the Excel import altogether
 
 		if ($pre_export_function = $this->module->run('export_objects',[
 			'get-pre-export-function',
@@ -634,7 +634,7 @@ class CtrlController extends Controller
 
 		// This is all very basic, although we can customise the headers
 		// and run a pre-export function (that could modify data, for example)
-		
+
 		$headers = $this->module->run('export_objects',[
 			'get-headers',
 			$ctrl_class->id,
@@ -642,8 +642,8 @@ class CtrlController extends Controller
 		]);
 
 		$class   = $ctrl_class->get_class();
-		
-		if (!empty($headers)) {			
+
+		if (!empty($headers)) {
 			$objects = $class::select($headers)->get();
 		}
 		else {
@@ -655,7 +655,7 @@ class CtrlController extends Controller
 		\Maatwebsite\Excel\Facades\Excel::create($filename, function($excel) use ($objects) {
 		    $excel->sheet('sheet_1', function($sheet) use ($objects) {
         		$sheet->fromModel($objects);
-    		});	
+    		});
 		})->download('csv');
 	}
 
@@ -673,7 +673,7 @@ class CtrlController extends Controller
 		}
 		// Should also check that we can import ctrlclass_id...
 
-		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();		
+		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
 		if (!$ctrl_class->can('import')) {
 			\App::abort(403, 'Access denied'); // As above
 		}
@@ -694,7 +694,7 @@ class CtrlController extends Controller
 		            $headers
 		        ),null,'A1',false,false);
 
-		    });		    
+		    });
 		})->download('csv');;
 
 
@@ -716,7 +716,7 @@ class CtrlController extends Controller
 		}
 
         if ($this->module->enabled('permissions')) {
-			$custom_permission = $this->module->run('permissions',[				
+			$custom_permission = $this->module->run('permissions',[
 				$ctrl_class->id,
 				$action,
 				// $filter_string
@@ -744,11 +744,11 @@ class CtrlController extends Controller
         ],[
 		    'files-import.required' => 'Please select some files to upload'
 		]);
-	
+
 		// Filter the array to remove empty values; we always have an empty initial value because of the way that the Krajee upload works
 		// (ie, we clone the input element for each Ajax response post-upload, but that leaves the orginal node empty)
 		$files = array_filter($request->input('files-import'));
-		
+
 		$callback_function = $this->module->run('import_objects',[
 			'get-callback-function',
 			$ctrl_class_id,
@@ -758,18 +758,18 @@ class CtrlController extends Controller
 		$count = $callback_function($files);
 
 		/* At some point it'd make sense to run a rudimentary security check; this will need tweaking if we ever use a path other than /uploads for uploads. Realistically, though, this is only needed if someone is actively trying to hack the CMS:
-		foreach ($files as $file) {			
+		foreach ($files as $file) {
 			if (strpos($file, '/uploads') !== 0) continue;
 		}
 		*/
-		
+
 		if (!empty($errors)) {
 			return response()->json($errors,422);
        	}
        	else {
        		$message  = $count . ' files imported';
        		$messages = [$message];
-       		$request->session()->flash('messages', $messages);		 
+       		$request->session()->flash('messages', $messages);
        		$back = route('ctrl::import_objects',[$ctrl_class_id, $filter_string]);
        		return response()->json(['redirect'=>$back]);
        	}
@@ -794,7 +794,7 @@ class CtrlController extends Controller
 
 		// Convert .txt files into .csv; this is because Office can export .txt files in UTF8 (UTF16, in fact) but not .csv
 		$converted = $this->convert_txt_to_csv($csv_file);
-		
+
 		// Work out what headers we need, what the callback functions are, whether we have a "pre-import" function, etc:
 		$required_headers = $this->module->run('import_objects',[
 			'get-headers',
@@ -818,20 +818,20 @@ class CtrlController extends Controller
 			// $filter_string // required?
 		]);
 
-		
+
 		// Run the pre-import-function if necessary; this can either prep data, or truncate tables,
-		// or (in the case of the Argos CAT sheet) bypass the Excel import altogether		
+		// or (in the case of the Argos CAT sheet) bypass the Excel import altogether
 
 		if ($pre_import_function = $this->module->run('import_objects',[
 			'get-pre-import-function',
 			$ctrl_class_id,
-			// $filter_string // required?			
+			// $filter_string // required?
 		])) {
 			if ($response = $pre_import_function($ctrl_class_id,$filter_string,$csv_file)) {
 				return $response;
 			}
 		}
-			
+
 		// Now import the data in chunks:
 
     	$loop = 0;
@@ -855,21 +855,21 @@ class CtrlController extends Controller
     		$callback_function
     	) {
 			if ($loop++ == 0) { // First pass so check headers etc
-				$first_row   = $results->first()->toArray();   	
+				$first_row   = $results->first()->toArray();
 			    $csv_headers = array_keys($first_row);
 
-					
+
 				if (count($results) == 0) {
 		    		$errors['csv-import'] = 'That CSV file doesn\'t appear to contain any data';
 		    	}
 		    	elseif (count($csv_headers) != count($required_headers)) {
 		    		// Can fairly easily run an array diff here...
-		    		$errors['csv-import'] = 'That CSV file doesn\'t seem to have the correct number of columns';    	
+		    		$errors['csv-import'] = 'That CSV file doesn\'t seem to have the correct number of columns';
 				}
 		    	elseif ($csv_headers != $slugged_headers) {
 		    		// ... and here
-		    		$errors['csv-import'] = 'That CSV file doesn\'t seem to have the correct column titles';    	
-				}				
+		    		$errors['csv-import'] = 'That CSV file doesn\'t seem to have the correct column titles';
+				}
 			}
 
 			if (!$errors) {
@@ -878,7 +878,7 @@ class CtrlController extends Controller
 
 				if ($response === false) {
 					$errors['csv-import'] = 'Cannot import data';
-				}			
+				}
 				else if ($response === 0) {
 					$errors['csv-import'] = 'This import would have no effect; no rows would be processed';
 					// Is this always right? Might we sometimes import zero rows from the first chunk, even though we'd import rows in subsequent chunks?
@@ -889,20 +889,20 @@ class CtrlController extends Controller
 			}
 
 			if ($errors) return; // Should exit the chunk, I think
-			
+
 		}, false); // False allows us to pass variables by reference; https://github.com/Maatwebsite/Laravel-Excel/issues/744
-    	
+
 		if (!empty($errors)) {
 			return response()->json($errors,422);
        	}
        	else {
        		$message  = $count . ' records imported';
        		$messages = [$message];
-       		$request->session()->flash('messages', $messages);		 
+       		$request->session()->flash('messages', $messages);
        		$back = route('ctrl::import_objects',[$ctrl_class_id, $filter_string]);
        		return response()->json(['redirect'=>$back]);
        	}
-		
+
 	}
 
 	/**
@@ -913,9 +913,9 @@ class CtrlController extends Controller
 	 * @return Response
 	 */
 	public function import_objects_process(Request $request, $ctrl_class_id, $filter_string = NULL) {
-		
+
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
-    	
+
     	if (!$this->module->enabled('import_objects')) {
 			// This can only happen if someone is fucking around with the URL, so just bail on them.
 			\App::abort(403, 'Access denied');
@@ -928,7 +928,7 @@ class CtrlController extends Controller
 		$import_type = $this->module->run('import_objects',[
 			'get-import-type',
 			$ctrl_class_id,
-		]); 
+		]);
 
 		if ($import_type == 'data') {
 			return $this->import_objects_process_data($request, $ctrl_class_id, $filter_string);
@@ -940,7 +940,7 @@ class CtrlController extends Controller
 			dd("Unrecognised import type $import_type");
 		}
 
-		
+
 	}
 
 	/**
@@ -954,15 +954,15 @@ class CtrlController extends Controller
 	 * @return Response
 	 */
 	public function import_objects(Request $request, $ctrl_class_id, $filter_string = NULL)
-	{		
+	{
 
 		if (!$this->module->enabled('import_objects')) {
 			// This can only happen if someone is fucking around with the URL, so just bail on them.
 			\App::abort(403, 'Access denied');
 		}
-		
+
 		// Check that we can specifically import this class:
-		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();		
+		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
 		if (!$ctrl_class->can('import')) {
 			\App::abort(403, 'Access denied'); // As above
 		}
@@ -984,7 +984,7 @@ class CtrlController extends Controller
 				'type'          => 'file',
 				'template'      => 'krajee',
 				'value'         => '',
-				'allowed-types' => ['text'] /* Only allow text files for CSV upload */				
+				'allowed-types' => ['text'] /* Only allow text files for CSV upload */
 			];
 			$page_description = 'Use this page to import records from a CSV file';
 			$help_text = 'Please select a CSV file from your computer by clicking "Browse", and then click "Import". <a href="'.$sample_link.'">You can download an example CSV here</a>.';
@@ -1022,22 +1022,22 @@ class CtrlController extends Controller
 	 * This is required because the automatic way to do it is to take unique values from the column, but on the given page of the table only
 	 * This means that the dropdown list is usually truncated
 	 * @param  integer $ctrl_class_id The ID of the class we're editing
-	 * @param  string $filter Optional list filter, passed in from the datatables Ajax call; NOT CURRENTLY USED 
-	 * 
+	 * @param  string $filter Optional list filter, passed in from the datatables Ajax call; NOT CURRENTLY USED
+	 *
 	 * @return [type]                [description]
-	 * 
+	 *
 	 */
 	public function populate_datatables_dropdowns(Request $request, $ctrl_class_id, $filter_string = NULL) {
 
-		/*		
+		/*
 		OK. THis is partly written. I was trying to build this for the Argos products:brand column, but then I realised that we have 5000 brands, and listing them all in a dropdown won't work. Instead, I need to abandon the dropdown altogether, and make it a searchable field.
 		However, this does have potential, if we're listing items with only 10 or 20 related items, but with the old problem that not all related values appear on page one of the table.
 		We'll need to get this function to return valid JSON data, and then use this data to populate the dropdowns; see list_objects.blade.php.
 		*/
 
-		$filter_array = $this->convert_filter_string_to_array($filter_string);	
+		$filter_array = $this->convert_filter_string_to_array($filter_string);
 		try {
-			$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();				
+			$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
 		}
 		catch (\Exception $e) {
 			trigger_error($e->getMessage());
@@ -1048,18 +1048,18 @@ class CtrlController extends Controller
 		$options = [];
 
 		if (strpos($data_src, '.')) { // Suggests a related property, like brand.title
-		
+
 			list($related_ctrl_class_name,$related_ctrl_property_name) = explode('.', $data_src);
 
 			// This should give us an array that looks like ['brand','title']
-			
+
 			// So, load all "title" values of the "brand" property for the current ctrl_class:
-			
+
 			$related_ctrl_property = CtrlProperty::where('name',$related_ctrl_class_name)
 													->where('ctrl_class_id',$ctrl_class->id)
-													->first();				
+													->first();
 			if (is_null($related_ctrl_property)) trigger_error("Cannot load related_ctrl_property");
-		
+
 			$related_ctrl_class = CtrlClass::where('id',$related_ctrl_property->related_to_id)->first();
 			if (is_null($related_ctrl_class)) trigger_error("Cannot load related_ctrl_class");
 
@@ -1089,7 +1089,7 @@ class CtrlController extends Controller
 
 		$status = 200;
 		$json = [
-            'options' => $options                
+            'options' => $options
         ];
        	return \Response::json($json, $status);
 
@@ -1099,24 +1099,24 @@ class CtrlController extends Controller
 	 * Get data for datatables
 	 * @param  integer $ctrl_class_id The ID of the class we're editing
 	 * @param  string $filter Optional list filter, passed in from the datatables Ajax call.
-	 * 
+	 *
 	 * @return [type]                [description]
-	 * 
+	 *
 	 */
 	public function get_data($ctrl_class_id, $filter_string = NULL) {
 
-		$filter_array = $this->convert_filter_string_to_array($filter_string);			
+		$filter_array = $this->convert_filter_string_to_array($filter_string);
 
 		//$objects = \App\Ctrl\Models\Test::query();
 		//$users = User::select(['id', 'name', 'email', 'password', 'created_at', 'updated_at']);
 
 		// if ($filter) dd($filter);
 
-		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();		
+		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
 		$class      = $ctrl_class->get_class();
 		//$objects    = $class::query(); // Why query() and not all()? Are they the same thing?
 		// This will include all necessary relationships: see http://datatables.yajrabox.com/eloquent/relationships
-		
+
 		$headers = $ctrl_class->ctrl_properties()->whereRaw(
 		   '(find_in_set(?, flags) or find_in_set(?, flags))',
 		   ['header','search']
@@ -1132,25 +1132,25 @@ class CtrlController extends Controller
 
 		if ($with) {
 			// Use Eager Loading to pull in related items
-			// Again, see http://datatables.yajrabox.com/eloquent/relationships			
+			// Again, see http://datatables.yajrabox.com/eloquent/relationships
       		// Note that we shouldn't filter the query here; we want this to pull as much information back as possible
       		// so that we can rely on datatables to filter everything for us
-      		
+
       		// Fail, we can't implode multiple $with values, we have to pass multiple arguments, which won't work :-(
-			// $objects = $class::with(implode(',', $with))->select($ctrl_class->table_name.'.*');	
+			// $objects = $class::with(implode(',', $with))->select($ctrl_class->table_name.'.*');
 
 			// Try this? I'm pretty sure this works:
-			$objects = $class::select($ctrl_class->table_name.'.*');	
+			$objects = $class::select($ctrl_class->table_name.'.*');
 			foreach ($with as $w) {
 				$objects->with($with);
 			}
-			// TODO: in fact, we could call $class::select() first, and then only run with (if $with) 
+			// TODO: in fact, we could call $class::select() first, and then only run with (if $with)
 		}
 		else {
-			// $objects    = $class::query(); 
+			// $objects    = $class::query();
 			// I think that select() and query() just return a Query Builder object, so both can be used here
 			// Taking this approach means that we can add extra selects (ie, extra columns) via a module though
-			$objects    = $class::select($ctrl_class->table_name.'.*');		
+			$objects    = $class::select($ctrl_class->table_name.'.*');
 		}
 
 		if ($this->module->enabled('custom_columns')) {
@@ -1160,11 +1160,11 @@ class CtrlController extends Controller
 		}
 		if (!empty($custom_columns)) {
 			foreach ($custom_columns as $custom_column=>$details) {
-				$add_select = \DB::raw(sprintf('(%s) AS `%s`',$details['raw_sql'],$custom_column));				
-				$objects->addSelect($add_select);				
+				$add_select = \DB::raw(sprintf('(%s) AS `%s`',$details['raw_sql'],$custom_column));
+				$objects->addSelect($add_select);
 			}
 		}
-		
+
 		// See http://datatables.yajrabox.com/eloquent/dt-row for some good tips here
 
 		// Known issue, that I'm struggling to resolve; if we have a dropdown to search related fields, but there's no relationship for an object, we can't select the "empty" value and show all items without a relationship. TODO.
@@ -1178,11 +1178,11 @@ class CtrlController extends Controller
 		}
 		*/
 
-        $datatable = Datatables::of($objects)  
-        	->setRowId('id') // For reordering        	
-        	->editColumn('order', function($object) { // Set the displayed value of the order column to just show the icon        	        	
+        $datatable = Datatables::of($objects)
+        	->setRowId('id') // For reordering
+        	->editColumn('order', function($object) { // Set the displayed value of the order column to just show the icon
         		return '<i class="fa fa-reorder"></i>';
-        	}) // Set the displayed value of the order column to just show the icon        	        	
+        	}) // Set the displayed value of the order column to just show the icon
         	// ->editColumn('src', '<div class="media"><div class="media-left"><a href="{{$src}}" data-toggle="lightbox" data-title="{{$src}}"><img class="media-object" src="{{$src}}" height="30"></a></div><div class="media-body" style="vertical-align: middle">{{$src}}</div></div>') // Draw the actual image, if this is an image field
         	->editColumn('src', function($object) {
 	    		if ($src = $object->src) { // If we have a "src" column, assume (for now!) that we render it as an image. We could probably load the corresponding ctrlproperty here and confirm this:
@@ -1206,32 +1206,32 @@ class CtrlController extends Controller
         	})
             ->addColumn('action', function ($object) use ($ctrl_class, $filter_string) {
             	return $this->get_row_buttons($ctrl_class->id, $object->id, $filter_string);
-            })       
+            })
             // Is this the best place to filter results if necessary?
             // I think so. See: http://datatables.yajrabox.com/eloquent/custom-filter
-        	->filter(function ($query) use ($filter_array) {
+        	->filter(function ($query) use ($filter_array, $ctrl_class, $filter_string) {
 	            if ($filter_array) {
 	            	foreach ($filter_array as $filter) {
 						$filter_ctrl_property = CtrlProperty::where('id',$filter['ctrl_property_id'])->firstOrFail(); // This throws a 404 if not found; not sure that's strictly what we want
-						
+
 						if (!empty($filter_ctrl_property->relationship_type)) {
 							$related_ctrl_class = CtrlClass::where('id',$filter_ctrl_property->related_to_id)->firstOrFail(); // As above
 							$related_class      = $related_ctrl_class->get_class();
 							$related_object     = $related_class::where('id',$filter['value'])->firstOrFail();
 
 							if ($filter_ctrl_property->relationship_type == 'belongsTo') {
-								// Duplication of code from @describe_filter here							
+								// Duplication of code from @describe_filter here
 								$query->where($filter_ctrl_property->foreign_key,$related_object->id);
-							}						
-							else if ($filter_ctrl_property->relationship_type == 'belongsToMany') {							
+							}
+							else if ($filter_ctrl_property->relationship_type == 'belongsToMany') {
 								// We need to join the query here, to generate something like this (from Argos, listing products related to a cached profile)
 								/*
-								$query->join('product_profile_cache', 'id', '=', $filter_ctrl_property->join_table.'product_profile_cache.product_id')            
-	                    			  ->where('product_profile_cache.profile_id',$related_object->id);							
-								 */                    		
+								$query->join('product_profile_cache', 'id', '=', $filter_ctrl_property->join_table.'product_profile_cache.product_id')
+	                    			  ->where('product_profile_cache.profile_id',$related_object->id);
+								 */
 								// Technically 'id' here is 'products.id'; is 'id' always unambiguous?
-								$query->join($filter_ctrl_property->pivot_table, 'id', '=', $filter_ctrl_property->pivot_table.'.'.$filter_ctrl_property->local_key)            
-	                    			  ->where($filter_ctrl_property->pivot_table.'.'.$filter_ctrl_property->foreign_key,$related_object->id);							
+								$query->join($filter_ctrl_property->pivot_table, 'id', '=', $filter_ctrl_property->pivot_table.'.'.$filter_ctrl_property->local_key)
+	                    			  ->where($filter_ctrl_property->pivot_table.'.'.$filter_ctrl_property->foreign_key,$related_object->id);
 
 		            		}
 		            	}
@@ -1240,8 +1240,17 @@ class CtrlController extends Controller
 		            		$query->where($filter_ctrl_property->name,$filter['value']);
 		            	}
 	            	}
-	            	//$query->where('title','LIKE',"%related%");	                
-	            }	            
+	            	//$query->where('title','LIKE',"%related%");
+	            }
+	            // $query->where('title','NOT LIKE',"Repair profile%");
+	            if ($this->module->enabled('custom_filter')) {
+					$this->module->run('custom_filter',[
+						$ctrl_class,
+						$query,
+						$filter_string
+					]);
+				}
+
 	        });
 
         /* Ah, this is the WRONG way to add a column. Instead, add it to the main ::select() routines above:
@@ -1254,7 +1263,7 @@ class CtrlController extends Controller
         foreach ($headers as $header) {
         	$property = $header->name;
 			if ($header->field_type == 'checkbox') {
-				// Convert checkboxes to yes/no				
+				// Convert checkboxes to yes/no
 				$datatable->editColumn($property, function($object) use ($property) {
 		    		if ($object->$property) {
 		    			return 'Yes';
@@ -1295,10 +1304,10 @@ class CtrlController extends Controller
 	// If we ever do need to format buttons differently for a "key", this function needs to be split into two; one to retrieve the buttons, and one to display them
 	protected function get_row_buttons($ctrl_class_id,$object_id, $filter_string = null, $scope = 'list') {
 
-		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();	
+		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
 
 		if ($scope != 'edit' && $ctrl_class->can('edit')) {
-    		$edit_link   = route('ctrl::edit_object',[$ctrl_class->id,$object_id,$filter_string]); 
+    		$edit_link   = route('ctrl::edit_object',[$ctrl_class->id,$object_id,$filter_string]);
     	}
     	else {
     		$edit_link = false;
@@ -1315,8 +1324,8 @@ class CtrlController extends Controller
     	$filtered_list_links        = [];
     	$filtered_list_properties = $ctrl_class->ctrl_properties()->whereRaw(
 		   '(find_in_set(?, flags))',
-		   ['filtered_list']		   
-		// )->where('relationship_type','hasMany')->get(); // I think a filtered list will always be "hasMany"?           	            					
+		   ['filtered_list']
+		// )->where('relationship_type','hasMany')->get(); // I think a filtered list will always be "hasMany"?
 		)->get(); // maybe not...
     	foreach ($filtered_list_properties as $filter_ctrl_property) {
     		// Build the filter string
@@ -1342,28 +1351,28 @@ class CtrlController extends Controller
     			else {
     				throw new Exception('Cannot set up a filtered list for a '.$filter_ctrl_property->relationship_type.' relationship.');
     			}
-    		
+
     		}
     		catch (\Exception $e) {
     			trigger_error($e->getMessage());
     		}
 
-    		
+
     		$filtered_list_array    = [
     			'ctrl_property_id'=>$inverse_filter_ctrl_property->id, // We don't use the keys here, they're for clarity only (as we use them elsewhere when handling filters)
     			'value'=>$object_id
-    		];            		
+    		];
     		$filtered_list_string = implode(',', $filtered_list_array); // Add 1,2 to the array (ctrl_property_id,value). Discard keys as above
-    		
+
     		// Establish the title and icon for the link; ie, the icon and title of the related class
-    		
+
     		$filter_ctrl_class = CtrlClass::where('id',$filter_ctrl_property->related_to_id)->firstOrFail();
-    		
+
 			//$filter_related_class = $filter_ctrl_class->get_class();
 
-			// Count the related items					
+			// Count the related items
 			$count_ctrl_class = $filter_ctrl_class;
-			$count_class      = $count_ctrl_class->get_class();					
+			$count_class      = $count_ctrl_class->get_class();
 
 			// Need to vary this if we're counting belongsToMany:
 			if ($filter_ctrl_property->relationship_type == 'hasMany') {
@@ -1371,19 +1380,19 @@ class CtrlController extends Controller
 				$count            = $count_objects->count();
 			}
 			else if ($filter_ctrl_property->relationship_type == 'belongsToMany') {
-				$count = DB::table($filter_ctrl_property->pivot_table)->where($inverse_filter_ctrl_property->foreign_key,$filtered_list_array['value'])->count();				
+				$count = DB::table($filter_ctrl_property->pivot_table)->where($inverse_filter_ctrl_property->foreign_key,$filtered_list_array['value'])->count();
 			}
 			else {
 				trigger_error("Cannot process relationship_type");
 			}
-			
+
 			/*
 			if ($count > 0) {
 				$filter_list_title = 'View '.$count . ' '.($count == 1 ? $filter_ctrl_class->get_singular() : $filter_ctrl_class->get_plural());
 				$filter_list_link  = route('ctrl::list_objects',[$filter_ctrl_property->related_to_id,$filtered_list_string]);
 			}
 			else {
-				$filter_list_title = 'No '.$filter_ctrl_class->get_plural();						
+				$filter_list_title = 'No '.$filter_ctrl_class->get_plural();
 				$filter_list_link  = false;
 			}
 			*/
@@ -1416,23 +1425,23 @@ class CtrlController extends Controller
 				$filter_string
 			]);
 		}
-    	
+
     	// Add a "reorder" button to the key
     	// see: https://github.com/laravel/framework/issues/1436
     	$class  = $ctrl_class->get_class();
-    	$table = with(new $class)->getTable();    	
+    	$table = with(new $class)->getTable();
     	if (Schema::hasColumn($table, 'order')) {
         	$can_reorder = true;
         }
         else {
-        	$can_reorder = false;	
+        	$can_reorder = false;
         }
-    	
+
     	if (!empty($key)) { // No longer used, see notes elsewhere
     		$template = 'ctrl::tables.row-buttons-key';
     	}
     	else {
-    		$template = 'ctrl::tables.row-buttons';	
+    		$template = 'ctrl::tables.row-buttons';
     	}
 
 
@@ -1442,7 +1451,7 @@ class CtrlController extends Controller
     		'filtered_list_links' => $filtered_list_links,
     		'custom_buttons'      => isset($custom_buttons) ? $custom_buttons : [],
     		'can_reorder'         => $can_reorder
-    	]);            	
+    	]);
        	return $buttons;
 	}
 
@@ -1450,16 +1459,16 @@ class CtrlController extends Controller
 	 * Delete the specifed object of the stated CtrlClass
 	 * @return Response
 	 */
-	public function delete_object($ctrl_class_id, $object_id) {	
-		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();				
+	public function delete_object($ctrl_class_id, $object_id) {
+		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
 		$class  = $ctrl_class->get_class();
 		$object = $class::where('id',$object_id)->firstOrFail();
 		$object->delete();
-		
+
 		$response = 'Item deleted';
 		$status = 200;
 		$json = [
-			'response'      => $response,			
+			'response'      => $response,
         ];
         return \Response::json($json, $status);
 	}
@@ -1478,7 +1487,7 @@ class CtrlController extends Controller
 	 * @param  integer $object_id  The ID of the object
 	 * @return object The resulting object
 	 */
-	public function get_object_from_ctrl_class_id($ctrl_class_id,$object_id = NULL) {		
+	public function get_object_from_ctrl_class_id($ctrl_class_id,$object_id = NULL) {
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
 		$class      = $ctrl_class->get_class();
 		if ($object_id == 'first') {
@@ -1493,9 +1502,9 @@ class CtrlController extends Controller
 			}
 		}
 		else {
-			$object     = new $class;			
+			$object     = new $class;
 		}
-		
+
 		return $object;
 	}
 
@@ -1505,14 +1514,14 @@ class CtrlController extends Controller
 	 * @return boolean
 	 */
 	protected function convert_txt_to_csv($csv_file) {
-		// From http://stackoverflow.com/questions/12489033/php-modify-a-single-line-in-a-text-file		
-		
-		ini_set("memory_limit",-1); // mb_convert_encoding takes up loads of memory... 
+		// From http://stackoverflow.com/questions/12489033/php-modify-a-single-line-in-a-text-file
+
+		ini_set("memory_limit",-1); // mb_convert_encoding takes up loads of memory...
 
 		// How is the current file encoded? Note that this is different to the value separator;
 		// but Office exports tab-delimited files as UTF-16, which we can't run through INFILE, so we need to convert it
 		$current_encoding = $this->detect_utf_encoding($csv_file);
-		
+
 		$fh = fopen($csv_file,'r+');
 
 		$csv_rows = '';
@@ -1524,21 +1533,21 @@ class CtrlController extends Controller
 				$commas = substr_count($row,',');
 				$tabs   = substr_count($row,"\t");
 				if ($commas >= $tabs) return false; // No need to change this file, it's already comma-delimited as far as we can tell
-			}			
+			}
 			// Attempting to remove Windows-style endings while we're here, but the following line doesn't work...
 		    // $csv_rows .= str_replace(["\t","\r"],[',',''],$row);
 
 			// Instead, from http://stackoverflow.com/questions/7836632/how-to-replace-different-newline-styles-in-php-the-smartest-way
 			// Nope, this doesn't work either. Fuck it, we can live with CRLF for now.
 			// $row = preg_replace('~(*BSR_ANYCRLF)\R~', "\n", $row);
-			
+
 			$csv_row = str_replace("\t",',',$row);
 		    $csv_rows .= $csv_row;
 		}
-		
+
 		$csv_rows = mb_convert_encoding($csv_rows, 'UTF-8',$current_encoding);
-		file_put_contents($csv_file, $csv_rows);		
-		fclose($fh); 
+		file_put_contents($csv_file, $csv_rows);
+		fclose($fh);
 
 		return true;
 	}
@@ -1557,7 +1566,7 @@ class CtrlController extends Controller
 	    $first2 = substr($text, 0, 2);
 	    $first3 = substr($text, 0, 3);
 	    $first4 = substr($text, 0, 3);
-	    
+
 	    if ($first3 == UTF8_BOM) return 'UTF-8';
 	    elseif ($first4 == UTF32_BIG_ENDIAN_BOM) return 'UTF-32BE';
 	    elseif ($first4 == UTF32_LITTLE_ENDIAN_BOM) return 'UTF-32LE';
@@ -1566,22 +1575,22 @@ class CtrlController extends Controller
 	}
 
 	/**
-	 * Return the ctrl_class object defined by the object $object_id	 
+	 * Return the ctrl_class object defined by the object $object_id
 	 * @param  integer $object_id  The ID of the object
 	 * @return object The resulting object
 	 */
-	protected function get_ctrl_class_from_object($object) {	
+	protected function get_ctrl_class_from_object($object) {
 
-		$ctrl_class_name = str_replace('App\Ctrl\Models\\','',get_class($object));		
+		$ctrl_class_name = str_replace('App\Ctrl\Models\\','',get_class($object));
 
 		try {
-			$ctrl_class = CtrlClass::where('name',$ctrl_class_name)->firstOrFail();		
+			$ctrl_class = CtrlClass::where('name',$ctrl_class_name)->firstOrFail();
 		}
 		catch (\Exception $e) {
 			trigger_error("Cannot load class by name $ctrl_class_name; {$e->getMessage()}");
 		}
 		return $ctrl_class;
-		
+
 	}
 
 	/**
@@ -1595,7 +1604,7 @@ class CtrlController extends Controller
 
 		$title_properties = $ctrl_class->ctrl_properties()->whereRaw(
 			'(find_in_set(?, flags))',
-			['string']	
+			['string']
 		)->get();
 		$title_strings = [];
 		foreach ($title_properties as $title_property) {
@@ -1613,9 +1622,9 @@ class CtrlController extends Controller
 				$title_strings[] = $object->$property;
 			}
 		}
-		
+
 		return implode(' ', $title_strings);
-		
+
 	}
 
 	/**
@@ -1629,25 +1638,25 @@ class CtrlController extends Controller
 	 * @return Response
 	 */
 	public function edit_object($ctrl_class_id, $object_id = NULL, $filter_string = NULL)
-	{		
+	{
 
 		// Convert the the $filter parameter into one that makes sense
 		// Used when linking BACK to a list
-		$filter_array = $this->convert_filter_string_to_array($filter_string);		
+		$filter_array = $this->convert_filter_string_to_array($filter_string);
 
 		$default_values      = $this->convert_filter_string_to_array($filter_string); // Note that we use this to set default values, not filter the list
 		$default_description = $this->describe_filter($default_values);
-		
+
 		$object             = $this->get_object_from_ctrl_class_id($ctrl_class_id,$object_id);
 
 		$ctrl_class         = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
-		$ctrl_properties    = $ctrl_class->ctrl_properties()->where('fieldset','!=','')->get();	
-		
+		$ctrl_properties    = $ctrl_class->ctrl_properties()->where('fieldset','!=','')->get();
+
 		$tabbed_form_fields = [];
 		$hidden_form_fields = [];
 
 		foreach ($ctrl_properties as $ctrl_property) {
- 			
+
  			// Reset $value, $values
 			unset($value);
 			unset($related_ctrl_class);
@@ -1700,11 +1709,11 @@ class CtrlController extends Controller
 					}
 				}
 				if (!isset($value)) { // No default value, so pull it from the existing object
-					$value      = $object->$field_name;		
-				}				
+					$value      = $object->$field_name;
+				}
 			}
 
-			// Do we have a range of valid values for this field? For example, an ENUM or relationship field			
+			// Do we have a range of valid values for this field? For example, an ENUM or relationship field
 			if ($ctrl_property->related_to_id) {
 				$related_ctrl_class = \Sevenpointsix\Ctrl\Models\CtrlClass::find($ctrl_property->related_to_id);
 				$related_class 		= $related_ctrl_class->get_class();
@@ -1718,42 +1727,42 @@ class CtrlController extends Controller
 				/* No, doesn't work, times out
 				$related_class::chunk(200, function ($related_objects) {
 				    foreach ($related_objects as $related_object) {
-						$values[$related_object->id] = $this->get_object_title($related_object); 
+						$values[$related_object->id] = $this->get_object_title($related_object);
 					}
 				});
 				*/
 				/*
 				foreach ($related_objects as $related_object) {
-					$values[$related_object->id] = $this->get_object_title($related_object); 
+					$values[$related_object->id] = $this->get_object_title($related_object);
 				}
 				*/
 				// If we use select2 for EVERYTHING (sensible I think?), we can just do this...update template/dropdown accordingly
 				if (!empty($value)) {
 					$related_objects  	= $related_class::where('id',$value)->get();
 					foreach ($related_objects as $related_object) {
-						$values[$related_object->id] = $this->get_object_title($related_object); 
+						$values[$related_object->id] = $this->get_object_title($related_object);
 					}
 				}
 			}
 			else {
 				$column = DB::select("SHOW COLUMNS FROM {$ctrl_property->ctrl_class->table_name} WHERE Field = '{$ctrl_property->name}'");
 				if (!isset($column[0])) {
-					// dump("SHOW COLUMNS FROM {$ctrl_property->ctrl_class->table_name} WHERE Field = '{$ctrl_property->name}'");					
+					// dump("SHOW COLUMNS FROM {$ctrl_property->ctrl_class->table_name} WHERE Field = '{$ctrl_property->name}'");
 					trigger_error("Cannot locate column {$ctrl_property->name} in table {$ctrl_property->ctrl_class->table_name}");
 				}
 				$type = $column[0]->Type;
 				// Is this an ENUM field?
 
-				preg_match("/enum\((.*)\)/", $type, $matches);					
-				if ($matches) {					
+				preg_match("/enum\((.*)\)/", $type, $matches);
+				if ($matches) {
 					// Convert 'One','Two','Three' into an array
 
 					$enums = explode("','",trim($matches[1],"'"));
-						
+
 					$loop = 1;
 					foreach ($enums as $enum) {
 						// Note that apostrophes are doubled-up when exported from SHOW COLUMNS
-						$enum_value = str_replace("''","'",$enum);					
+						$enum_value = str_replace("''","'",$enum);
 						// $values[$loop++] = $value;
 						// Hmmm. Since we switched to Ajax select2 lists, I think we've broken ENUM selects...
 						$values[$enum_value] = $enum_value;
@@ -1767,7 +1776,7 @@ class CtrlController extends Controller
 			$tab_name = $ctrl_property->fieldset;
 			if ($this->module->enabled('hide_fieldset')) {
 				if ($this->module->run('hide_fieldset',[
-					$tab_name					
+					$tab_name
 				])) {
 					continue;
 				}
@@ -1781,7 +1790,7 @@ class CtrlController extends Controller
 					$tab_icon // Acts as the default
 				]);
 			}
-			
+
 			$tab_text = '';
 
 			if (!isset($tabbed_form_fields[$tab_name])) {
@@ -1810,7 +1819,7 @@ class CtrlController extends Controller
 				Otherwise, if we're working with (eg) Sogra Products, we have a select box with thousands of options, which breaks.
 			*/
 
-		}		
+		}
 		// dd($tabbed_form_fields);
 
 		// TODO: right, we need to add something here that allows us to customise the list of form fields
@@ -1831,17 +1840,17 @@ class CtrlController extends Controller
 			foreach ($default_values as $default_value) {
 				$default_property = $ctrl_class->ctrl_properties()->
 									where('fieldset','')->
-									where('id',$default_value['ctrl_property_id'])->first();										
+									where('id',$default_value['ctrl_property_id'])->first();
 				if ($default_property !== null) {
 					$default_field_name = $default_property->get_field_name();
 					$hidden_form_fields[] = [
 						'id'       => 'form_id_'.$default_field_name,
-						'name'     => $default_field_name,							
-						'value'    => $default_value['value'],										
+						'name'     => $default_field_name,
+						'value'    => $default_value['value'],
 						// Don't need $template, $values, $tip, $type or $label.
-					];			
+					];
 				}
-			}			
+			}
 		}
 
 		if ($object_id) {
@@ -1851,10 +1860,10 @@ class CtrlController extends Controller
 			$delete_link      = $ctrl_class->can('delete') ? route('ctrl::delete_object',[$ctrl_class->id,$object->id]) : '';
 		}
 		else {
-			$page_title = 'Add '.$this->a_an($ctrl_class->get_singular()) . ' ' .$ctrl_class->get_singular();			
-			$page_description = $default_description ? '&hellip;'.$default_description : ''; 
+			$page_title = 'Add '.$this->a_an($ctrl_class->get_singular()) . ' ' .$ctrl_class->get_singular();
+			$page_description = $default_description ? '&hellip;'.$default_description : '';
 			$delete_link = '';
-		}		
+		}
 		// If we've set default values here, then that implies that we came through a filtered list; and we want to go back to THAT list, not a list of all these items
 		// Or do we...? Hmmm. It might make more sense to return to a filtered list of *these* items... TBC.
 		/* Yes, use the code below from @list_objects
@@ -1871,7 +1880,7 @@ class CtrlController extends Controller
         }
         else {
         	// Is this a sensible fallback?
-        	// Only if we can list the items... we almost always can        	
+        	// Only if we can list the items... we almost always can
         	$back_link        = $ctrl_class->can('list') ? route('ctrl::list_objects',[$ctrl_class->id,$filter_string]) : route('ctrl::dashboard');
         }
 
@@ -1880,7 +1889,7 @@ class CtrlController extends Controller
 
 		// NEW: can we repeat the row buttons on the edit page? This makes a lot of sense I think
 		$row_buttons = $this->get_row_buttons($ctrl_class->id, $object->id, $filter_string, 'edit');
-		
+
 		return view('ctrl::edit_object',[
 			'ctrl_class'         => $ctrl_class,
 			'page_title'         => $page_title,
@@ -1906,9 +1915,9 @@ class CtrlController extends Controller
 	 * @return Response
 	 */
 	public function save_object(Request $request, $ctrl_class_id, $object_id = NULL, $filter_string = NULL)
-	{		
+	{
 
-		// We need to disable Debugbar when returning Froala AJAX, if used 	    
+		// We need to disable Debugbar when returning Froala AJAX, if used
 	    if (in_array('Barryvdh\Debugbar\ServiceProvider', config('app.providers'))) {
 	    	// Debugbar enabled (there must be a better way of checking this)
 	    	// but in order to disable it, we also need to have enabled the Facade...
@@ -1916,13 +1925,13 @@ class CtrlController extends Controller
 	    		trigger_error("If using Debugbar, the alias must be enabled so that we can in turn disable Debugbar...");
 	    	}
 	    	else {
-	    		\Debugbar::disable();	
+	    		\Debugbar::disable();
 	    	}
 	    }
-		
+
 		// dd($_POST);
 		try {
-			$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();				
+			$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
 		}
 		catch (\Exception $e) {
 			trigger_error($e->getMessage());
@@ -1945,7 +1954,7 @@ class CtrlController extends Controller
 			/*
 				$required_properties = $ctrl_class->ctrl_properties()
 					->whereRaw("FIND_IN_SET('required',flags) > 0")
-					->get();  	
+					->get();
 			*/
 			if ($ctrl_property->field_type == 'email') {
 				$validation[$field_name][] = 'email';
@@ -1959,7 +1968,7 @@ class CtrlController extends Controller
 				$validation[$field_name][] = 'date_format:g:i\ A';
 				$messages["$field_name.date"] = "The &ldquo;{$ctrl_property->label}&rdquo; field must be a valid time";
 			}
-			
+
 			if (!empty($validation[$field_name])) {
 				$validation[$field_name] = implode('|', $validation[$field_name]);
 			}
@@ -1967,7 +1976,7 @@ class CtrlController extends Controller
 
 		if ($this->module->enabled('custom_validation')) {
         	// We may eventually need to patch this into the validation...? Or would that imply the need for a validation (or pre_save) module?
-			list ($validation,$messages) = $this->module->run('custom_validation',[				
+			list ($validation,$messages) = $this->module->run('custom_validation',[
 				$ctrl_class,
 				$validation,
 				$messages
@@ -1978,13 +1987,13 @@ class CtrlController extends Controller
 			$this->validate($request, $validation, $messages);
 	    }
 
-	    // $class 		= $ctrl_class->get_class();		
-		// $object  	= ($object_id) ? $class::where('id',$object_id)->firstOrFail() : new $class;		
+	    // $class 		= $ctrl_class->get_class();
+		// $object  	= ($object_id) ? $class::where('id',$object_id)->firstOrFail() : new $class;
 		$object = $this->get_object_from_ctrl_class_id($ctrl_class->id,$object_id);
-		
+
 		// Convert dates back into MySQL format; this feels quite messy but I can't see where else to do it:
 		foreach ($ctrl_properties as $ctrl_property) {
-			if (in_array($ctrl_property->field_type,['date','datetime','time']) && !empty($_POST[$ctrl_property->name])) {								
+			if (in_array($ctrl_property->field_type,['date','datetime','time']) && !empty($_POST[$ctrl_property->name])) {
 				switch ($ctrl_property->field_type) {
 					case 'date':
 						$date_format = 'Y-m-d';
@@ -1994,14 +2003,14 @@ class CtrlController extends Controller
 						break;
 					case 'time':
 						$date_format = 'H:i:s';
-						break;						
+						break;
 				}
 				$_POST[$ctrl_property->name] = date($date_format,strtotime($_POST[$ctrl_property->name]));
 			}
 		}
 
 		//dd($_POST);
-		
+
         $object->fill($_POST);
 
         // OK. I don't want nullable fields (typically integers or floats) to be set to zero, if the posted value is an empty string
@@ -2009,8 +2018,8 @@ class CtrlController extends Controller
         $check_nullable_properties = $ctrl_class->ctrl_properties()
                                               ->where('fieldset','!=','')
                                               ->where('relationship_type','=',NULL) // This makes sense, I think
-                                              ->get();  
-        
+                                              ->get();
+
 		foreach ($check_nullable_properties as $check_nullable_property) {
 			$column = $check_nullable_property->name;
 	        $nullable = DB::table('INFORMATION_SCHEMA.COLUMNS')
@@ -2028,30 +2037,30 @@ class CtrlController extends Controller
 	        }
         }
 
-        // Set the URL automatically as well:        
-        if (Schema::hasColumn($ctrl_class->table_name, 'url') && !$object->url) {        	
+        // Set the URL automatically as well:
+        if (Schema::hasColumn($ctrl_class->table_name, 'url') && !$object->url) {
         	$title = $this->get_object_title($object);
-        	$slug  = str_slug($title);        	
+        	$slug  = str_slug($title);
         	$append = 1;
         	while (!is_null(DB::table($ctrl_class->table_name)->where('url', $slug)->first())) {
-        		$slug = str_slug($title .' '.$append++); 
+        		$slug = str_slug($title .' '.$append++);
         		if ($append >= 100) {
         			trigger_error("Infinite loop");
         		}
-        	} 
+        	}
         	$object->url = $slug;
         }
-        
+
         $object->save(); // Save the new object, otherwise we can't save any relationships...
         // Now load any related fields (excluding belongsTo, as this indicates the presence of an _id field)
         $related_ctrl_properties = $ctrl_class->ctrl_properties()
                                               ->where('fieldset','!=','')
                                               ->where(function ($query) {
                                                     $query->where('relationship_type','hasMany')
-                                                          ->orWhere('relationship_type','belongsToMany');                                                    
+                                                          ->orWhere('relationship_type','belongsToMany');
                                                 })
-                                              ->get();  
-        
+                                              ->get();
+
 		foreach ($related_ctrl_properties as $related_ctrl_property) {
 			$related_field_name = $related_ctrl_property->get_field_name();
 
@@ -2067,30 +2076,30 @@ class CtrlController extends Controller
 	            		... etc
 	            	 */
 	            $related_class = $related_ctrl_class->get_class();
-	            $related_objects = $related_class::find($request->input($related_field_name));	
-	            
+	            $related_objects = $related_class::find($request->input($related_field_name));
+
 	            if ($related_ctrl_property->relationship_type == 'hasMany'
 	            	|| $related_ctrl_property->relationship_type == 'belongsToMany'
 	            		// I initially thought we'd have to treat these differently, but it seems to work at the moment. Could break in more advanced cases though.
 	            	) {
 
-	            	// OK, I think we can use synch here; or does this break for hasMany?	         
+	            	// OK, I think we can use synch here; or does this break for hasMany?
 	            	// Yeah, breaks for hasMany... :-(  This works though:
 	            	if ($related_ctrl_property->relationship_type == 'belongsToMany') {
 	            		$object->$related_field_name()->sync($related_objects);
 	            	}
-	            	else if ($related_ctrl_property->relationship_type == 'hasMany') {	            		
-	            		$object->$related_field_name()->saveMany($related_objects);	            		
+	            	else if ($related_ctrl_property->relationship_type == 'hasMany') {
+	            		$object->$related_field_name()->saveMany($related_objects);
 	            	}
-	            	
-	            	
-					
+
+
+
 					/*
 		            // A hasMany relationship needs saveMany
 		            // belongsToMany might need attach, or synch -- TBC
 
 
-	            	
+
 	            	dump ("Loading existing_related_objects with $related_field_name");
 		          	$existing_related_objects = $object->$related_field_name();
 		          	$inverse_property = CtrlProperty::where('ctrl_class_id',$related_ctrl_class->id)
@@ -2098,11 +2107,11 @@ class CtrlController extends Controller
 		            								  ->first(); // Does this always hold true?
 					$inverse_field_name = $inverse_property->name;
 
-		          	foreach ($existing_related_objects as $existing_related_object) {	
+		          	foreach ($existing_related_objects as $existing_related_object) {
 		          		dump('$existing_related_object'. $existing_related_object);
 		          		$existing_related_object->$inverse_field_name()->dissociate();
 		          		dump("Removing relationship to $related_field_name");
-		          		$existing_related_object->save(); 
+		          		$existing_related_object->save();
 		          			// This seems unnecessarily complicated; review this.
 		          			// Is there no equivalent of synch() for hasMany/belongsTo relationships?
 		          			// Something like, $object->related_field_name()->sync($related_objects);
@@ -2119,7 +2128,7 @@ class CtrlController extends Controller
 		          	// $object->$related_field_name()->sync($related_objects);
 		          	// Gives same error as below:
 		            // $object->$related_field_name()->saveMany($related_objects);
-		            
+
 		          	// Maybe...
 
 		          	if ($related_ctrl_property->relationship_type == 'hasMany') {
@@ -2136,8 +2145,8 @@ class CtrlController extends Controller
 		            //$object->save();
 		            // This is ALMOST working but glitches; we seem to save the relationship then overwrite it when we try to remove it, even though we try to remove it first. Do we need to lock the tables here?
 		            */
-		            
-		        }	
+
+		        }
 			}
 			// Note: if we're posting a multiple select with nothing selected, the $_POST value doesn't exist; meaning that we can't remove the relationship
 			else if ($related_ctrl_property->relationship_type == 'belongsToMany') {
@@ -2151,18 +2160,18 @@ class CtrlController extends Controller
         // Add a custom post_save module
         if ($this->module->enabled('post_save')) {
         	// We may eventually need to patch this into the validation...? Or would that imply the need for a validation (or pre_save) module?
-			$this->module->run('post_save',[				
+			$this->module->run('post_save',[
 				$request,
 				$object,
 				$filter_string
 			]);
 		}
-        
+
 		$message  = ucwords($ctrl_class->get_singular()) . ' saved';
    		$messages = [$message];
-   		$request->session()->flash('messages', $messages);	
-        
-		if ($ctrl_class->can('list')) {      
+   		$request->session()->flash('messages', $messages);
+
+		if ($ctrl_class->can('list')) {
         	$redirect = route('ctrl::list_objects',[$ctrl_class->id,$filter_string]);
         }
         else {
@@ -2175,7 +2184,7 @@ class CtrlController extends Controller
             ]);
         }
         else {
-            return redirect($redirect);            
+            return redirect($redirect);
         }
 
 	}
@@ -2200,8 +2209,8 @@ class CtrlController extends Controller
 	        'file' => 'required|image'
 	    ]);
 	    */
-	    
-		// We need to disable Debugbar when returning Froala AJAX, if used 	    
+
+		// We need to disable Debugbar when returning Froala AJAX, if used
 	    if (in_array('Barryvdh\Debugbar\ServiceProvider', config('app.providers'))) {
 	    	// Debugbar enabled (there must be a better way of checking this)
 	    	// but in order to disable it, we also need to have enabled the Facade...
@@ -2209,16 +2218,16 @@ class CtrlController extends Controller
 	    		trigger_error("If using Debugbar, the alias must be enabled so that we can in turn disable Debugbar...");
 	    	}
 	    	else {
-	    		\Debugbar::disable();	
+	    		\Debugbar::disable();
 	    	}
 	    }
 
 	    $response = new \StdClass;
 
 		if ($request->file('file')->isValid()) {
-			
+
 			$extension = $request->file('file')->getClientOriginalExtension();
-			
+
 			if ($request->type == 'image') {
 				$name      = uniqid('image_');
 			}
@@ -2226,11 +2235,11 @@ class CtrlController extends Controller
 				// We could add something a little more intelligent here
 				$name = basename($request->file('file')->getClientOriginalName(),".$extension").'-'.rand(11111,99999);
 			}
-			
+
 			$target_folder = $this->uploads_folder;
 			$target_file   = $name.'.'.$extension;
-			
-			$moved_file      = $request->file('file')->move($target_folder, $target_file);			
+
+			$moved_file      = $request->file('file')->move($target_folder, $target_file);
 			$response->link  = '/'.$moved_file->getPathname();
 		}
 		else {
@@ -2243,8 +2252,8 @@ class CtrlController extends Controller
 				See: http://api.symfony.com/2.7/Symfony/Component/HttpFoundation/File/UploadedFile.html#method_getError
 				See also notes above regarding automatic validation in Froala/HTML5 though.
 			*/
-		}		
-        
+		}
+
         return stripslashes(json_encode($response));
     }
 
@@ -2266,21 +2275,21 @@ class CtrlController extends Controller
 	    		trigger_error("If using Debugbar, the alias must be enabled so that we can in turn disable Debugbar...");
 	    	}
 	    	else {
-	    		\Debugbar::disable();	
+	    		\Debugbar::disable();
 	    	}
 	    }
 
 		$response = new \StdClass;
-		
+
 		$field_name = $request->field_name;
 		// We pass in field_name as a hidden parameter
 
 		if ($request->hasFile($field_name)) {
 
 			if ($request->file($field_name)->isValid()) {
-				
+
 				$extension = $request->file($field_name)->getClientOriginalExtension();
-				
+
 				if ($request->type == 'image') {
 					$name      = uniqid('image_');
 				}
@@ -2288,18 +2297,18 @@ class CtrlController extends Controller
 					// We could add something a little more intelligent here
 					$name = basename($request->file($field_name)->getClientOriginalName(),".$extension").'-'.rand(11111,99999);
 				}
-				
+
 				$target_folder = $this->uploads_folder;
 				$target_file   = $name.'.'.$extension;
-				
-				$moved_file      = $request->file($field_name)->move($target_folder, $target_file);			
+
+				$moved_file      = $request->file($field_name)->move($target_folder, $target_file);
 				$response->link  = '/'.$moved_file->getPathname();
 			}
 			else {
 				$response->error = 'An error has occurred';
-				
-			}	
-		}	
+
+			}
+		}
 
 		return stripslashes(json_encode($response));
 	}
@@ -2327,12 +2336,12 @@ class CtrlController extends Controller
 	 * @return Response
 	 */
 	public function test()
-	{			
-	
+	{
+
 		$model_folder = 'Ctrl';
 
         echo app_path($model_folder);
-        
+
         if (!File::makeDirectory(app_path($model_folder))) {
         	echo "fail";
         }
@@ -2363,14 +2372,14 @@ class CtrlController extends Controller
 	 * @return Response
 	 */
 	public function post_login(Request $request)
-	{		
+	{
 		// Note: there's a known issue here, which is that old('email') doesn't prepopulate the email address field if we somehow post without Ajax. I'm not sure why not. We don't prepopulate if we do submit an unsuccesful login via Ajax, because we use a clientside redirect which obviously loses the previous values; but this is a different issue.
 		// IDEALLY, we'd add a custom rule to $this->validate(), to check for valid logins, but I'm not sure if ths is possible.
-		
+
         $this->validate($request, [
             'email'    => 'required|email',
-            'password' => 'required'            
-        ]);       
+            'password' => 'required'
+        ]);
 
         // Basic validation passed, now try to log the user in
         $email    = $request->input('email');
@@ -2383,45 +2392,45 @@ class CtrlController extends Controller
 		    	$redirect = URL::previous();
 			    $message  = 'Logged in';
 	        	$messages = [$message => 'success'];
-	        	$request->session()->flash('messages', $messages);		        	
+	        	$request->session()->flash('messages', $messages);
 	        	$status = 200;
 		    }
 		    else {
-		    	Auth::logout();		    	
-		    }		    
+		    	Auth::logout();
+		    }
 		}
-		
+
 		if (!Auth::check()) {
-			// Can't log in, try again			
+			// Can't log in, try again
         	$redirect = route('ctrl::login');
         	// Set a flash error message; we don't use these, in fact (we just trigger the "shake" error effect from Authenty)
         	$message  = 'Incorrect login';
         	$messages = collect([$message]);
         	$request->session()->flash('errors', $messages);
      		$status = 400; // Side note: we can set this to 422 to emulate a Laravel validation error
-        }	    
+        }
 
-        if ($request->ajax()) { 
+        if ($request->ajax()) {
         	// NOTE: the response here will refresh the page clientside; NOT display Ajax errors inline
         	// forms.js is designed to handle an Ajax error response from the Laravel validation method only
         	// We can replicate this manually (see $status below), but for the login form, why bother?
             $json = [
-                'redirect' => $redirect                
+                'redirect' => $redirect
             ];
            	return \Response::json($json, $status);
         }
-        else {            
+        else {
             return redirect($redirect);
         }
 	}
-	
+
 	/**
 	 * Return JSON data to the typehead search (used on the dashboard for now)
 	 * @param  text $search_term The text we're searching for
 	 * @return Response
 	 */
-	
-	public function get_typeahead($search_term = NULL) {		
+
+	public function get_typeahead($search_term = NULL) {
 
 		$json = [];
 
@@ -2429,27 +2438,27 @@ class CtrlController extends Controller
 
 		if ($search_term) {
 
-			// Loop through all classes that we can edit			
+			// Loop through all classes that we can edit
 			$ctrl_classes = CtrlClass::whereRaw(
 			   '(find_in_set(?, permissions))',
-			   ['edit']		   
+			   ['edit']
 			)->get();
 			foreach ($ctrl_classes as $ctrl_class) {
 				$class   = $ctrl_class->get_class();
-				
+
 				// What are the searchable columns?
 				$searchable_properties = $ctrl_class->ctrl_properties()->whereRaw(
 				   '(find_in_set(?, flags))',
-				   ['search']		   
+				   ['search']
 				)->whereNull('relationship_type')->get();
 					// I have no idea how to include searchable related columns in the query builder below...
-				
+
 
 				if (!$searchable_properties->isEmpty()) {
 					$query = $class::query(); // From http://laravel.io/forum/04-13-2015-combine-foreach-loop-and-eloquent-to-perform-a-search
 					foreach ($searchable_properties as $searchable_property) {
 						/* not needed
-						if ($loop++ == 1) {							
+						if ($loop++ == 1) {
 							$class::where($searchable_property->name,'LIKE',"%$query%");
 						}
 						else {
@@ -2458,45 +2467,45 @@ class CtrlController extends Controller
 						*/
 						$query->orWhere($searchable_property->name,'LIKE',"%$search_term%");
 					}
-					$objects = $query->get();	
+					$objects = $query->get();
 					if (!$objects->isEmpty()) {
 					    foreach ($objects as $object) {
 					    	$result             = new \StdClass;
 					    	$result->class_name = $ctrl_class->get_singular();
 					    	$result->title      = $this->get_object_title($object);
-					    	$result->edit_link  = route('ctrl::edit_object',[$ctrl_class->id,$object->id]);							
+					    	$result->edit_link  = route('ctrl::edit_object',[$ctrl_class->id,$object->id]);
 					    	$result->icon       = $ctrl_class->get_icon() ? $ctrl_class->get_icon() : 'fa fa-toggle-right';
 					    	$json[]             = $result;
 					    }
 					}
 				}
 			}
-				
+
 		}
 
 		$status = 200;
 
         return \Response::json($json, $status);
-	}	
+	}
 
 	/**
 	 * Handle the posted data when we reorder items in the datatable
 	 * @param  int $ctrl_class_id The ID of the Ctrl Class of the objects we're reordering
 	 * @return Response
 	 */
-	
-	public function reorder_objects(Request $request, $ctrl_class_id) {		
-		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();				
+
+	public function reorder_objects(Request $request, $ctrl_class_id) {
+		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
 		$class  = $ctrl_class->get_class();
-		if ($new_order = $request->input('new_order')) {			
+		if ($new_order = $request->input('new_order')) {
 			foreach ($new_order as $order) {
 				$object = $class::where('id',$order['id'])->firstOrFail();
 				$object->order = $order['order'];
 				$object->save();
-			}		
+			}
 			$response = 'Items reordered';
 			$status = 200;
-		}		
+		}
 		/* No, this might just mean we didn't actually change the order:
 		if (empty($response)) {
 			$response = 'An error has occurred';
@@ -2505,11 +2514,11 @@ class CtrlController extends Controller
 		*/
 		if (!empty($response)) {
 			$json = [
-				'response'      => $response,			
+				'response'      => $response,
 	        ];
 	        return \Response::json($json, $status);
 	    }
-	}	
+	}
 
 	/**
 	 * A placeholder function to illustrate how to load config variables
@@ -2518,7 +2527,7 @@ class CtrlController extends Controller
 	 */
 	public function demo_config()
 	{
-		dd(Config::get("ctrl.message"));		
+		dd(Config::get("ctrl.message"));
 	}
 
 	/**
@@ -2527,7 +2536,7 @@ class CtrlController extends Controller
 	 * @return Response
 	 */
 	public function demo_view()
-	{		
+	{
 		return view('ctrl::ctrl');
 	}
 
@@ -2536,15 +2545,15 @@ class CtrlController extends Controller
 		if (!empty($filter_string)) {
 			$filters = explode('~', $filter_string);
 			foreach ($filters as $filter) {
-				$filter_item = [];				
+				$filter_item = [];
 				list($filter_item['ctrl_property_id'], $filter_item['value']) = explode(',', $filter);
 					// Take the two values from the comma-separated pair, and assign them to two array keys of $filter_array; ctrl_property_id and value
 				$filter_array[] = $filter_item;
-			}			
+			}
 		}
 		return $filter_array;
 	}
-	
+
 	/**
 	 * A function from the old CI CMS; Join a list of elements with commas and a final 'and'; 1) = '1', (1,2) = '1 and 2', (1,2,3) = '1, 2 and 3'
 	 Optionally, wrap each element in <$tag> with $properties
@@ -2554,7 +2563,7 @@ class CtrlController extends Controller
 	 * @return string The formatted string
 	 */
 	protected function comma_and($array,$tag = '', $properties = array()) {
-		
+
 		if ($tag) {
 			foreach ($array as &$a) {
 				$a = $this->wrap_in_tag($a,$tag,$properties);
@@ -2624,7 +2633,7 @@ class CtrlController extends Controller
 
 
 	/****** Some archived function ******/
-	
+
 	/**
 	 * Test some dummy models (Test, One, Many, Pivot)
 	 *
@@ -2634,30 +2643,30 @@ class CtrlController extends Controller
 	{
 		// Check we can load models from our package
 		$test = \App\Ctrl\Models\Test::find(1);
-		
-		
+
+
 		dump($test->one->title);
 
 		foreach ($test->many as $many) {
 			dump($many->title);
 		}
-		
+
 		foreach ($test->pivot as $pivot) {
 			dump($pivot->title);
 		}
 
 		// Ones
-		$one = \Sevenpointsix\Ctrl\Models\One::find(1);	
+		$one = \Sevenpointsix\Ctrl\Models\One::find(1);
 		foreach ($one->test as $t) {
 			dump($t->title);
 		}
 
 		// Manies
-		$many = \Sevenpointsix\Ctrl\Models\Many::find(1);	
+		$many = \Sevenpointsix\Ctrl\Models\Many::find(1);
 		dump($many->test->title);
 
 		// Pivots
-		$pivot = \App\Ctrl\Models\Pivot::find(1);	
+		$pivot = \App\Ctrl\Models\Pivot::find(1);
 		foreach ($pivot->test as $t) {
 			dump($t->title);
 		}
