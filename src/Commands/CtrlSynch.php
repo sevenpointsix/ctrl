@@ -546,6 +546,12 @@ class CtrlSynch extends Command
             $table = DB::select("SHOW TABLES like '{$ctrl_class->table_name}'");
             if (!$table) {
                 $this->error("The table for the class {$ctrl_class->name} ('{$ctrl_class->table_name}') appears not to exist");
+                if ($force) {
+                    $this->info("Deleting it...");
+                    $ctrl_class->ctrl_properties()->delete();
+                    $ctrl_class->related_ctrl_properties()->delete();                    
+                    $ctrl_class->delete();
+                }
                 $missing_tables = true;
             }
         }
@@ -575,10 +581,17 @@ class CtrlSynch extends Command
                 }
             }
             else if (in_array($ctrl_property->relationship_type,['hasMany'])) { // hasMany, has a key in a related table, as per $ctrl_property->related_to_id
-                $table_name = $ctrl_property->related_ctrl_class->table_name;    
+                if (!empty($ctrl_property->related_ctrl_class)) {
+                    $table_name = $ctrl_property->related_ctrl_class->table_name;    
+                }
+                else {
+                    $this->info("Cannot load related ctrl class for {$ctrl_property->name}");
+                    break;
+                }
 
                 // Has the table been deleted?!
                 if (!Schema::hasTable($table_name)) {
+                    // I believe that this table should now have already been deleted, in the first foreach loop above
                     $this->error("Table $table_name doesn't exist");
                     $missing_columns = true;
                 }
@@ -587,6 +600,11 @@ class CtrlSynch extends Command
                     if (!$table_column) {
                         $this->error("The {$ctrl_property->relationship_type} column for {$ctrl_property->ctrl_class->name}::{$ctrl_property->foreign_key} (from the table '{$table_name}') appears not to exist");
                         $missing_columns = true;
+                        // WIP: this might delete columns that we actually need, keep an eye on it!
+                        if ($force) {
+                            $ctrl_property->delete();
+                            $this->info("Deleting it...");
+                        }
                     }
                 }
             }
@@ -595,6 +613,7 @@ class CtrlSynch extends Command
 
                 // Has the table been deleted?!
                 if (!Schema::hasTable($table_name)) {
+                    // I believe that this table should now have already been deleted, in the first foreach loop above
                     $this->error("Table $table_name doesn't exist");
                     $missing_columns = true;
                 }
@@ -604,6 +623,11 @@ class CtrlSynch extends Command
                     if (!$table_column) {
                         $this->error("The {$ctrl_property->relationship_type} column for {$ctrl_property->ctrl_class->name}::{$ctrl_property->foreign_key} (from the table '{$table_name}') appears not to exist");
                         $missing_columns = true;
+                        // WIP: this might delete columns that we actually need, keep an eye on it!
+                        if ($force) {
+                            $ctrl_property->delete();
+                            $this->info("Deleting it...");
+                        }
                     }
                 }
             }
@@ -612,6 +636,7 @@ class CtrlSynch extends Command
 
                 // Has the table been deleted?!
                 if (!Schema::hasTable($table_name)) {
+                    // I believe that this table should now have already been deleted, in the first foreach loop above
                     $this->error("Table $table_name doesn't exist");
                     $missing_columns = true;
                 }
@@ -622,9 +647,8 @@ class CtrlSynch extends Command
                         $this->error("The standard column for {$ctrl_property->ctrl_class->name}::{$ctrl_property->name} (from the table '{$table_name}') appears not to exist");
                         $missing_columns = true;
                         if ($force) {
-                            // We only forcibly delete "standard" columns for now, I need to run further tests on this
                             $ctrl_property->delete();
-                            $this->info("Property deleted!");
+                            $this->info("Deleting it...");
                         }
                     }
                 }
@@ -634,7 +658,13 @@ class CtrlSynch extends Command
             $this->info("All columns present and correct");
         }
         else{
-            $this->error("Some potential problems with columns, tables");
+            if ($force) {
+                $this->error("Found some potential problems with tables that may have been automatically fixed.");
+            }
+            else {
+                $this->error("Found some potential problems with tables that need to be reviewed.");
+                $this->comment("Use the --force flag to attempt to fix these problems automatically.");
+            }
         }
 
     }

@@ -22,6 +22,14 @@ class CtrlClass extends Model
         return $this->hasMany('Sevenpointsix\Ctrl\Models\CtrlProperty')->orderBy('order');
     }
 
+    /**
+     * Return all properties for this class
+     */
+    public function related_ctrl_properties()
+    {       
+        return $this->hasMany('Sevenpointsix\Ctrl\Models\CtrlProperty','related_to_id','id')->orderBy('order');
+    }
+
     // I think that the following methods should be helper functions within the controller, really...
 
     /**
