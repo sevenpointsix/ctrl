@@ -1,8 +1,8 @@
 {{-- Draw the JS to flash messages and errors(?) to notify --}}
 @push('js')
 <script>
-@if(Session::has('notify'))    
-$(function() {	
+@if(Session::has('notify'))
+$(function() {
     @foreach (session('notify') as $notification=>$type)
     	<?php // Hack
     		switch ($type) {
@@ -24,7 +24,7 @@ $(function() {
     	?>
 	    $.notify({
 			icon: '{{ $icon }}',
-			message: '{{ addslashes($notification) }}',					
+			message: '{!! addslashes($notification) !!}',
 		},{
 			placement: {
 				from: 'top',
@@ -32,7 +32,7 @@ $(function() {
 			},
 			type: "{{ $type }}",
 			newest_on_top: true,
-			delay: 0,					
+			delay: 0,
 		});
     @endforeach
 });
