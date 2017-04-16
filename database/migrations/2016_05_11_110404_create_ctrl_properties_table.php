@@ -15,21 +15,21 @@ class CreateCtrlPropertiesTable extends Migration
         if (!Schema::hasTable('ctrl_properties')) {
             Schema::create('ctrl_properties', function (Blueprint $table) {
                 $table->increments('id');
-                
+
                 $table->string('name');
                 $table->integer('ctrl_class_id')->nullable();
                 $table->integer('related_to_id')->nullable();
                 $table->enum('relationship_type', array('belongsTo','hasMany','belongsToMany'))->nullable();
-                $table->string('foreign_key');
-                $table->string('local_key');
-                $table->string('pivot_table');
+                $table->string('foreign_key')->nullable();
+                $table->string('local_key')->nullable();
+                $table->string('pivot_table')->nullable();
                 $table->enum('flags',[])->nullable(); // *** SEE BELOW
-                $table->string('label');
+                $table->string('label')->nullable();
                 $table->enum('field_type', array('text','textarea','redactor','dropdown','checkbox','date','datetime','image','file','email','froala'))->nullable();
-                $table->string('fieldset');
-                $table->text('tip');
+                $table->string('fieldset')->nullable();
+                $table->text('tip')->nullable();
                 $table->integer('order');
-                
+
                 $table->timestamps();
 
                 $table->index('ctrl_class_id');

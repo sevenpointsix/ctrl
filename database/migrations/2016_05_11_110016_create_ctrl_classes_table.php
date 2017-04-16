@@ -12,7 +12,7 @@ class CreateCtrlClassesTable extends Migration
      */
     public function up()
     {
-        
+
         if (!Schema::hasTable('ctrl_classes')) {
             Schema::create('ctrl_classes', function (Blueprint $table) {
                 $table->increments('id');
@@ -23,7 +23,7 @@ class CreateCtrlClassesTable extends Migration
                 $table->string('plural');
                 $table->string('description');
                 $table->enum('permissions', [])->nullable(); // *** SEE BELOW
-                $table->string('menu_title');
+                $table->string('menu_title')->nullable();
                 $table->string('icon');
                 $table->integer('order');
 
