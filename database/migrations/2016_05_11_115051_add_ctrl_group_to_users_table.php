@@ -14,7 +14,7 @@ class AddCtrlGroupToUsersTable extends Migration
     {
         if (!Schema::hasColumn('users', 'ctrl_group')) {
             Schema::table('users', function (Blueprint $table) {
-                $table->string('ctrl_group',10);
+                $table->string('ctrl_group',10)->nullable();
             });
         }
     }

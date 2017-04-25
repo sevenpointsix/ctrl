@@ -14,7 +14,7 @@ class AddPlainTextPasswordToUsers extends Migration
     {
 
        Schema::table('users', function (Blueprint $table) {
-            $table->string('plaintext_password');
+            $table->string('plaintext_password')->nullable();;
         });
         
     }
