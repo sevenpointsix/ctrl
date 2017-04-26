@@ -211,6 +211,11 @@
 				}
 			}
 			*/
+
+			/**
+			 * I think we should always fall back to the class permissions:
+			 */
+			return $ctrl_class->can($action);
 		}
 
 		/**

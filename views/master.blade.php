@@ -17,7 +17,11 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
     --}}
     {{-- <script src="https://use.fontawesome.com/ededc99dd3.js"></script> --}}{{-- JS is very slow, CSS is quicker --}}
-    <link rel="stylesheet" href="https://use.fontawesome.com/ededc99dd3.css">
+    @if (app()->environment('local'))
+      <link rel="stylesheet" href="{{ asset('assets/vendor/ctrl/vendor/font-awesome/css/font-awesome.min.css') }}">
+    @else
+      <link rel="stylesheet" href="https://use.fontawesome.com/ededc99dd3.css">
+    @endif
     <!-- Animate.css, used by notify -->
     <link rel="stylesheet" href="{{ asset('assets/vendor/ctrl/vendor/animate.css/animate.min.css') }}">
 
@@ -27,12 +31,12 @@
     <link rel="stylesheet" href="{{ asset('assets/vendor/ctrl/css/main.css') }}">
 
     @if (view()->exists('ctrl_custom::custom_css'))
-      @include('ctrl_custom::custom_css')  
+      @include('ctrl_custom::custom_css')
     @endif
 
     <!-- Fix header and footer -->
     <style>
-    
+
 	   </style>
 
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -79,21 +83,21 @@
             <li class="active"><a href="{{ route('ctrl::dashboard') }}">Dashboard</a></li>
             --}}
             @foreach ($menu_links as $menu_title=>$links)
-            
-              @if (count($links) == 1) 
+
+              @if (count($links) == 1)
               <li><a href="{{ route('ctrl::list_objects',$links[0]['id']) }}">{!! $links[0]['icon'] !!}{{ $menu_title }}</a></li>
               @else
-              
+
                 <li class="dropdown">
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ $menu_title }} <span class="caret"></span></a>
                   <ul class="dropdown-menu">
-                  @foreach ($links as $link)                  
+                  @foreach ($links as $link)
                   <li><a href="{{ route('ctrl::list_objects',$link['id']) }}">{!! $link['icon'] !!}{{ $link['title'] }}</a></li>
                   @endforeach
                   </ul>
                 </li>
-              @endif       
-            @endforeach            
+              @endif
+            @endforeach
           </ul>
         </div><!--/.nav-collapse -->
       </div>
@@ -125,11 +129,11 @@
     <script src="{{ asset('assets/vendor/ctrl/vendor/bootbox/bootbox.min.js') }}"></script>
 
     <script src="{{ asset('assets/vendor/ctrl/js/main.js') }}"></script>
-    
+
     @yield('js')
 
     @if (view()->exists('ctrl_custom::custom_js'))
-      @include('ctrl_custom::custom_js')  
+      @include('ctrl_custom::custom_js')
     @endif
 
     @include('ctrl::notify')

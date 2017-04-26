@@ -28,14 +28,14 @@
 	{
 	  name: 'tests',
 	  display: 'title',
-	  source: dashboard_search,  
+	  source: dashboard_search,
 	  templates: {
 		suggestion: Handlebars.compile('<div><i class="\{\{icon\}\}"></i> \{\{title\}\} <span class="label label-primary pull-right">\{\{class_name\}\}</span></div>')
 	  }
 	  // Could add <span class=\"label label-default pull-right\">Test</span> here
 
 	}).bind("typeahead:select", function(obj, datum, name) {
-		document.location = datum.edit_link; // Jump to the "Edit" link		
+		document.location = datum.edit_link; // Jump to the "Edit" link
 	});;
 
 	$('[data-toggle="tooltip"]').tooltip();
@@ -99,7 +99,7 @@
 	margin: 0;
 }
 /* Full width from http://stackoverflow.com/questions/17957513/extending-the-width-of-bootstrap-typeahead-to-match-input-field */
-.twitter-typeahead, .tt-hint, .tt-input, .tt-menu { width: 100%; }	
+.twitter-typeahead, .tt-hint, .tt-input, .tt-menu { width: 100%; }
 
 
 /* HIghlight current item */
@@ -144,11 +144,11 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 	padding: 10px 10px 8px;
 	border: 1px solid #eee;
 	color: #666;
-	cursor: pointer;	
+	cursor: pointer;
 }
 #dashboard-grid a:hover, #dashboard-grid a:focus {
 	text-decoration: none;
-	background-color: #f0f0f0;	
+	background-color: #f0f0f0;
 }
 */
 /* Stick this in a separate stylesheet once we finalise the layout */
@@ -203,13 +203,13 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
     background-color: #fff;
     border-color: #ccc;
     box-shadow: none;
-    outline: none; 
+    outline: none;
 }
 </style>
 @stop
 
 @section('content')
-	
+
 	<div class="page-header">
 	  <h1>@if ($logo)<img src="{{ $logo }}"> @endif<small>Content Management System</small></h1>
 	</div>
@@ -220,15 +220,15 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 			<div class="panel panel-default">
 			  	<div class="panel-heading"><h3 class="panel-title"><i class="fa fa-list-alt fa-fw" style="font-weight: normal"></i> Dashboard</h3></div>
 			  	<div class="panel-body">
-			    
+
 				  	<form id="dashboard-search">
-					  <div class="form-group">				    
+					  <div class="form-group">
 					    <div class="input-group">
 					      <span class="input-group-addon"><i class="fa fa-search"></i></span>
-					      <input class="typeahead form-control input-lg" type="text" placeholder="Search for an item here" style="float: none;">		
-					      {{-- float: none aligns the addon in Chrome but apparently not IE? https://github.com/twitter/typeahead.js/issues/847 --}}	      
+					      <input class="typeahead form-control input-lg" type="text" placeholder="Search for an item here" style="float: none;">
+					      {{-- float: none aligns the addon in Chrome but apparently not IE? https://github.com/twitter/typeahead.js/issues/847 --}}
 					    </div>
-					  </div>			  
+					  </div>
 					</form>
 					<hr />
 
@@ -239,7 +239,7 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 							<div class="btn-group btn-group-justified" role="group">
 							  <div class="btn-group wide" role="group">
 							    <a type="button" class="btn btn-default" data-toggle="tooltip" data-placement="right" title="{{ $custom_link['list_title'] }}" href="{{ $custom_link['list_link'] }}"><i class="fa {{ $custom_link['icon'] }}  fa-fw"></i> {{ $custom_dashboard_title }}</a>
-							  </div>				
+							  </div>
 							  @if (!empty($custom_link['add_title']))
 							  <div class="btn-group narrow" role="group" style="width: .1%;">
 							    <a type="button" class="btn btn-info" data-toggle="tooltip" data-placement="right" title="{{ $custom_link['add_title'] }}" href="{{ $custom_link['add_link'] }}"><i class="fa fa-plus"></i></a>
@@ -254,20 +254,36 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 					<div class="btn-group-mixed-width">
 					@foreach ($dashboard_links as $menu_title=>$links)
 						{{-- Probably no need to show $menu_title here? --}}
+						{{--
+							This is a total mess and needs a major rethink! Way too many crazy object properties here,
+							and some really loose logic governing whether we can list, add or edit items.
+						 --}}
 						@foreach ($links as $link)
 						<div class="btn-group btn-group-justified" role="group">
 						  <div class="btn-group wide" role="group">
+						  	@if (!empty($link['list_title']))
 						    <a type="button" class="btn btn-default" data-toggle="tooltip" data-placement="right" title="{{ $link['list_title'] }}" href="{{ $link['list_link'] }}"><i class="fa {{ $link['icon_only'] }}  fa-fw"></i> {{ $link['title'] }}</a>
-						  </div>				  
+						    @elseif (!empty($link['edit_title']))
+						    	<a type="button" class="btn btn-default" href="{{ $link['edit_link'] }}"><i class="fa {{ $link['icon_only'] }}  fa-fw"></i> {{ $link['title'] }}</a>
+						    @else
+						    	<a class="btn btn-default"><i class="fa {{ $link['icon_only'] }}  fa-fw"></i> {{ $link['title'] }}</a>
+						    @endif
+						  </div>
+						  @if (!empty($link['edit_title']))
+						  <div class="btn-group narrow" role="group" style="width: .1%;">
+						    <a type="button" class="btn btn-info" data-toggle="tooltip" data-placement="right" title="{{ $link['edit_title'] }}" href="{{ $link['edit_link'] }}"><i class="fa fa-pencil"></i></a>
+						  </div>
+						  @elseif (!empty($link['add_title']))
 						  <div class="btn-group narrow" role="group" style="width: .1%;">
 						    <a type="button" class="btn btn-info" data-toggle="tooltip" data-placement="right" title="{{ $link['add_title'] }}" href="{{ $link['add_link'] }}"><i class="fa fa-plus"></i></a>
 						  </div>
+						  @endif
 					  	</div>
 					  	@endforeach
 					@endforeach
 					</div>
-				
-				
+
+
 			 	</div>
 			</div>
 		</div>
@@ -292,8 +308,8 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 						    	<a href="{{ $import_export_link['export_link'] }}" type="button" class="btn btn-success" data-toggle="tooltip" data-placement="bottom" title="Export"><i class="fa fa-download fa-fw"></i></a>
 						  	</div>
 						  @endif
-						</div>	
-						@endforeach				
+						</div>
+						@endforeach
 					</div>
 				</div>
 			</div>
@@ -301,5 +317,5 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 		</div>
 	</div>
 
-	
+
 @stop

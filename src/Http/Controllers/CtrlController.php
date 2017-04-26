@@ -46,6 +46,47 @@ class CtrlController extends Controller
 		}
 		*/
 
+		$this->uploads_folder = config('ctrl.uploads_folder','uploads');
+
+		// This is required by Laravel 5.3+; see "Session In The Constructor", here: https://laravel.com/docs/5.3/upgrade
+		/* Specifically:
+			In previous versions of Laravel, you could access session variables or the authenticated user in your controller's constructor. This was never intended to be an explicit feature of the framework. In Laravel 5.3, you can't access the session or authenticated user in your controller's constructor because the middleware has not run yet.
+
+			As an alternative, you may define a Closure based middleware directly in your controller's constructor. Before using this feature, make sure that your application is running Laravel 5.3.4 or above:
+		*/
+		if (\App::VERSION() >= 5.3) {
+			$this->middleware(function ($request, $next) {
+	            $this->_check_login(Auth::user()); // Check that the user is logged in, if necessary
+	            $this->build_menu();
+	            return $next($request);
+	            //WIP: we need to move some more code here, such as building menu links (otherwise we can't customise them by user).
+	        });
+	    }
+	    else {
+			$this->_check_login(); // Check that the user is logged in, if necessary
+			$this->build_menu();
+		}
+
+		// Can we automatically set the password of any new users (ie, those for which we've added a plaintext_password, but not set an actual password)?
+		$new_users = DB::table('users')->where('password','')->where('plaintext_password','!=','')->get();
+		foreach ($new_users as $new_user) {
+			DB::table('users')
+            ->where('id', $new_user->id)
+            ->update([
+            	'password' => \Hash::make($new_user->plaintext_password),
+            	'plaintext_password'=>'',
+            	'ctrl_group'=>'user'
+            ]);
+		}
+	}
+
+	/**
+	 * Build the menu and save it as a global view variable using View::share()
+	 */
+	protected function build_menu() {
+
+		//if (is_null($user)) $user = Auth::user();
+
 		// Build the menu
 		$ctrl_classes = CtrlClass::where('menu_title','!=','')
 					 	->orderBy('order')
@@ -73,70 +114,105 @@ class CtrlController extends Controller
 
 			$count = $count_ctrl_class::count();
 
-			$add_link  = route('ctrl::edit_object',$ctrl_class->id);
-			$add_title = 'Add '.$this->a_an($ctrl_class->get_singular()).' '.$ctrl_class->get_singular();
-
-			if ($count > 0) {
-				$list_link  = route('ctrl::list_objects',$ctrl_class->id);
-				$list_title = 'View '.$count.' '.($count == 1 ? $ctrl_class->get_singular() : $ctrl_class->get_plural());
+			if ($this->module->enabled('permissions')) {
+				$can_add = $this->module->run('permissions',[
+					$ctrl_class->id,
+					'add',
+				]);
+				$can_edit = $this->module->run('permissions',[
+					$ctrl_class->id,
+					'edit',
+				]);
+				$can_list = $this->module->run('permissions',[
+					$ctrl_class->id,
+					'list',
+				]);
 			}
 			else {
-				$list_link  = false;
-				$list_title = 'No '.$ctrl_class->get_plural();
+				$can_list = $can_edit = $can_add = true;
+			}
+
+			/**
+			 * Add items to the menu that indicate whether we can list items, and/or add or edit them.
+			 * "Editing" is a special case, which we use when it's not possible to add or list items; this
+			 * implies that we only have one record of a given type; such as, a "Settings" record for a single user.
+			 * The logic will be, an "edit" link takes precedence over an "add" link; in fact, we should
+			 * never have both present.
+			 */
+
+
+			if ($can_list) {
+				if ($count > 0) { // TODO: this is misleading, we may have loads of items but only one that this user can edit
+					$list_link  = route('ctrl::list_objects',$ctrl_class->id);
+					$list_title = 'View '.$count.' '.($count == 1 ? $ctrl_class->get_singular() : $ctrl_class->get_plural());
+				}
+				else {
+					$list_link  = false;
+					$list_title = 'No '.$ctrl_class->get_plural();
+				}
+			}
+			else {
+				$list_link = $list_title = false;
+			}
+
+			if ($can_add) {
+				$add_link  = route('ctrl::edit_object',[$ctrl_class->id]);
+				$add_title = 'Add '.$this->a_an($ctrl_class->get_singular()).' '.$ctrl_class->get_singular();
+			}
+			else {
+				$add_link = $add_title = false;
+			}
+
+			// Do we assume that an Edit link in this context is always when editing just one of something? I think so.
+			if ($can_edit && !$can_list && !$can_add) {
+				$first_object = $this->get_object_from_ctrl_class_id($ctrl_class->id);
+				$edit_link    = route('ctrl::edit_object',[$ctrl_class->id,$first_object->id]);
+				$edit_title   = 'Edit the '.$ctrl_class->get_singular();
+
+				$link_title = ucwords($ctrl_class->get_singular());
+			}
+			else {
+				$edit_link = $edit_title = false;
+				$link_title = ucwords($ctrl_class->get_plural());
 			}
 
 			// Note that we flag these links as "dashboard", to add them to the dashboard view
 			// This relies on us having a "dashboard" flag in the ctrl_classes table, and having at least one item flagged as "dashboard"
 			// This is because this flag is new; previously we listed everything on the dashboard, and we retain this old approach if necessary
 
-			$link = [
-				'id'         => $ctrl_class->id,
-				'title'      => ucwords($ctrl_class->get_plural()),
-				'icon'       => ($icon = $ctrl_class->get_icon()) ? '<i class="'.$icon.' fa-fw"></i> ' : '',
-				'icon_only'  => ($icon = $ctrl_class->get_icon()) ? $icon : '',
-				'add_link'   => $add_link,
-				'add_title'  => $add_title,
-				'list_link'  => $list_link,
-				'list_title' => $list_title,
-				'dashboard'  => $ctrl_class->flagged('dashboard')
-			];
+			if ($can_edit || $can_list || $can_add) {
 
 
-			$menu_links[$ctrl_class->menu_title][] = $link;
+				$link = [
+					'id'         => $ctrl_class->id,
+					'title'      => $link_title,
+					'icon'       => ($icon = $ctrl_class->get_icon()) ? '<i class="'.$icon.' fa-fw"></i> ' : '',
+					'icon_only'  => ($icon = $ctrl_class->get_icon()) ? $icon : '',
+					'add_link'   => $add_link,
+					'add_title'  => $add_title,
+					'edit_link'  => $edit_link,
+					'edit_title' => $edit_title,
+					'list_link'  => $list_link,
+					'list_title' => $list_title,
+					'dashboard'  => $ctrl_class->flagged('dashboard')
+				];
+
+
+				$menu_links[$ctrl_class->menu_title][] = $link;
+			}
 
 		}
+
+		/**
+		 * WIP: we need to make this array much more flexible, so that it can drive the main menu and
+		 * the dashboard links. We need to store a "default" link (for the main menu?) and also make
+		 * the name of the class (eg, "Homepages" or "Home page") separate from any buttons. I think?
+		 * Or, do we just dynamically assess whether we have options to add, edit and/or list?
+		 * They're the only three permutations, after all. No, I think we definitely need to strengthen
+		 * the way in which we store information in menu_links.
+		 */
 
 		View::share ('menu_links', $menu_links );
-
-		$this->uploads_folder = config('ctrl.uploads_folder','uploads');
-
-		// This is required by Laravel 5.3+; see "Session In The Constructor", here: https://laravel.com/docs/5.3/upgrade
-		/* Specifically:
-			In previous versions of Laravel, you could access session variables or the authenticated user in your controller's constructor. This was never intended to be an explicit feature of the framework. In Laravel 5.3, you can't access the session or authenticated user in your controller's constructor because the middleware has not run yet.
-
-			As an alternative, you may define a Closure based middleware directly in your controller's constructor. Before using this feature, make sure that your application is running Laravel 5.3.4 or above:
-		*/
-		if (\App::VERSION() >= 5.3) {
-			$this->middleware(function ($request, $next) {
-	            $this->_check_login(Auth::user()); // Check that the user is logged in, if necessary
-	            return $next($request);
-	        });
-	    }
-	    else {
-			$this->_check_login(); // Check that the user is logged in, if necessary
-		}
-
-		// Can we automatically set the password of any new users (ie, those for which we've added a plaintext_password, but not set an actual password)?
-		$new_users = DB::table('users')->where('password','')->where('plaintext_password','!=','')->get();
-		foreach ($new_users as $new_user) {
-			DB::table('users')
-            ->where('id', $new_user->id)
-            ->update([
-            	'password' => \Hash::make($new_user->plaintext_password),
-            	'plaintext_password'=>'',
-            	'ctrl_group'=>'user'
-            ]);
-		}
 	}
 
 	/**

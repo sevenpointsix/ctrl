@@ -61,11 +61,11 @@ class CtrlTables extends Command
         }
         else if ($action == 'export') {
             $this->export();
-        }        
+        }
         else {
             $this->line('Usage: php artisan ctrl:tables import|export');
-        }      
-        
+        }
+
     }
 
     /**
@@ -96,7 +96,13 @@ class CtrlTables extends Command
 
         exec($command);
 
-        $this->info("Data file exported");
+        $this->info("Data file exported, about to synch the model files");
+
+        $this->call('ctrl:synch', [
+            'files' => 1
+        ]);
+
+
 
     }
 
