@@ -127,6 +127,7 @@ class CtrlController extends Controller
 					$ctrl_class->id,
 					'list',
 				]);
+
 			}
 			else {
 				$can_list = $can_edit = $can_add = true;
@@ -1380,6 +1381,11 @@ class CtrlController extends Controller
 	// If we ever do need to format buttons differently for a "key", this function needs to be split into two; one to retrieve the buttons, and one to display them
 	protected function get_row_buttons($ctrl_class_id,$object_id, $filter_string = null, $scope = 'list') {
 
+		/**
+		 * We draw "row buttons" on the edit page; we don't want these to display when adding a new object, though
+		 */
+		if (!$object_id) return false;
+
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
 
 		if ($scope != 'edit' && $ctrl_class->can('edit')) {
@@ -1963,7 +1969,11 @@ class CtrlController extends Controller
 		// Similarly... once we've saved a filtered object, we want to bounce back to a filtered list. This enables it:
 		$save_link        = route('ctrl::save_object',[$ctrl_class->id,$object_id,$filter_string]);
 
-		// NEW: can we repeat the row buttons on the edit page? This makes a lot of sense I think
+		// NEW: can we repeat the row buttons on the edit page? This makes a lot of sense I think.
+		/**
+		 * We can, but only if we're *editing* an object, not adding one...
+		 */
+
 		$row_buttons = $this->get_row_buttons($ctrl_class->id, $object->id, $filter_string, 'edit');
 
 		return view('ctrl::edit_object',[
