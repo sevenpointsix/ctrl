@@ -3,6 +3,9 @@
 namespace App\Ctrl\Models;
 
 use Illuminate\Database\Eloquent\Model;
+@if (!empty($globalScope))
+use Illuminate\Database\Eloquent\Builder;
+@endif
 
 @if (!empty($soft_deletes))
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -76,7 +79,7 @@ class {{ $model_name }} extends Model
     {
         return $this->belongsToMany('App\Ctrl\Models\{{ $relationship['model'] }}','{{ $relationship['pivot_table'] }}', '{{ $relationship['local_key'] }}','{{ $relationship['foreign_key'] }}');
     }
-    @endforeach    
+    @endforeach
 
     {{-- Set a password mutator so that we never show the password; is there any harm including this for *all* models? --}}
     /**
@@ -114,6 +117,26 @@ class {{ $model_name }} extends Model
     public function setCtrlGroupAttribute($value)
     {
         if (empty($value)) $this->attributes['ctrl_group'] = 'user';
+    }
+
+    @endif
+
+    @if (!empty($globalScope))
+
+    /**
+     * A custom boot to add globalScopes; handy for hiding certain items from certain users.
+     * We may one day need to use an array of globalScopes with different keys...? but
+     * let's just use a single 'ctrl' scope for now.
+     *
+     * @return void
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::addGlobalScope('ctrl', function(Builder $builder) {
+            {!! $globalScope !!}
+        });
     }
 
     @endif

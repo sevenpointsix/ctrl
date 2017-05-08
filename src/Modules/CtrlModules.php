@@ -415,4 +415,21 @@
 			*/
 		}
 
+		/**
+		 * Assign global scopes to certain models; good for filtering by certain users
+		 * @param  object $ctrl_class 	The CtrlClass of objects that we're listing
+		 * @return string The contents of the globalScope function using NowDoc syntax
+		 */
+		protected function globalScope($ctrl_class) {
+			/* For example:
+			$scope = <<<'EOD'
+					$user = \Auth::user();
+					if ($user && $user->ctrl_group == 'site') {
+	                	$builder->where('user_id',$user->id);
+	            	}
+EOD;
+			return $scope;
+			*/
+		}
+
 	}

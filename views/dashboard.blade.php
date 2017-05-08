@@ -260,23 +260,25 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 						 --}}
 						@foreach ($links as $link)
 						<div class="btn-group btn-group-justified" role="group">
-						  <div class="btn-group wide" role="group">
-						  	@if (!empty($link['list_title']))
-						    <a type="button" class="btn btn-default" data-toggle="tooltip" data-placement="right" title="{{ $link['list_title'] }}" href="{{ $link['list_link'] }}"><i class="fa {{ $link['icon_only'] }}  fa-fw"></i> {{ $link['title'] }}</a>
-						    @elseif (!empty($link['edit_title']))
-						    	<a type="button" class="btn btn-default" href="{{ $link['edit_link'] }}"><i class="fa {{ $link['icon_only'] }}  fa-fw"></i> {{ $link['title'] }}</a>
-						    @else
-						    	<a class="btn btn-default"><i class="fa {{ $link['icon_only'] }}  fa-fw"></i> {{ $link['title'] }}</a>
-						    @endif
-						  </div>
-						  @if (!empty($link['edit_title']))
-						  <div class="btn-group narrow" role="group" style="width: .1%;">
-						    <a type="button" class="btn btn-info" data-toggle="tooltip" data-placement="right" title="{{ $link['edit_title'] }}" href="{{ $link['edit_link'] }}"><i class="fa fa-pencil"></i></a>
-						  </div>
-						  @elseif (!empty($link['add_title']))
-						  <div class="btn-group narrow" role="group" style="width: .1%;">
-						    <a type="button" class="btn btn-info" data-toggle="tooltip" data-placement="right" title="{{ $link['add_title'] }}" href="{{ $link['add_link'] }}"><i class="fa fa-plus"></i></a>
-						  </div>
+
+						@if (!empty($link['edit']['link'])) {{-- Indicates a "single item" option --}}
+							<div class="btn-group wide" role="group">
+						  		<a type="button" class="btn btn-default" data-toggle="tooltip" data-placement="right" title="" href="{{ $link['edit']['link'] }}" data-original-title="{{ $link['edit']['title'] }}"><i class="fa {{ $link['icon'] }} fa-fw"></i> {{ $link['title'] }}</a>
+						    </div>
+						  	<div class="btn-group narrow" role="group" style="width: .1%;">
+						    	<a type="button" class="btn btn-info" data-toggle="tooltip" data-placement="right" title="" href="{{ $link['edit']['link'] }}" data-original-title="{{ $link['edit']['title'] }}"><i class="fa fa-pencil"></i></a>
+						  	</div>
+						@elseif (!empty($link['list']['link']))
+							<div class="btn-group wide" role="group">
+						  		<a type="button" class="btn btn-default" data-toggle="tooltip" data-placement="right" title="" href="{{ $link['list']['link'] }}" data-original-title="{{ $link['list']['title'] }}"><i class="fa {{ $link['icon'] }} fa-fw"></i> {{ $link['title'] }}</a>
+						    </div>
+						  	<div class="btn-group narrow" role="group" style="width: .1%;">
+						  		@if (!empty($link['add']['link']))
+						    		<a type="button" class="btn btn-info" data-toggle="tooltip" data-placement="right" title="" href="{{ $link['add']['link'] }}" data-original-title="{{ $link['add']['title'] }}"><i class="fa fa-plus"></i></a>
+						    	@else
+						    		<a type="button" class="btn btn-info" data-toggle="tooltip" data-placement="right" title="" href="{{ $link['list']['link'] }}" data-original-title="{{ $link['list']['title'] }}"><i class="fa fa-th"></i></a>
+						    	@endif
+						  	</div>
 						  @endif
 					  	</div>
 					  	@endforeach

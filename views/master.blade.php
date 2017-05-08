@@ -85,14 +85,26 @@
             @foreach ($menu_links as $menu_title=>$links)
 
               @if (count($links) == 1)
-              <li><a href="{{ route('ctrl::list_objects',$links[0]['id']) }}">{!! $links[0]['icon'] !!}{{ $menu_title }}</a></li>
+                <li>
+                  @if (!empty($links[0]['edit']['link'])) {{-- Indicates a "single item" --}}
+                    <a href="{{ $links[0]['edit']['link'] }}">{!! $links[0]['icon'] !!}{{ $links[0]['title'] }}</a>
+                  @elseif (!empty($links[0]['list']['link']))
+                    <a href="{{ $links[0]['list']['link'] }}">{!! $links[0]['icon'] !!}{{ $links[0]['title'] }}</a>
+                  @endif
+                </li>
               @else
 
                 <li class="dropdown">
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ $menu_title }} <span class="caret"></span></a>
                   <ul class="dropdown-menu">
                   @foreach ($links as $link)
-                  <li><a href="{{ route('ctrl::list_objects',$link['id']) }}">{!! $link['icon'] !!}{{ $link['title'] }}</a></li>
+                    <li>
+                      @if (!empty($link['edit']['link'])) {{-- Indicates a "single item" --}}
+                        <a href="{{ $link['edit']['link'] }}">{!! $link['icon'] !!}{{ $link['title'] }}</a>
+                      @elseif (!empty($link['list']['link']))
+                        <a href="{{ $link['list']['link'] }}">{!! $link['icon'] !!}{{ $link['title'] }}</a>
+                      @endif
+                    </li>
                   @endforeach
                   </ul>
                 </li>

@@ -4,6 +4,8 @@ namespace Sevenpointsix\Ctrl\Commands;
 
 use Illuminate\Console\Command;
 
+use \App\Ctrl\CtrlModules;
+
 use DB;
 use Schema;
 use Config;
@@ -35,8 +37,18 @@ class CtrlSynch extends Command
      *
      * @return void
      */
-    public function __construct()
-    {
+    // Lifted from CtrlController, and based on http://stackoverflow.com/a/30373386/1463965
+    protected $ctrlModules;
+
+    public function __construct(CtrlModules $ctrlModules) {
+
+        $this->module = $ctrlModules;
+        /* We can now run modules:
+            dd($this->modules->run('test',[
+                'string' => 'Hello world!'
+            ]));
+        }
+        */
         parent::__construct();
     }
 
@@ -49,7 +61,7 @@ class CtrlSynch extends Command
     {
 
         $action = $this->argument('action');
-        $wipe   = $this->option('wipe'); 
+        $wipe   = $this->option('wipe');
         $force  = $this->option('force');
 
         if ($action == 'files') {
@@ -57,7 +69,7 @@ class CtrlSynch extends Command
             $this->generate_model_files();
         }
         else if ($action == 'data') {
-            $this->populate_ctrl_tables($wipe);            
+            $this->populate_ctrl_tables($wipe);
             $this->tidy_up($force);
         }
         else if ($action == 'tidy') {
@@ -70,8 +82,8 @@ class CtrlSynch extends Command
         }
         else {
             $this->line('Usage: php artisan ctrl:synch files|data|tidy|all --wipe');
-        }      
-        
+        }
+
     }
 
     /**
@@ -95,11 +107,11 @@ class CtrlSynch extends Command
         // Get the current database name (from https://octobercms.com/forum/post/howto-get-the-default-database-name-in-eloquentlaravel-config)
         $database_name = Config::get('database.connections.'.Config::get('database.default').'.database');
         $tables = DB::select('SHOW TABLES');
-        $ignore_tables = ['ctrl_classes','ctrl_properties','migrations','password_resets','revisions','jobs','failed_jobs'];         
-        foreach ($tables as $table) {           
+        $ignore_tables = ['ctrl_classes','ctrl_properties','migrations','password_resets','revisions','jobs','failed_jobs'];
+        foreach ($tables as $table) {
             $table_name = $table->{'Tables_in_'.$database_name};
 
-            /*          
+            /*
                 Ignore the following tables:
                 - The ctrl_ tables
                 - The migrations table
@@ -107,32 +119,32 @@ class CtrlSynch extends Command
                 - The revisions table (assuming we're using this)
                 - Any tables prefixed with '_'
             */
-            
+
             if (in_array($table_name, $ignore_tables) || starts_with($table_name,'_')) continue;
 
             // We now need to identify whether the table we're looking at is a pivot table or not
             // We assume a table is a pivot if it has two or three columns, with two "_id" columns
             $table_columns = DB::select("SHOW COLUMNS FROM {$table_name}"); // Bindings fail here for some reason
-            $pivot_table   = false;            
+            $pivot_table   = false;
             $non_id_count  = 0;
             if (count($table_columns) == 2 || count($table_columns) == 3) {
-                $pivot_table   = true; 
+                $pivot_table   = true;
                 foreach ($table_columns as $table_column) {
                     $column_name = $table_column->Field;
-                    if (!ends_with($column_name,'_id')) {                        
-                        if (++$non_id_count > 1) { // Is this our second "non_id" column? 
+                    if (!ends_with($column_name,'_id')) {
+                        if (++$non_id_count > 1) { // Is this our second "non_id" column?
                             $pivot_table = false;
                             break;
                         }
                     }
                 }
             }
-      
+
             if ($pivot_table) {
                 // $table_name is a pivot table
                 $pivot_tables[] = $table_name;
             }
-            else {              
+            else {
                 // $table_name is a standard table
                 $standard_tables[] = $table_name;
             }
@@ -151,12 +163,12 @@ class CtrlSynch extends Command
         for ($pass = 1; $pass <= 2; $pass++) { // Properties on pass 1, relationships on pass 2
             foreach ($standard_tables as $standard_table) {
 
-                $model_name = studly_case(str_singular($standard_table));           
+                $model_name = studly_case(str_singular($standard_table));
                 $ctrl_class = \Sevenpointsix\Ctrl\Models\CtrlClass::firstOrNew(['name' => $model_name]);
 
                 if (!$ctrl_class->exists) {
                     // This is a new model, so set some default values:
-                    $ctrl_class->table_name = $standard_table; 
+                    $ctrl_class->table_name = $standard_table;
                     $ctrl_class->singular = '';
                     $ctrl_class->plural = '';
                     $ctrl_class->description = '';
@@ -165,7 +177,7 @@ class CtrlSynch extends Command
                     $ctrl_class->icon        = 'fa-toggle-right';
                     // Let's leave menu_title for now
                     $ctrl_class->order = 0;
-                } 
+                }
 
                 $ctrl_class->save();
 
@@ -173,7 +185,7 @@ class CtrlSynch extends Command
                 if (!Schema::hasTable($standard_table)) {
                     $this->error("Table $standard_table doesn't exist");
                 }
-        
+
                 $columns = DB::select("SHOW COLUMNS FROM {$standard_table}");
                 if ($pass == 1) $column_ordering[$model_name] = 1;
                 foreach ($columns as $column) {
@@ -182,20 +194,20 @@ class CtrlSynch extends Command
 
                     if (in_array($column_name, $ignore_columns) || starts_with($column_name,'_')) continue;
                         // Not sure we ever prefix columns with _, but I suppose it's possible
-                        
+
                     /*
                         Is this column a straight property, or a relationship?
                         We'll handle relationships on the second pass, so that it's easy enough
-                        to identify the corresponding table we're linking to. 
+                        to identify the corresponding table we're linking to.
                         For example, if we have tables A and B, with A.B_id, we need to know
                         that table B exists before we can create *both* relationships.
                      */
-                    
+
                     if (!ends_with($column_name,'_id') && $pass == 1) { // A straight property
                         $ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrNew([
                             'ctrl_class_id' => $ctrl_class->id,
                             'name'          => $column_name
-                        ]);     
+                        ]);
 
                         // $ctrl_property->ctrl_class()->save($ctrl_class);
                         // I think we can omit this, as we've already set ctrl_class_id when calling firstOrNew():
@@ -207,7 +219,7 @@ class CtrlSynch extends Command
                                 // Set this as a header, so that we can reorder the table, then skip the rest
                                 $ctrl_property->add_to_set('flags','header');
                                 $ctrl_property->order = -1; // To force this to be the first column on the left of the table
-                                $ctrl_property->save(); 
+                                $ctrl_property->save();
                                 continue; // Is this correct? Or break?
                             }
 
@@ -224,14 +236,14 @@ class CtrlSynch extends Command
                                 case 'photo':
                                     $ctrl_property->field_type = 'image';
                                     break;
-                                case 'file':                            
+                                case 'file':
                                     $ctrl_property->field_type = 'file';
                                     break;
                                 case 'email':
                                 case 'email_address':
                                     $ctrl_property->field_type = 'email';
                                     break;
-                                case 'content':                            
+                                case 'content':
                                     $ctrl_property->field_type = 'froala';
                                     break;
                             }
@@ -256,7 +268,7 @@ class CtrlSynch extends Command
                             }
                         }
 
-                        $ctrl_property->save();             
+                        $ctrl_property->save();
                     }
                     else if (ends_with($column_name,'_id') && $pass == 2) { // A relationship
 
@@ -281,14 +293,14 @@ class CtrlSynch extends Command
                             $inverse_ctrl_property_name = strtolower($ctrl_class->name);
                         }
 
-                        $ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrNew([                      
+                        $ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrNew([
                             'ctrl_class_id'     => $ctrl_class->id,
                             'related_to_id'     => $inverse_ctrl_class->id,
                             'name'              => $ctrl_property_name,
                             'relationship_type' => 'belongsTo',
                             'foreign_key'       => $column_name,
-                            'local_key'         => 'id'                            
-                        ]); 
+                            'local_key'         => 'id'
+                        ]);
 
                         // Only set these if they're not already set, otherwise we'll overwrite custom settings:
                         if (!$ctrl_property->exists) {
@@ -299,10 +311,10 @@ class CtrlSynch extends Command
                             $ctrl_property->fieldset   = 'Details'; // Assume we always want to include simple "belongsTo" relationships on the form
                         }
 
-                        $ctrl_property->save(); // As above, no need to explicitly save relationship                            
-                            
+                        $ctrl_property->save(); // As above, no need to explicitly save relationship
+
                         // We do need to create the inverse property though:
-                    
+
                         $inverse_ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrNew([
                             'name'              => $inverse_ctrl_property_name,
                                 // 'name' here could possibly be ascertained in other ways; TBC
@@ -319,8 +331,8 @@ class CtrlSynch extends Command
                         $inverse_ctrl_property->order = $column_ordering[$model_name]++;
                         $inverse_ctrl_property->save();  // As above, no need to explicitly save relationship
                     }
-                    if ($pass == 1) $columns_processed++;   
-                }               
+                    if ($pass == 1) $columns_processed++;
+                }
 
                 if ($pass == 1) $tables_processed++;
             }
@@ -338,7 +350,7 @@ class CtrlSynch extends Command
 
             // Filter out anything that isn't an _id
             $columns = array_where($columns, function ($key, $value) {
-                // Jesus, $key and $value are transposed in Laravel 5.4!                
+                // Jesus, $key and $value are transposed in Laravel 5.4!
                 if (!is_object($value)) {
                     $value = $key;
                 }
@@ -349,7 +361,7 @@ class CtrlSynch extends Command
             $columns = array_sort($columns, function ($value) {
                 return $value->Field;
             });
-            
+
             for ($pass = 1; $pass <= 2; $pass++) { // Allows us to create (invert) both relationships without duplicating code
 
                 if ($pass == 1) {
@@ -360,7 +372,7 @@ class CtrlSynch extends Command
                     $pivot_one = last($columns)->Field;
                     $pivot_two = head($columns)->Field;
                 }
-            
+
                 // Identify the tables (and hence ctrl classes) that we're relating
                 $related_table_one = str_plural(str_replace('_id', '', $pivot_one));
                 $related_ctrl_class_one = \Sevenpointsix\Ctrl\Models\CtrlClass::where([
@@ -389,12 +401,12 @@ class CtrlSynch extends Command
 
                 // This will break product_profile_cache into an array, remove "product", and then rejoin it as "profile_cache"
                 $pivot_table_parts = explode('_', $pivot_table);
-                $pivot_key = array_search(str_replace('_id', '', $pivot_one),$pivot_table_parts);                
+                $pivot_key = array_search(str_replace('_id', '', $pivot_one),$pivot_table_parts);
                 unset($pivot_table_parts[$pivot_key]);
                 $ctrl_property_name = implode('_', $pivot_table_parts);
 
-                // $ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrCreate([ // Should this be first or New?                      
-                $ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrNew([ // Try it...                      
+                // $ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrCreate([ // Should this be first or New?
+                $ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrNew([ // Try it...
                     'ctrl_class_id'     => $related_ctrl_class_one->id,
                     'related_to_id'     => $related_ctrl_class_two->id,
                     'name'              => $ctrl_property_name,
@@ -406,17 +418,17 @@ class CtrlSynch extends Command
 
                 // Only set these if they're not already set, otherwise we'll overwrite custom settings:
                 if (!$ctrl_property->exists) {
-                    // $ctrl_property->order      = $column_order++; 
+                    // $ctrl_property->order      = $column_order++;
                     $ctrl_property->order      = $column_ordering[$model_name]++;
                     $ctrl_property->field_type = 'dropdown';
                     $ctrl_property->label      = ucfirst(str_plural(str_replace('_id', '', $column_name)));
                     $ctrl_property->fieldset   = ''; // We don't always want to include these...
                 }
 
-                $ctrl_property->save(); // As above, no need to explicitly save relationship  
-                
-                if ($pass == 1) $columns_processed++;   
-            }               
+                $ctrl_property->save(); // As above, no need to explicitly save relationship
+
+                if ($pass == 1) $columns_processed++;
+            }
 
             if ($pass == 1) $tables_processed++;
         }
@@ -441,7 +453,7 @@ class CtrlSynch extends Command
         $ctrl_classes = \Sevenpointsix\Ctrl\Models\CtrlClass::get();
 
         foreach ($ctrl_classes as $ctrl_class) {
-        
+
             $view_data = [
                 'model_name'    => $ctrl_class->name,
                 'soft_deletes'  => false, // Let's leave soft deletes for now
@@ -450,9 +462,10 @@ class CtrlSynch extends Command
                 'belongsTo'     => [],
                 'hasMany'       => [],
                 'belongsToMany' => [],
-                'timestamps'    => true // Assume we can have timestamps by default; could also set CREATED_AT and UPDATED_AT if these need to be customised
+                'timestamps'    => true, // Assume we can have timestamps by default; could also set CREATED_AT and UPDATED_AT if these need to be customised
+                'globalScope'   => false
             ];
-            
+
             // NOTE: this may need to include properties that we set using a filter in the URL
             // ie, if we want to add a course to a client, but "client" isn't directly visible in the form;
             // instead, we get to the list of courses by clicking the filtered_list "courses" when listing clients.
@@ -462,21 +475,21 @@ class CtrlSynch extends Command
                                                     $query->whereNull('relationship_type')
                                                           ->orWhere('relationship_type','belongsTo');
                                                 })
-                                              ->get();      
-                                              
+                                              ->get();
+
             // We can only fill relationships if they're belongsTo (ie, have a specific local key, such as one_id)
             // OR if they're belongsToMany, in which case we have a pivot table (I think?)
             foreach ($fillable_properties as $fillable_property) {
                 $view_data['fillable'][] = $fillable_property->get_field_name();
                     // Does Laravel/Eloquent give us a quick way of extracting all ->name properties into an array?
                     // I think it does.
-            } 
+            }
 
             // Which properties can be automatically filled via a filtered list? ie, clicking to add a related page to a pagesection, should set the pagesection variable.
-            // This is a bit complex as we have to look at properties of other classes, linking to this class...            
+            // This is a bit complex as we have to look at properties of other classes, linking to this class...
             $filtered_list_properties = \Sevenpointsix\Ctrl\Models\CtrlProperty::whereRaw(
                                            '(find_in_set(?, flags))',
-                                           ['filtered_list']           
+                                           ['filtered_list']
                                         )->where('related_to_id',$ctrl_class->id)->get();
             if (!$filtered_list_properties->isEmpty()) {
 
@@ -486,14 +499,14 @@ class CtrlSynch extends Command
                                             where('related_to_id',$filtered_list_property->ctrl_class_id)->get();
                     if (!$default_properties->isEmpty()) {
                         foreach ($default_properties as $default_property) {
-                            $view_data['fillable'][] = $default_property->get_field_name();                            
+                            $view_data['fillable'][] = $default_property->get_field_name();
                         }
                     }
                 }
             }
 
             $relationship_properties = $ctrl_class->ctrl_properties()->whereNotNull('related_to_id')->get();
-            
+
             foreach ($relationship_properties as $relationship_property) {
                 $related_ctrl_class = \Sevenpointsix\Ctrl\Models\CtrlClass::find($relationship_property->related_to_id);
 
@@ -503,7 +516,7 @@ class CtrlSynch extends Command
                     'foreign_key' => $relationship_property->foreign_key,
                     'local_key'   => $relationship_property->local_key,
                 ];
-            
+
                 if ($relationship_property->relationship_type == 'belongsToMany') {
                     $relationship_data['pivot_table'] = $relationship_property->pivot_table;
                 }
@@ -514,15 +527,22 @@ class CtrlSynch extends Command
             $timestamps = DB::select("SHOW COLUMNS FROM {$ctrl_class->table_name} WHERE `field` = 'created_at' OR `field` = 'updated_at'"); // Bindings fail here for some reason
             if (count($timestamps) != 2) $view_data['timestamps'] = false; // Don't set timestamps, as we don't have the default Laravel timestamp fields
 
+            // Do we have any custom global scopes...?
+            if ($this->module->enabled('globalScope')) {
+                $view_data['globalScope'] = $this->module->run('globalScope',[
+                    $ctrl_class
+                ]);
+            }
+
             $model_code = View::make('ctrl::model_template',$view_data)->render();
             $model_path = app_path($model_folder.$ctrl_class->name.'.php');
 
             File::put($model_path, $model_code);
-        
+
         }
 
         $this->info($ctrl_classes->count() . ' files generated');
-        
+
     }
 
     /**
@@ -549,7 +569,7 @@ class CtrlSynch extends Command
                 if ($force) {
                     $this->info("Deleting it...");
                     $ctrl_class->ctrl_properties()->delete();
-                    $ctrl_class->related_ctrl_properties()->delete();                    
+                    $ctrl_class->related_ctrl_properties()->delete();
                     $ctrl_class->delete();
                 }
                 $missing_tables = true;
@@ -582,7 +602,7 @@ class CtrlSynch extends Command
             }
             else if (in_array($ctrl_property->relationship_type,['hasMany'])) { // hasMany, has a key in a related table, as per $ctrl_property->related_to_id
                 if (!empty($ctrl_property->related_ctrl_class)) {
-                    $table_name = $ctrl_property->related_ctrl_class->table_name;    
+                    $table_name = $ctrl_property->related_ctrl_class->table_name;
                 }
                 else {
                     $this->info("Cannot load related ctrl class for {$ctrl_property->name}");
@@ -609,7 +629,7 @@ class CtrlSynch extends Command
                 }
             }
             else if (in_array($ctrl_property->relationship_type,['belongsTo'])) { // belongsTo, has a join column (eg _id)
-                $table_name = $ctrl_property->ctrl_class->table_name;   
+                $table_name = $ctrl_property->ctrl_class->table_name;
 
                 // Has the table been deleted?!
                 if (!Schema::hasTable($table_name)) {
@@ -632,7 +652,7 @@ class CtrlSynch extends Command
                 }
             }
             else {
-                $table_name = $ctrl_property->ctrl_class->table_name;    
+                $table_name = $ctrl_property->ctrl_class->table_name;
 
                 // Has the table been deleted?!
                 if (!Schema::hasTable($table_name)) {

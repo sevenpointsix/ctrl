@@ -40,7 +40,7 @@ class CtrlController extends Controller
 
 		$this->module = $ctrlModules;
 		/* We can now run modules:
-			dd($this->modules->run('test',[
+			dd($this->module->run('test',[
 				'string' => 'Hello world!'
 			]));
 		}
@@ -143,12 +143,11 @@ class CtrlController extends Controller
 
 
 			if ($can_list) {
-				if ($count > 0) { // TODO: this is misleading, we may have loads of items but only one that this user can edit
-					$list_link  = route('ctrl::list_objects',$ctrl_class->id);
+				$list_link  = route('ctrl::list_objects',$ctrl_class->id);
+				if ($count > 0) {
 					$list_title = 'View '.$count.' '.($count == 1 ? $ctrl_class->get_singular() : $ctrl_class->get_plural());
 				}
 				else {
-					$list_link  = false;
 					$list_title = 'No '.$ctrl_class->get_plural();
 				}
 			}
@@ -164,12 +163,24 @@ class CtrlController extends Controller
 				$add_link = $add_title = false;
 			}
 
-			// Do we assume that an Edit link in this context is always when editing just one of something? I think so.
+			// An "Edit" link in the context of menu_links is the option to edit just one single item'
+			// for example, editing a "homepage" or "settings" record from a table.
+			$first_object = $this->get_object_from_ctrl_class_id($ctrl_class->id,'first');
+
 			if ($can_edit && !$can_list && !$can_add) {
-				$first_object = $this->get_object_from_ctrl_class_id($ctrl_class->id);
+
+				/**
+				 * Surely we should always expect to an ite in this instance?
+				 */
+				if (is_null($first_object)) {
+					trigger_error("No {$ctrl_class->name} object found");
+					/**
+					 * We could potentially create one here...?
+					 */
+				}
+
 				$edit_link    = route('ctrl::edit_object',[$ctrl_class->id,$first_object->id]);
 				$edit_title   = 'Edit the '.$ctrl_class->get_singular();
-
 				$link_title = ucwords($ctrl_class->get_singular());
 			}
 			else {
@@ -189,12 +200,26 @@ class CtrlController extends Controller
 					'title'      => $link_title,
 					'icon'       => ($icon = $ctrl_class->get_icon()) ? '<i class="'.$icon.' fa-fw"></i> ' : '',
 					'icon_only'  => ($icon = $ctrl_class->get_icon()) ? $icon : '',
+					/* Replace all this with arrays for list, add and edit:
 					'add_link'   => $add_link,
 					'add_title'  => $add_title,
 					'edit_link'  => $edit_link,
 					'edit_title' => $edit_title,
 					'list_link'  => $list_link,
 					'list_title' => $list_title,
+					*/
+					'list'		 => [
+						'title' => $list_title,
+						'link'  => $list_link,
+					],
+					'edit'		 => [
+						'title' => $edit_title,
+						'link'  => $edit_link,
+					],
+					'add'		 => [
+						'title' => $add_title,
+						'link'  => $add_link,
+					],
 					'dashboard'  => $ctrl_class->flagged('dashboard')
 				];
 
@@ -203,6 +228,7 @@ class CtrlController extends Controller
 			}
 
 		}
+		// dd($menu_links);
 
 		/**
 		 * WIP: we need to make this array much more flexible, so that it can drive the main menu and
@@ -1729,10 +1755,40 @@ class CtrlController extends Controller
 		$default_values      = $this->convert_filter_string_to_array($filter_string); // Note that we use this to set default values, not filter the list
 		$default_description = $this->describe_filter($default_values);
 
-		$object             = $this->get_object_from_ctrl_class_id($ctrl_class_id,$object_id);
-
 		$ctrl_class         = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
 		$ctrl_properties    = $ctrl_class->ctrl_properties()->where('fieldset','!=','')->get();
+
+		$object             = $this->get_object_from_ctrl_class_id($ctrl_class_id,$object_id);
+		$mode 			    = ($object_id) ? 'edit' : 'add';
+
+		/**
+		 * Check permissions; this is too clunky, can we set a "default" in a better way?
+		 * @var boolean
+		 */
+		$can_edit = true;
+		$can_add  = true;
+
+        if ($this->module->enabled('permissions')) {
+			$custom_add_permission = $this->module->run('permissions',[
+				$ctrl_class->id,
+				'add',
+				// $filter_string
+			]);
+			if (!is_null($custom_add_permission)) {
+				$can_add = $custom_add_permission;
+			}
+			$custom_edit_permission = $this->module->run('permissions',[
+				$ctrl_class->id,
+				'edit',
+				// $filter_string
+			]);
+			if (!is_null($custom_edit_permission)) {
+				$can_edit = $custom_edit_permission;
+			}
+		}
+
+		if ($mode == 'edit' && !$can_edit) abort(403);
+		if ($mode == 'add' && !$can_add) abort(403);
 
 		$tabbed_form_fields = [];
 		$hidden_form_fields = [];
@@ -1783,7 +1839,7 @@ class CtrlController extends Controller
 			}
 			else {
 				// Do we have a default value set in the querystring?
-				if ($default_values && !$object_id) { // We're adding a new object
+				if ($default_values && $mode == 'add') { // We're adding a new object
 					foreach ($default_values as $default_value) {
 						if ($ctrl_property->id == $default_value['ctrl_property_id']) {
 							$value = $default_value['value'];
@@ -1935,7 +1991,12 @@ class CtrlController extends Controller
 			}
 		}
 
-		if ($object_id) {
+		if ($mode == 'edit') {
+
+			// TODO: we should technically say, "Edit THE {singular}" if this is a single item
+			// We can probably assess this by looking at menu_items, although we might need
+			// to add some more array keys in order to identify (eg) the "homepage" item in the menu.
+
 			$page_title       = 'Edit this '.$ctrl_class->get_singular();
 			// $page_description = '&ldquo;'.$object->title.'&rdquo;';
 			$page_description = $this->get_object_title($object) ? '&ldquo;'.$this->get_object_title($object).'&rdquo;' : '';

@@ -9,7 +9,7 @@
 {{-- No longer needed as we've moved this to the new row-buttons block
 	$(function() {
 		$('a.delete-item').on('click',function() {
-			
+
 			var that = this; // Nicked this idea from Datatables; see below. Preserve $this for the bootbox callback
 	   		bootbox.confirm("Are you sure you want to delete this item?", function(result) {
 	   			if (result) {
@@ -21,12 +21,12 @@
 					    data: {_token: CSRF_TOKEN },
 					    dataType: 'JSON',
 					    success: function (data) {
-					    	
+
 							// Note: this should also go "back" to the dashboard, or a related list, if appropriate.
 							document.location = '{{ route('ctrl::list_objects',$ctrl_class->id) }}';
 					    }
 					});
-	   			}		   				 
+	   			}
 			});
 		});
 	});
@@ -40,7 +40,7 @@
 
 @section('css')
 	<style>
-	
+
 	</style>
 @stop
 
@@ -55,9 +55,9 @@
 	        <span class="icon-bar"></span>
 	        <span class="icon-bar"></span>
 	        <span class="icon-bar"></span>
-	      </button>   
+	      </button>
 	      <a class="navbar-brand">@if ($icon = $ctrl_class->get_icon())<i class="{{ $icon }} fa-fw"></i> @endif
-	      	{{ $page_title }}</a>   
+	      	{{ $page_title }}</a>
 	    </div>
 
 	    <!-- Collect the nav links, forms, and other content for toggling -->
@@ -70,7 +70,7 @@
 			@if (!empty($delete_link) && false) {{-- We now include this in the buttons below; should use this instead? --}}
 			<li><a href="#" rel="{{ $delete_link }}" class="delete-item"><i class="fa fa-trash"></i> Delete</a></li>
 			@endif
-	      </ul>      
+	      </ul>
 	    </div><!-- /.navbar-collapse -->
 	  </div><!-- /.container-fluid -->
 	</nav>
@@ -81,12 +81,12 @@
 	  <ul class="nav nav-tabs" role="tablist">
 	  	<?php $tab_loop = 0; // Hate mixing PHP and blade syntax; consider http://robin.radic.nl/blade-extensions/directives/assignment.html ? ?>
 	  	@foreach ($tabbed_form_fields as $tab_name=>$tab_details)
-	    <li role="presentation" @if ($tab_loop++ == 0)class="active" @endif><a href="#tab-{{ $tab_loop }}" aria-controls="tab-{{ $tab_loop }}" role="tab" data-toggle="tab"><i class="{{ $tab_details['icon'] }}"></i> {{ $tab_name }}</a></li>	    
+	    <li role="presentation" @if ($tab_loop++ == 0)class="active" @endif><a href="#tab-{{ $tab_loop }}" aria-controls="tab-{{ $tab_loop }}" role="tab" data-toggle="tab"><i class="{{ $tab_details['icon'] }}"></i> {{ $tab_name }}</a></li>
 	    @endforeach
 	  </ul>
 
 	  <form class="ajax" method="post" action="{{ $save_link }}">
-	  		
+
 	  		@foreach ($hidden_form_fields as $hidden_form_field)
 	  			@include('ctrl::form_fields.hidden', ['field' => $hidden_form_field])
 	  		@endforeach
@@ -96,7 +96,7 @@
 		  	?>
 		  	@foreach ($tabbed_form_fields as $tab_name=>$tab_details)
 		    <div role="tabpanel" class="tab-pane fade in @if ($tab_loop++ == 0) active @endif" id="tab-{{ $tab_loop }}">
-		    	
+
 		    	@if ($tab_loop == 1)
 					@include('ctrl::messages')
 				@endif
@@ -111,9 +111,9 @@
 					@include('ctrl::form_fields.'.$form_field['template'], ['field' => $form_field])
 
 				@endforeach
-				
+
 			</div>
-			@endforeach			
+			@endforeach
 		  </div>
 		  <hr />
 		  	<div class="row">
