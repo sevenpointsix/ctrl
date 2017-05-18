@@ -99,7 +99,7 @@ class CtrlTables extends Command
         $this->info("Data file exported, about to synch the model files");
 
         $this->call('ctrl:synch', [
-            'files' => 1
+            'action' => 'files'
         ]);
 
 
@@ -115,6 +115,10 @@ class CtrlTables extends Command
          if ($response) { // Bizarrely, I'm getting true on error, false on success. WTF.
             $this->error("Possible error?");
          }
-         $this->info("Data file imported");
+         $this->info("Data file imported, about to synch the model files");
+
+        $this->call('ctrl:synch', [
+            'action' => 'files'
+        ]);
     }
 }

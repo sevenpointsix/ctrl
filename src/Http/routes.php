@@ -18,6 +18,11 @@ Route::group(['as' => 'ctrl::','prefix'=>env('CTRL_PREFIX', 'admin'),'middleware
 		'uses'=>'CtrlController@edit_object'
 	]);
 
+	Route::get('view/{ctrl_class_id}/{object_id?}/{default_properties?}',[
+		'as'=>'view_object',
+		'uses'=>'CtrlController@view_object'
+	]);
+
 	Route::get('export/{ctrl_class_id}/{filter_string?}',[
 		'as'=>'export_objects',
 		'uses'=>'CtrlController@export_objects'
@@ -31,7 +36,7 @@ Route::group(['as' => 'ctrl::','prefix'=>env('CTRL_PREFIX', 'admin'),'middleware
 		'as'=>'import_objects',
 		'uses'=>'CtrlController@import_objects'
 	]);
-	
+
 	Route::post('import/{ctrl_class_id}/{filter_string?}',[
 		'as'=>'import_objects_process',
 		'uses'=>'CtrlController@import_objects_process'
@@ -92,12 +97,12 @@ Route::group(['as' => 'ctrl::','prefix'=>env('CTRL_PREFIX', 'admin'),'middleware
 
 
 	// AUTH:
-	
+
 	Route::get('login',[
 		'as'=>'login',
 		'uses'=>'CtrlController@login'
 	]);
-	
+
 	Route::post('login',[
 		'as'=>'post_login',
 		'uses'=>'CtrlController@post_login'

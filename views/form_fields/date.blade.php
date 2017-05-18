@@ -3,25 +3,35 @@
 
 @extends('ctrl::form_fields.master')
 
-@section('input')    
+@section('input')
     <?php
         // Convert the current database value into a readable string; we convert this back before saving it to the DB
         // This is a bit messy but the datetimepicker doesn't seem to do much in the way of date conversion...
         if ($field['type'] == 'date') {
             $convert_date_format = 'jS F Y'; // Convert the date FROM this format as it comes from the databse
             $clientside_date_format = 'Do MMMM YYYY'; // Display the date usin this format, based on Moment.js, http://momentjs.com/docs/#/displaying/format/
+            $icon = 'fa fa-calendar';
+            $col_width = 'col-md-3 col-sm-4 col-xs-12';
         }
         elseif ($field['type'] == 'datetime') {
             $convert_date_format = 'jS F Y H:i';
             $clientside_date_format = 'Do MMMM YYYY HH:mm';
+            $icon = 'fa fa-calendar';
+            $col_width = 'col-md-3 col-sm-4 col-xs-12';
         }
         elseif ($field['type'] == 'time') {
             $convert_date_format = 'H:i';
             $clientside_date_format = 'LT';
+            $icon = 'fa fa-calendar';
+            $col_width = 'col-md-2 col-sm-3 col-xs-12';
         }
         $date_value = ($field['value'] && strtotime($field['value']) > 0) ? date($convert_date_format,strtotime($field['value'])) : '';
     ?>
-    <input type="text" class="form-control" id="{{ $field['id'] }}" name="{{ $field['name'] }}" value="{{ $date_value }}" placeholder="">    
+    <div class="input-group {{ $col_width }}">
+        <span class="input-group-addon"><i class="{{ $icon }}"></i></span>
+        <input type="text" class="form-control" id="{{ $field['id'] }}" name="{{ $field['name'] }}" value="{{ $date_value }}" placeholder="">
+    </div>
+
 @overwrite
 {{-- Note that we need @overwrite because we include multiple instances of templates that extend form_fields.master: see https://github.com/laravel/framework/issues/1058 --}}
 
@@ -37,10 +47,10 @@
 @push('js')
  <script type="text/javascript">
     $(function () {
-        $('#{{ $field['id'] }}').datetimepicker({            
+        $('#{{ $field['id'] }}').datetimepicker({
             format: '{{ $clientside_date_format }}',
             sideBySide: true,
-            // Auto positioning seems to be a bit buggy; v4 is in beta though 
+            // Auto positioning seems to be a bit buggy; v4 is in beta though
             widgetPositioning: {
                 horizontal: 'left',
                 vertical: 'bottom'

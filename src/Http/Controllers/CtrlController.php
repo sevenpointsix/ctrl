@@ -78,6 +78,13 @@ class CtrlController extends Controller
             	'ctrl_group'=>'user'
             ]);
 		}
+
+		/**
+		 * This is a hacky way to put the "Edit" page into "View" mode;
+		 * what would the best approach be here? A function parameter?
+		 * @var boolean
+		 */
+		$this->isViewingObject = false;
 	}
 
 	/**
@@ -1414,6 +1421,7 @@ class CtrlController extends Controller
 
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
 
+		// TODO: check permissions using the module here if necessary
 		if ($scope != 'edit' && $ctrl_class->can('edit')) {
     		$edit_link   = route('ctrl::edit_object',[$ctrl_class->id,$object_id,$filter_string]);
     	}
@@ -1421,11 +1429,20 @@ class CtrlController extends Controller
     		$edit_link = false;
     	}
 
+    	// TODO: check permissions using the module here if necessary
     	if ($ctrl_class->can('delete')) {
     		$delete_link = route('ctrl::delete_object',[$ctrl_class->id,$object_id]);
     	}
     	else {
     		$delete_link = false;
+    	}
+
+    	// TODO: check permissions using the module here if necessary
+    	if ($ctrl_class->can('view')) {
+    		$view_link = route('ctrl::view_object',[$ctrl_class->id,$object_id]);
+    	}
+    	else {
+    		$view_link = false;
     	}
 
     	// Do we have any filtered lists?
@@ -1554,6 +1571,7 @@ class CtrlController extends Controller
 
 
     	$buttons = view($template, [
+    		'view_link'           => $view_link,
     		'edit_link'           => $edit_link,
     		'delete_link'         => $delete_link,
     		'filtered_list_links' => $filtered_list_links,
@@ -1736,6 +1754,16 @@ class CtrlController extends Controller
 	}
 
 	/**
+	 * Display an object for viewing, not editing
+	 * This mirrors @edit_object, but puts all fields in read_only mode; is this the best approach?
+	 */
+	public function view_object($ctrl_class_id, $object_id = NULL, $filter_string = NULL)
+	{
+		$this->isViewingObject = true;
+		return $this->edit_object($ctrl_class_id, $object_id, $filter_string);
+	}
+
+	/**
 	 * Edit an objects of a given CtrlClass, if an ID is given
 	 * Or renders a blank form if not
 	 * This essentially renders a form for the object
@@ -1747,7 +1775,6 @@ class CtrlController extends Controller
 	 */
 	public function edit_object($ctrl_class_id, $object_id = NULL, $filter_string = NULL)
 	{
-
 		// Convert the the $filter parameter into one that makes sense
 		// Used when linking BACK to a list
 		$filter_array = $this->convert_filter_string_to_array($filter_string);
@@ -1759,7 +1786,7 @@ class CtrlController extends Controller
 		$ctrl_properties    = $ctrl_class->ctrl_properties()->where('fieldset','!=','')->get();
 
 		$object             = $this->get_object_from_ctrl_class_id($ctrl_class_id,$object_id);
-		$mode 			    = ($object_id) ? 'edit' : 'add';
+		$mode 			    = $this->isViewingObject ? 'view' : (($object_id) ? 'edit' : 'add');
 
 		/**
 		 * Check permissions; this is too clunky, can we set a "default" in a better way?
@@ -1950,7 +1977,8 @@ class CtrlController extends Controller
 				'label'                   => $ctrl_property->label,
 				'tip'                     => $ctrl_property->tip,
 				'ctrl_class_name'		  => $ctrl_class->name,
-				'related_ctrl_class_name' => (!empty($related_ctrl_class) ? $related_ctrl_class->name : false)
+				'related_ctrl_class_name' => (!empty($related_ctrl_class) ? $related_ctrl_class->name : false),
+				'readOnly'				  => $mode == 'view' || $ctrl_property->flagged('read_only')
 			];
 			/*
 				Note: we pass in the related_ctrl_class so that we can use Ajax to generate the list of select2 options.
@@ -1991,18 +2019,18 @@ class CtrlController extends Controller
 			}
 		}
 
-		if ($mode == 'edit') {
+		if ($mode == 'edit' || $mode == 'view') {
 
 			// TODO: we should technically say, "Edit THE {singular}" if this is a single item
 			// We can probably assess this by looking at menu_items, although we might need
 			// to add some more array keys in order to identify (eg) the "homepage" item in the menu.
 
-			$page_title       = 'Edit this '.$ctrl_class->get_singular();
+			$page_title       = ($mode == 'view' ? 'View' : 'Edit') .' this '.$ctrl_class->get_singular();
 			// $page_description = '&ldquo;'.$object->title.'&rdquo;';
 			$page_description = $this->get_object_title($object) ? '&ldquo;'.$this->get_object_title($object).'&rdquo;' : '';
 			$delete_link      = $ctrl_class->can('delete') ? route('ctrl::delete_object',[$ctrl_class->id,$object->id]) : '';
 		}
-		else {
+		else if ($mode == 'add') {
 			$page_title = 'Add '.$this->a_an($ctrl_class->get_singular()) . ' ' .$ctrl_class->get_singular();
 			$page_description = $default_description ? '&hellip;'.$default_description : '';
 			$delete_link = '';

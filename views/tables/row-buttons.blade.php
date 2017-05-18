@@ -19,21 +19,23 @@
 */ ?>
 <div class="row-buttons">
 
-	  @if ($edit_link) <a class="btn btn-sm btn-info" href="{!! $edit_link !!}" data-toggle="tooltip" data-placement="bottom" title="Edit"><i class="fa fa-pencil"></i></a> @endif
+	  @if ($view_link) <a class="btn btn-sm btn-info" href="{!! $view_link !!}" data-toggle="tooltip" data-placement="bottom" title="View"><i class="fa fa-eye"></i></a> @endif
+
+      @if ($edit_link) <a class="btn btn-sm btn-info" href="{!! $edit_link !!}" data-toggle="tooltip" data-placement="bottom" title="Edit"><i class="fa fa-pencil"></i></a> @endif
 	  @if ($delete_link) <a class="btn btn-sm btn-danger delete-item" rel="{!! $delete_link !!}" data-toggle="tooltip" data-placement="bottom" title="Delete"><i class="fa fa-trash"></i></a> @endif
 	  {{-- Can we filter on any related items? --}}
-	 
+
 	  @if ($filtered_list_links)
 	  	@if (count($filtered_list_links) == 1 && false) {{-- I'm undecided whether to go for this approach, or the dropdown below; I think the latter. Suspend this for now. --}}
-	  		@if ($filtered_list_links[0]['count'] > 0) 
+	  		@if ($filtered_list_links[0]['count'] > 0)
 	  			<a class="btn btn-sm btn-default" href="{!! $filtered_list_links[0]['link'] !!}"  data-toggle="tooltip" data-placement="top" title="{{ $filtered_list_links[0]['title'] }}">@if ($filtered_list_links[0]['icon'])<i class="{{ $filtered_list_links[0]['icon'] }}"></i>@else<i class="fa fa-bars"></i>@endif</a>
 	  		@else
-	  			<div class="tooltip-wrapper disabled" data-toggle="tooltip" data-placement="top" data-title="{{ $filtered_list_links[0]['title'] }}">					
+	  			<div class="tooltip-wrapper disabled" data-toggle="tooltip" data-placement="top" data-title="{{ $filtered_list_links[0]['title'] }}">
 					<a class="btn btn-sm btn-default disabled">@if ($filtered_list_links[0]['icon'])<i class="{{ $filtered_list_links[0]['icon'] }}"></i>@else<i class="fa fa-bars"></i>@endif</a>
 				</div>
-	  			
+
 	  		@endif
-	  	@else 
+	  	@else
 	  		@foreach ($filtered_list_links as $filtered_list_link)
 			<div class="btn-group">
 				{{-- Another change of approach -- is the dropdown menu just too confusing? --}}
@@ -42,7 +44,7 @@
 			    @if ($filtered_list_link['icon'])<i class="{{ $filtered_list_link['icon'] }}"></i>@else<i class="fa fa-bars"></i>@endif
 			  </a>
 			  <ul class="dropdown-menu dropdown-menu-right">
-			  	<li><a @if ($filtered_list_link['count'] == 0) class="disabled" @else href="{{ $filtered_list_link['list_link'] }}" @endif><i class="fa fa-list fa-fw"></i> {{ $filtered_list_link['list_title'] }}</a></li>			  	
+			  	<li><a @if ($filtered_list_link['count'] == 0) class="disabled" @else href="{{ $filtered_list_link['list_link'] }}" @endif><i class="fa fa-list fa-fw"></i> {{ $filtered_list_link['list_title'] }}</a></li>
 			    <li><a href="{{ $filtered_list_link['add_link'] }}"><i class="fa fa-plus fa-fw"></i> {{ $filtered_list_link['add_title'] }}</a></li>
 			  </ul>
 			  */ ?>
@@ -55,9 +57,9 @@
 			@endforeach
 	  	@endif
 	  @endif
-	
+
 	@forelse ($custom_buttons as $custom_button)
-		<div class="btn-group">				
+		<div class="btn-group">
 			<a href="{{ $custom_button['link'] }}" class="btn btn-sm @if ($custom_button['count'] == 0) btn-default @else btn-warning @endif {{ $custom_button['class'] }}" rel="{{ $custom_button['rel'] }}"  data-toggle="tooltip" data-placement="bottom" title="{{ $custom_button['title'] }}">
 		    @if ($custom_button['icon'])<i class="{{ $custom_button['icon'] }}"></i>@else<i class="fa fa-bars"></i>@endif
 		  </a>
@@ -65,6 +67,6 @@
 	@empty
 		<!-- No custom buttons -->
 	@endforelse
-	
+
 </div>
 
