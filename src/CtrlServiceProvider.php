@@ -75,7 +75,6 @@ class CtrlServiceProvider extends ServiceProvider{
 				}
 			}
 		}
-		dd($args);
 		/* Can I put this here? Just check that we have a Ctrl folder, for models and Modules */
 		$ctrl_folder = app_path('Ctrl/');
 
