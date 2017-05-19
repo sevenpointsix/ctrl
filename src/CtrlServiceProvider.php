@@ -3,7 +3,7 @@
 namespace	Sevenpointsix\Ctrl;
 
 /**
- * 
+ *
  * @author Chris Gibson <chris@sevenpointsix.com>
  * Heavily based on https://github.com/jaiwalker/setup-laravel5-package
  */
@@ -36,12 +36,20 @@ class CtrlServiceProvider extends ServiceProvider{
 
 		// If we run `artisan vendor publish --force`, we can overwrite config files;
 		// this is user error (most likely, my user error), but it's a major cock-up so let's catch it
-		if (\App::runningInConsole()) {			
+
+		if (\App::runningInConsole()) {
 			$args = $_SERVER['argv'];
+
 			if (!empty($args)) {
 				// Are we attempting to run `artisan vendor publish --force`, without the public tag?
 				if (
-					in_array('artisan', $args)
+
+					/**
+					 * Bugfix: previously 'in_array('artisan', $args)' but
+					 * this trips up if you run php ../artisan from a subfolder
+					 */
+					ends_with($args[0],'artisan')
+
 					&& in_array('vendor:publish', $args)
 					&& (
 						!in_array('--tag=public', $args)
@@ -67,12 +75,12 @@ class CtrlServiceProvider extends ServiceProvider{
 				}
 			}
 		}
-
+		dd($args);
 		/* Can I put this here? Just check that we have a Ctrl folder, for models and Modules */
 		$ctrl_folder = app_path('Ctrl/');
-		
+
 		// Don't create a Ctrl folder if this is the local ctrl-c.ms site; that site uses symlinks to other folders
-        if(!File::exists($ctrl_folder) && env('APP_URL', false) != 'http://dev.ctrl-c.ms') {
+        if (!File::exists($ctrl_folder) && env('APP_URL', false) != 'http://dev.ctrl-c.ms') {
             File::makeDirectory($ctrl_folder,0777,true); // See http://laravel-recipes.com/recipes/147/creating-a-directory
         }
 
@@ -115,7 +123,7 @@ class CtrlServiceProvider extends ServiceProvider{
 		$router->group(['namespace' => 'Sevenpointsix\Ctrl\Http\Controllers'], function($router)
 		{
 			require __DIR__.'/Http/routes.php';
-		});		
+		});
 	}
 
 
@@ -131,7 +139,7 @@ class CtrlServiceProvider extends ServiceProvider{
 
 		// Excel module used when importing, exporting CSV data
 		\App::register('Maatwebsite\Excel\ExcelServiceProvider');
-		
+
 		// This didn't seem to work, and isn't needed if we "use Maatwebsite\Excel\Facades\Excel;" at the top of the controller
 		// \App::alias('Excel','Maatwebsite\Excel\Facades\Excel');
 

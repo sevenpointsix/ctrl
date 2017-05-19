@@ -10,15 +10,19 @@
 	@push('js')
 		<!-- Include JS files. -->
 		<script type="text/javascript" src="{{ asset('assets/vendor/ctrl/vendor/froala/js/froala_editor.min.js') }}"></script>
+		{{-- New approach for 2.5+
 		<script>
 		  $.FroalaEditor.DEFAULTS.key = '{{ env('FROALA_KEY','') }}';
 		</script>
+		--}}
+		<script id="fr-fek">try{(function (k){localStorage.FEK=k;t=document.getElementById('fr-fek');t.parentNode.removeChild(t);})('{{ env('FROALA_KEY','') }}')}catch(e){}</script>
 
 		<!-- Include Code Mirror. -->
 		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.3.0/codemirror.min.js"></script>
 		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.3.0/mode/xml/xml.min.js"></script>
 
 		<!-- Include Plugins. -->
+		{{-- TODO: do we really need all these plugins?! Just pick the ones we're using. See: https://www.froala.com/wysiwyg-editor/docs/plugins --}}
 		<script type="text/javascript" src="{{ asset('assets/vendor/ctrl/vendor/froala/js/plugins/align.min.js') }}"></script>
 		<script type="text/javascript" src="{{ asset('assets/vendor/ctrl/vendor/froala/js/plugins/char_counter.min.js') }}"></script>
 		<script type="text/javascript" src="{{ asset('assets/vendor/ctrl/vendor/froala/js/plugins/code_beautifier.min.js') }}"></script>
@@ -43,7 +47,7 @@
 		<script type="text/javascript" src="{{ asset('assets/vendor/ctrl/vendor/froala/js/plugins/table.min.js') }}"></script>
 		<script type="text/javascript" src="{{ asset('assets/vendor/ctrl/vendor/froala/js/plugins/save.min.js') }}"></script>
 		<script type="text/javascript" src="{{ asset('assets/vendor/ctrl/vendor/froala/js/plugins/url.min.js') }}"></script>
-		<script type="text/javascript" src="{{ asset('assets/vendor/ctrl/vendor/froala/js/plugins/video.min.js') }}"></script>	
+		<script type="text/javascript" src="{{ asset('assets/vendor/ctrl/vendor/froala/js/plugins/video.min.js') }}"></script>
 	@endpush
 	<?php $GLOBALS['push_froala_js'] = true; ?>
 @endif
@@ -77,7 +81,7 @@
 		  });
 		</script>
 @endpush
-	
+
 
 @if (empty($GLOBALS['push_froala_css']))
 	@push('css')

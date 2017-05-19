@@ -46,6 +46,9 @@ class CtrlController extends Controller
 		}
 		*/
 
+		/**
+		 * This isn't used if we're running 5.4+, we switch to using Storage
+		 */
 		$this->uploads_folder = config('ctrl.uploads_folder','uploads');
 
 		// This is required by Laravel 5.3+; see "Session In The Constructor", here: https://laravel.com/docs/5.3/upgrade
@@ -2093,16 +2096,7 @@ class CtrlController extends Controller
 	{
 
 		// We need to disable Debugbar when returning Froala AJAX, if used
-	    if (in_array('Barryvdh\Debugbar\ServiceProvider', config('app.providers'))) {
-	    	// Debugbar enabled (there must be a better way of checking this)
-	    	// but in order to disable it, we also need to have enabled the Facade...
-	    	if (!array_key_exists('Debugbar', config('app.aliases'))) {
-	    		trigger_error("If using Debugbar, the alias must be enabled so that we can in turn disable Debugbar...");
-	    	}
-	    	else {
-	    		\Debugbar::disable();
-	    	}
-	    }
+		$this->disableDebugBar();
 
 		// dd($_POST);
 		try {
@@ -2385,37 +2379,15 @@ class CtrlController extends Controller
 	    ]);
 	    */
 
-		// We need to disable Debugbar when returning Froala AJAX, if used
-	    if (in_array('Barryvdh\Debugbar\ServiceProvider', config('app.providers'))) {
-	    	// Debugbar enabled (there must be a better way of checking this)
-	    	// but in order to disable it, we also need to have enabled the Facade...
-	    	if (!array_key_exists('Debugbar', config('app.aliases'))) {
-	    		trigger_error("If using Debugbar, the alias must be enabled so that we can in turn disable Debugbar...");
-	    	}
-	    	else {
-	    		\Debugbar::disable();
-	    	}
-	    }
+	    $this->disableDebugBar();
 
 	    $response = new \StdClass;
 
 		if ($request->file('file')->isValid()) {
 
-			$extension = $request->file('file')->getClientOriginalExtension();
+			$path           = $this->upload($request);
+			$response->link = $path;
 
-			if ($request->type == 'image') {
-				$name      = uniqid('image_');
-			}
-			else if ($request->type == 'file') {
-				// We could add something a little more intelligent here
-				$name = basename($request->file('file')->getClientOriginalName(),".$extension").'-'.rand(11111,99999);
-			}
-
-			$target_folder = $this->uploads_folder;
-			$target_file   = $name.'.'.$extension;
-
-			$moved_file      = $request->file('file')->move($target_folder, $target_file);
-			$response->link  = '/'.$moved_file->getPathname();
 		}
 		else {
 			$response->error = 'An error has occurred';
@@ -2442,17 +2414,7 @@ class CtrlController extends Controller
 	{
 
 		// This code is very, very similar to froala_upload, but we'll keep them separate for future flexibility
-
-		if (in_array('Barryvdh\Debugbar\ServiceProvider', config('app.providers'))) {
-	    	// Debugbar enabled (there must be a better way of checking this)
-	    	// but in order to disable it, we also need to have enabled the Facade...
-	    	if (!array_key_exists('Debugbar', config('app.aliases'))) {
-	    		trigger_error("If using Debugbar, the alias must be enabled so that we can in turn disable Debugbar...");
-	    	}
-	    	else {
-	    		\Debugbar::disable();
-	    	}
-	    }
+		$this->disableDebugBar();
 
 		$response = new \StdClass;
 
@@ -2463,21 +2425,9 @@ class CtrlController extends Controller
 
 			if ($request->file($field_name)->isValid()) {
 
-				$extension = $request->file($field_name)->getClientOriginalExtension();
+				$path           = $this->upload($request);
+				$response->link = $path;
 
-				if ($request->type == 'image') {
-					$name      = uniqid('image_');
-				}
-				else if ($request->type == 'file') {
-					// We could add something a little more intelligent here
-					$name = basename($request->file($field_name)->getClientOriginalName(),".$extension").'-'.rand(11111,99999);
-				}
-
-				$target_folder = $this->uploads_folder;
-				$target_file   = $name.'.'.$extension;
-
-				$moved_file      = $request->file($field_name)->move($target_folder, $target_file);
-				$response->link  = '/'.$moved_file->getPathname();
 			}
 			else {
 				$response->error = 'An error has occurred';
@@ -2487,6 +2437,78 @@ class CtrlController extends Controller
 
 		return stripslashes(json_encode($response));
 	}
+
+	/**
+	 * A generic "upload" function used by both Krajee and Froala
+	 * @param  Request $request
+	 * @param  string $fieldName    The name of the "file" field (typically just 'file')
+	 * @return string The path of the uploaded file
+	 */
+	protected function upload($request, $fieldName = 'file') {
+		/**
+		 * New approach using Storage
+		 */
+		if (\App::VERSION() >= 5.4) {
+			/**
+			 * Storage images with a hash, preserve original filename for files
+			 * Duplicate name code lifted from http://stackoverflow.com/a/28710192
+			 */
+			if ($request->type == 'image') {
+				 $path = $request->file('file')->store('images');
+			}
+			else if ($request->type == 'file') {
+				$fileName = $request->file('file')->getClientOriginalName();
+
+				/**
+				 * TODO: Duplicate name code goes here
+				 */
+				$path = $request->file('file')->storeAs(
+				    'files', $fileName
+				);
+			}
+		}
+		else {
+			/**
+			 * Old approach
+			 */
+			$extension = $request->file('file')->getClientOriginalExtension();
+
+			if ($request->type == 'image') {
+				$name      = uniqid('image_');
+			}
+			else if ($request->type == 'file') {
+				// We could add something a little more intelligent here
+				$name = basename($request->file('file')->getClientOriginalName(),".$extension").'-'.rand(11111,99999);
+			}
+
+			$target_folder = $this->uploads_folder;
+			$target_file   = $name.'.'.$extension;
+
+			$moved_file = $request->file('file')->move($target_folder, $target_file);
+
+			$path = '/'.$moved_file->getPathname();
+		}
+		return $path;
+
+	}
+
+	/**
+	 * Disable the DebugBar, for instances where it clashes with Ajax responses
+	 */
+	protected function disabledDebugBar() {
+		// We need to disable Debugbar when returning Froala AJAX, if used
+	    if (in_array('Barryvdh\Debugbar\ServiceProvider', config('app.providers'))) {
+	    	// Debugbar enabled (there must be a better way of checking this)
+	    	// but in order to disable it, we also need to have enabled the Facade...
+	    	if (!array_key_exists('Debugbar', config('app.aliases'))) {
+	    		trigger_error("If using Debugbar, the alias must be enabled so that we can in turn disable Debugbar...");
+	    	}
+	    	else {
+	    		\Debugbar::disable();
+	    	}
+	    }
+	}
+
 	/**
 	 * Present the login screen
 	 *
