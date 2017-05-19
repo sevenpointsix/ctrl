@@ -2385,7 +2385,7 @@ class CtrlController extends Controller
 
 		if ($request->file('file')->isValid()) {
 
-			$path           = $this->upload($request);
+			$path           = $this->upload($request, 'file');
 			$response->link = $path;
 
 		}
@@ -2425,7 +2425,7 @@ class CtrlController extends Controller
 
 			if ($request->file($field_name)->isValid()) {
 
-				$path           = $this->upload($request);
+				$path           = $this->upload($request,$field_name);
 				$response->link = $path;
 
 			}
@@ -2441,28 +2441,50 @@ class CtrlController extends Controller
 	/**
 	 * A generic "upload" function used by both Krajee and Froala
 	 * @param  Request $request
-	 * @param  string $fieldName    The name of the "file" field (typically just 'file')
+	 * @param  string $fieldName    The name of the "file" field
 	 * @return string The path of the uploaded file
 	 */
-	protected function upload($request, $fieldName = 'file') {
+	protected function upload($request, $fieldName) {
 		/**
 		 * New approach using Storage
 		 */
 		if (\App::VERSION() >= 5.4) {
 			/**
 			 * Storage images with a hash, preserve original filename for files
-			 * Duplicate name code lifted from http://stackoverflow.com/a/28710192
 			 */
 			if ($request->type == 'image') {
-				 $path = $request->file('file')->store('images');
+				 $path = $request->file($fieldName)->store('images');
 			}
 			else if ($request->type == 'file') {
-				$fileName = $request->file('file')->getClientOriginalName();
-
+				$fileName = $request->file($fieldName)->getClientOriginalName();
 				/**
-				 * TODO: Duplicate name code goes here
+				 * TODO: Untested! Duplicate name code should also go here.
+				 *  Something like this, from http://stackoverflow.com/a/28710192:
+				 *
+				if (Storage::exists($fileName)) {
+				    // Split filename into parts
+				    $pathInfo = pathinfo($fileName);
+				    $extension = isset($pathInfo['extension']) ? ('.' . $pathInfo['extension']) : '';
+
+				    // Look for a number before the extension; add one if there isn't already
+				    if (preg_match('/(.*?)(\d+)$/', $pathInfo['filename'], $match)) {
+				        // Have a number; increment it
+				        $base = $match[1];
+				        $number = intVal($match[2]);
+				    } else {
+				        // No number; add one
+				        $base = $pathInfo['filename'];
+				        $number = 0;
+				    }
+
+				    // Choose a name with an incremented number until a file with that name
+				    // doesn't exist
+				    do {
+				        $fileName = $pathInfo['dirname'] . DIRECTORY_SEPARATOR . $base . ++$number . $extension;
+				    } while (Storage::exists($fileName));
+				}
 				 */
-				$path = $request->file('file')->storeAs(
+				$path = $request->file($fieldName)->storeAs(
 				    'files', $fileName
 				);
 			}
@@ -2471,20 +2493,20 @@ class CtrlController extends Controller
 			/**
 			 * Old approach
 			 */
-			$extension = $request->file('file')->getClientOriginalExtension();
+			$extension = $request->file($fieldName)->getClientOriginalExtension();
 
 			if ($request->type == 'image') {
 				$name      = uniqid('image_');
 			}
 			else if ($request->type == 'file') {
 				// We could add something a little more intelligent here
-				$name = basename($request->file('file')->getClientOriginalName(),".$extension").'-'.rand(11111,99999);
+				$name = basename($request->file($fieldName)->getClientOriginalName(),".$extension").'-'.rand(11111,99999);
 			}
 
 			$target_folder = $this->uploads_folder;
 			$target_file   = $name.'.'.$extension;
 
-			$moved_file = $request->file('file')->move($target_folder, $target_file);
+			$moved_file = $request->file($fieldName)->move($target_folder, $target_file);
 
 			$path = '/'.$moved_file->getPathname();
 		}
@@ -2495,7 +2517,7 @@ class CtrlController extends Controller
 	/**
 	 * Disable the DebugBar, for instances where it clashes with Ajax responses
 	 */
-	protected function disabledDebugBar() {
+	protected function disableDebugBar() {
 		// We need to disable Debugbar when returning Froala AJAX, if used
 	    if (in_array('Barryvdh\Debugbar\ServiceProvider', config('app.providers'))) {
 	    	// Debugbar enabled (there must be a better way of checking this)
