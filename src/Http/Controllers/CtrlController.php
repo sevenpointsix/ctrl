@@ -2453,7 +2453,7 @@ class CtrlController extends Controller
 			 * Storage images with a hash, preserve original filename for files
 			 */
 			if ($request->type == 'image') {
-				 $path = $request->file($fieldName)->store('images');
+				 $path = $request->file($fieldName)->store('public/images');
 			}
 			else if ($request->type == 'file') {
 				$fileName = $request->file($fieldName)->getClientOriginalName();
@@ -2485,9 +2485,18 @@ class CtrlController extends Controller
 				}
 				 */
 				$path = $request->file($fieldName)->storeAs(
-				    'files', $fileName
+				    'public/files', $fileName
 				);
 			}
+
+			/**
+			 * OK, so. Using Storage as above will stick everything in (eg) /storage/app/public/images
+			 * We then use the Laravel symlink to server these files from (eg) /storage/images
+			 * However, the store() and storeAs() methods return the 'public' path; eg, /public/images
+			 * whereas really, I think it makes more sense to store the actual path we'd use; eg, /storage/images
+			 * So, swap out the /public for /storage. This is all a bit flaky and may well need revisiting.
+			 */
+			$path = preg_replace('/^public\//', 'storage/', $path);
 		}
 		else {
 			/**
