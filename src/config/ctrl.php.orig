@@ -1,0 +1,10 @@
+<?php
+
+
+return [
+	"logo" => '', // The path or full URL of a suitable client logo
+<<<<<<< HEAD
+=======
+	"uploads_folder" => '', // The name of a folder (relative to /public) into which we save uploads; only used < 5.4, we later switched to the storage folder.
+>>>>>>> 556ca349b565f5a13d05facac014f2b392bb950b
+];

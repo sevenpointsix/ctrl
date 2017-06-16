@@ -18,7 +18,7 @@ class CtrlClass extends Model
      * Return all properties for this class
      */
     public function ctrl_properties()
-    {       
+    {
         return $this->hasMany('Sevenpointsix\Ctrl\Models\CtrlProperty')->orderBy('order');
     }
 
@@ -26,7 +26,7 @@ class CtrlClass extends Model
      * Return all properties for this class
      */
     public function related_ctrl_properties()
-    {       
+    {
         return $this->hasMany('Sevenpointsix\Ctrl\Models\CtrlProperty','related_to_id','id')->orderBy('order');
     }
 
@@ -37,7 +37,7 @@ class CtrlClass extends Model
      * @return string
      */
     public function get_class() {
-        $class = "\App\Ctrl\Models\\{$this->name}"; 
+        $class = "\App\Ctrl\Models\\{$this->name}";
         return $class;
     }
 
@@ -52,7 +52,7 @@ class CtrlClass extends Model
         }
         else {
             $icon = 'fa-toggle-right';
-        }        
+        }
         if (strpos($icon,'fa') === 0) { // Identify Font Awesome icons automatically
             $icon = "fa $icon";
         }
@@ -81,7 +81,7 @@ class CtrlClass extends Model
      * @return string
      */
     public function get_singular() {
-       
+
         $singular = '';
         if ($this->singular) {
             $singular = $this->singular;
@@ -90,7 +90,7 @@ class CtrlClass extends Model
             $singular = strtolower($this->name);
         }
         return $singular;
-       
+
     }
 
     /**

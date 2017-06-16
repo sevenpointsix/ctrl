@@ -1,22 +1,27 @@
 {
     "name": "sevenpointsix/ctrl",
-    "description": "A very early version of a CMS. Not intended for public or general use.",    
+    "description": "A very early version of a CMS. Not intended for public or general use.",
     "require": {
         "php": ">=5.5.9",
         "laravel/framework": "5.*",
         "yajra/laravel-datatables-oracle": "~7.5",
         "maatwebsite/excel": "~2.1.0",
         "sunra/php-simple-html-dom-parser": "1.5.2",
+<<<<<<< HEAD
 	    "venturecraft/revisionable": "1.*",
         "intervention/image": "^2.3"
     },    
+=======
+	    "venturecraft/revisionable": "1.*"
+    },
+>>>>>>> 556ca349b565f5a13d05facac014f2b392bb950b
     "autoload": {
         "psr-4": {
             "Sevenpointsix\\Ctrl\\": "src"
         }
     },
     "scripts": {
-        "post-update-cmd": [  
+        "post-update-cmd": [
             "php artisan vendor:publish --tag=config",
             "php artisan vendor:publish --tag=migrations",
             "php artisan vendor:publish --tag=public --force"
