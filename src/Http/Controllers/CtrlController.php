@@ -2484,8 +2484,14 @@ class CtrlController extends Controller
 				    } while (Storage::exists($fileName));
 				}
 				 */
+				/**
+				 * Note that we use the public disk to save files in storage/app/public
+				 * this is because we'll likely want to download files directly
+				 * (where as images are always passed through intervention or similar)
+				 * @var [type]
+				 */
 				$path = $request->file($fieldName)->storeAs(
-				    'files', $fileName
+				    'files', $fileName, 'public'
 				);
 			}
 		}

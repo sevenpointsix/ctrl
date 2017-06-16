@@ -59,10 +59,10 @@ class CtrlServiceProvider extends ServiceProvider{
 					&& in_array('--force', $args)
 				) {
 					// Require a `--ctrl` flag in order to force a `vendor publish`
-					if (!in_array('--ctrl', $args)) {
+					if (!in_array('--ctrl=overwrite', $args)) {
 						$message = [
-							'Running `artisan vendor publish --force` will override CTRL config files!',
-							'If you really wish to do this, please add the flag `--ctrl`.',
+							'Running `artisan vendor publish --force` will overwrite CTRL config files!',
+							'If you really wish to do this, please add the flag `--ctrl=overwrite`.',
 							'Otherwise, to publish CSS files only, add the argument `--tag=public`.'
 						];
 						$maxlen = max(array_map('strlen', $message)); // Nice, http://stackoverflow.com/questions/1762191/how-to-get-the-length-of-longest-string-in-an-array
@@ -139,7 +139,15 @@ class CtrlServiceProvider extends ServiceProvider{
 		// Excel module used when importing, exporting CSV data
 		\App::register('Maatwebsite\Excel\ExcelServiceProvider');
 
+		// Image module for thumbnailing images, required now that we store them all in storage
+		\App::register('Intervention\Image\ImageServiceProvider');
+		// Ah, this is the way to register an Alias in a ServiceProvider, from: http://stackoverflow.com/a/22749871
+		$loader = \Illuminate\Foundation\AliasLoader::getInstance();
+    	$loader->alias('Image', 'Intervention\Image\Facades\Image');
+
 		// This didn't seem to work, and isn't needed if we "use Maatwebsite\Excel\Facades\Excel;" at the top of the controller
+		// (See above to see how this could actually be done, but in fact it's not necessary. We only need to use the Image Facade
+		// because we use it directly within the Routes file).
 		// \App::alias('Excel','Maatwebsite\Excel\Facades\Excel');
 
 		// Can we create a custom Service Provider here to drive "modules"?

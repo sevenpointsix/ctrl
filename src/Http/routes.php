@@ -1,5 +1,5 @@
 <?php
-
+use Intervention\Image\ImageServiceProvider;
 // Prefix all route names with ctrl::, all URLs with ctrl/, and enable the 'web' middlewhere (which automatically enables sessions, a global $errors variable, CSRF protection and probably some other stuff).
 
 Route::group(['as' => 'ctrl::','prefix'=>env('CTRL_PREFIX', 'admin'),'middleware' => ['web']], function () {
@@ -87,14 +87,40 @@ Route::group(['as' => 'ctrl::','prefix'=>env('CTRL_PREFIX', 'admin'),'middleware
 		'uses'=>'CtrlController@get_select2'
 	]);
 
+	/**
+	 * Load and display an image from the storage folder
+	 * From: http://image.intervention.io/use/http
+	 * @param  $mode 'view' or 'download'
+	 * @param  $file The full filename, including slashes (see wildcard below)
+	 */
+	Route::get('image/{mode}/{file}', function($mode,$file)
+	{
+		// TODO: formalise the storage paths for files and images
+		// TODO: handle multiple folders...? although this is only ever used by the image preview input
+		// 		 so we have control over how that works.
+		$path = storage_path("app/$file");
+
+		if ($mode == 'view') {
+		    $image = Image::make($path)->resize(600, 600, function ($constraint) {
+			    $constraint->aspectRatio();
+			    $constraint->upsize();
+			});
+		    return $image->response();
+		}
+		else if ($mode == 'download') {
+			$path_parts = pathinfo($path);
+			return response()->download($path, "image.".$path_parts['extension']);
+		}
+		else {
+			abort(404);
+		}
+	})->where('file', '.*')->name('image'); // Wildcard from http://stackoverflow.com/a/35275210; is this a bit hacky?
+
 	// Testing...
 	Route::get('test',[
 		'as'=>'test',
 		'uses'=>'CtrlController@test'
 	]);
-
-
-
 
 	// AUTH:
 

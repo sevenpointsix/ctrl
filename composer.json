@@ -7,7 +7,8 @@
         "yajra/laravel-datatables-oracle": "~6.0",
         "maatwebsite/excel": "~2.1.0",
         "sunra/php-simple-html-dom-parser": "1.5.2",
-	    "venturecraft/revisionable": "1.*"
+	    "venturecraft/revisionable": "1.*",
+        "intervention/image": "^2.3"
     },    
     "autoload": {
         "psr-4": {

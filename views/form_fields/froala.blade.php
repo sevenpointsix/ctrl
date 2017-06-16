@@ -64,7 +64,8 @@
 		      	See: https://www.froala.com/wysiwyg-editor/docs/options#toolbarButtons
 		      	*/
 		      	charCounterCount: false,
-		      	toolbarSticky: false, /* Was this causing layout glitches in Chrome? */
+		      	toolbarSticky: true, /* Was this causing layout glitches in Chrome? Nah, reckon it'll be fine */
+		      	toolbarStickyOffset: 50, /* Need this to account for the fixed navbar though, otherwise the toolbar disappears behind it */
 
 		      	// See https://www.froala.com/wysiwyg-editor/docs/server-integrations/php-image-upload
 				imageUploadURL: '{{ route('ctrl::froala_upload') }}',
