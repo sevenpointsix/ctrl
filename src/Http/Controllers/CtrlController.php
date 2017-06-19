@@ -1320,6 +1320,7 @@ class CtrlController extends Controller
             ->addColumn('action', function ($object) use ($ctrl_class, $filter_string) {
             	return $this->get_row_buttons($ctrl_class->id, $object->id, $filter_string);
             })
+            ->rawColumns(['order','src','file','action']) // Allow HTML in columns; see https://github.com/yajra/laravel-datatables/issues/949
             // Is this the best place to filter results if necessary?
             // I think so. See: http://datatables.yajrabox.com/eloquent/custom-filter
         	->filter(function ($query) use ($filter_array, $ctrl_class, $filter_string) {
