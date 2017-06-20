@@ -86,6 +86,17 @@
 		}
 
 		/**
+		 * Manipulate an object before it's been saved
+		 * @param  Request  $request
+		 * @param  integer $object The object we're saving
+		 * @param  string $filter_string Optional list filter; such as 43,1, which will set the value of the ctrl_property 43 to 1 when we save the object
+		 * @return
+		 */
+		protected function pre_save($request, $object, $filter_string) {
+
+		}
+
+		/**
 		 * Import objects from a CSV file
 		 * @param  string $action        There are various things that this function can do; count rows, check headers, import data and so on.
 		 * @param  collection $results The results of the CSV import, as returned by Maatwebsite\Excel

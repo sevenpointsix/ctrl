@@ -2325,6 +2325,14 @@ class CtrlController extends Controller
 			}
 		}
 
+        if ($this->module->enabled('pre_save')) {
+			$this->module->run('pre_save',[
+				$request,
+				$object,
+				$filter_string
+			]);
+		}
+
         $object->save();
 
         // Add a custom post_save module
