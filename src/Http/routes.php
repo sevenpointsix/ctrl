@@ -95,10 +95,10 @@ Route::group(['as' => 'ctrl::','prefix'=>env('CTRL_PREFIX', 'admin'),'middleware
 	 */
 	Route::get('image/{mode}/{file}', function($mode,$file)
 	{
-		// TODO: formalise the storage paths for files and images
 		// TODO: handle multiple folders...? although this is only ever used by the image preview input
 		// 		 so we have control over how that works.
-		$path = storage_path("app/$file");
+
+		$path = storage_path("app/public/$file");
 
 		if ($mode == 'view') {
 		    $image = Image::make($path)->resize(600, 600, function ($constraint) {

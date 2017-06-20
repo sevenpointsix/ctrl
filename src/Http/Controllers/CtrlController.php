@@ -1320,6 +1320,7 @@ class CtrlController extends Controller
             ->addColumn('action', function ($object) use ($ctrl_class, $filter_string) {
             	return $this->get_row_buttons($ctrl_class->id, $object->id, $filter_string);
             })
+            ->rawColumns(['order','src','file','action']) // Allow HTML in columns; see https://github.com/yajra/laravel-datatables/issues/949
             // Is this the best place to filter results if necessary?
             // I think so. See: http://datatables.yajrabox.com/eloquent/custom-filter
         	->filter(function ($query) use ($filter_array, $ctrl_class, $filter_string) {
@@ -2451,14 +2452,12 @@ class CtrlController extends Controller
 		if (\App::VERSION() >= 5.4) {
 			/**
 			 * Storage images with a hash, preserve original filename for files
+			 * We'll store both in the public folder though, as we're likely to need direct
+			 * access at some point -- especially files, but images as well, as we
+			 * might not always run them through Intervention or whatever.
 			 */
 			if ($request->type == 'image') {
-
-				/**
-				 * Is this definitely correct? Should it be 'images'?
-				 */
-
-				 $path = $request->file($fieldName)->store('public/images');
+				 $path = $request->file($fieldName)->store('images','public');
 			}
 			else if ($request->type == 'file') {
 				$fileName = $request->file($fieldName)->getClientOriginalName();
@@ -2489,12 +2488,6 @@ class CtrlController extends Controller
 				    } while (Storage::exists($fileName));
 				}
 				 */
-				/**
-				 * Note that we use the public disk to save files in storage/app/public
-				 * this is because we'll likely want to download files directly
-				 * (where as images are always passed through intervention or similar)
-				 * @var [type]
-				 */
 				$path = $request->file($fieldName)->storeAs(
 				    'files', $fileName, 'public'
 				);
@@ -2507,12 +2500,7 @@ class CtrlController extends Controller
 			 * whereas really, I think it makes more sense to store the actual path we'd use; eg, /storage/images
 			 * So, swap out the /public for /storage. This is all a bit flaky and may well need revisiting.
 			 */
-			/**
-			 * NOTE: this might not be necessary! Does passing 'public' as the third argument to
-			 * storeAs (above) keep 'public' out of the path? Do we really want to include 'storage' in the URL?
-			 * This needs reviewing propely.
-			 */
-			$path = preg_replace('/^public\//', 'storage/', $path);
+			// $path = preg_replace('/^public\//', 'storage/', $path);
 		}
 		else {
 			/**
