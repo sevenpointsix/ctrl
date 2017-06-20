@@ -2453,6 +2453,11 @@ class CtrlController extends Controller
 			 * Storage images with a hash, preserve original filename for files
 			 */
 			if ($request->type == 'image') {
+
+				/**
+				 * Is this definitely correct? Should it be 'images'?
+				 */
+
 				 $path = $request->file($fieldName)->store('public/images');
 			}
 			else if ($request->type == 'file') {
@@ -2501,6 +2506,11 @@ class CtrlController extends Controller
 			 * However, the store() and storeAs() methods return the 'public' path; eg, /public/images
 			 * whereas really, I think it makes more sense to store the actual path we'd use; eg, /storage/images
 			 * So, swap out the /public for /storage. This is all a bit flaky and may well need revisiting.
+			 */
+			/**
+			 * NOTE: this might not be necessary! Does passing 'public' as the third argument to
+			 * storeAs (above) keep 'public' out of the path? Do we really want to include 'storage' in the URL?
+			 * This needs reviewing propely.
 			 */
 			$path = preg_replace('/^public\//', 'storage/', $path);
 		}
