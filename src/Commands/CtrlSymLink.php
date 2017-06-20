@@ -15,6 +15,7 @@ class CtrlSymLink extends Command
      */
     protected $signature = 'ctrl:symlink
                                 {folder? : the project folder to point to, such as argos-support.co.uk }
+                                {database? : the database the site will use }
                                 {webroot=webroot : the name of the webroot we\'re using, defaults to \'webroot\' }
                             ';
 
@@ -23,7 +24,7 @@ class CtrlSymLink extends Command
      *
      * @var string
      */
-    protected $description = 'Update the symlink that points to another app/Ctrl folder; this is how we can use dev.ctrl-c.ms to manage other sites. We also now link to Http/Controllers/Ctrl if it exists, as this is where we should be keeping a Custom Controller.';
+    protected $description = 'Update the symlink that points to another app/Ctrl folder; this is how we can use dev.ctrl-c.ms to manage other sites. We also now link to Http/Controllers/Ctrl if it exists, as this is where we should be keeping a Custom Controller. We can also update the database to be used.';
 
     /**
      * Create a new command instance.
@@ -53,6 +54,7 @@ class CtrlSymLink extends Command
         }
 
         $project_folder = $this->argument('folder');
+        $database       = $this->argument('database');
         $webroot        = $this->argument('webroot');
 
         if (!$project_folder) {
@@ -83,13 +85,13 @@ class CtrlSymLink extends Command
             $this->line("Removing existing symlink at $symlink");
             unlink($symlink);
         }
-        
+
         $this->line("Creating new symlink at ".implode('/',['app','Ctrl']));
         symlink ($ctrl_path, $symlink); // Effectively ln -s $ctrl_path $symlink
 
         // Also create a symlink to Http/Controllers/Ctrl if it exists; see $description above
 
-        $custom_controller_path = implode('/', [$project_path,$webroot,'app','Http','Controllers','Ctrl']);        
+        $custom_controller_path = implode('/', [$project_path,$webroot,'app','Http','Controllers','Ctrl']);
         $symlink = app_path('Http/Controllers/Ctrl');
 
         if (is_link($symlink)) {
@@ -102,6 +104,26 @@ class CtrlSymLink extends Command
             symlink ($custom_controller_path, $symlink); // Effectively ln -s $custom_controller_path $symlink");
         }
 
-        $this->info('Done. Don\'t forget to switch database in .env if necessary.');        
+        if ($database) {
+            $env_file = base_path('.env');
+            if (!File::isWritable($env_file)) {
+                $this->error('Cannot switch database as .env isn\'t writeable.');
+            }
+            else {
+                $env_contents = File::get($env_file);
+                $new_env_contents = preg_replace('/\nDB_DATABASE\=.*\n/', "\nDB_DATABASE=$database\n", $env_contents);
+                if ($env_contents == $new_env_contents) {
+                    $this->error("Unable to update .env, cannot locate DB_DATABASE key.");
+                }
+                else {
+                    File::put($env_file, $new_env_contents);
+                    $this->line('Database switched to '.$database);
+                }
+            }
+        }
+        else {
+            $this->comment('Don\'t forget to switch database in .env if necessary.');
+        }
+        $this->info('Done.');
     }
 }
