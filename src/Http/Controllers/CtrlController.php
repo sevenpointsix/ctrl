@@ -2221,6 +2221,15 @@ class CtrlController extends Controller
         	$object->url = $slug;
         }
 
+        if ($this->module->enabled('pre_save')) {
+			$this->module->run('pre_save',[
+				$request,
+				$object,
+				$filter_string
+			]);
+		}
+
+
         $object->save(); // Save the new object, otherwise we can't save any relationships...
         // Now load any related fields (excluding belongsTo, as this indicates the presence of an _id field)
         $related_ctrl_properties = $ctrl_class->ctrl_properties()
@@ -2323,14 +2332,6 @@ class CtrlController extends Controller
 				// Try this:
 				$object->$related_field_name()->detach();
 			}
-		}
-
-        if ($this->module->enabled('pre_save')) {
-			$this->module->run('pre_save',[
-				$request,
-				$object,
-				$filter_string
-			]);
 		}
 
         $object->save();
