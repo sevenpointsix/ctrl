@@ -79,8 +79,10 @@ class CtrlStorage extends Command
 
         $rsync_command = 'rsync -avz '.$remote_connection.':'.$remote_path.' '.$local_path;
 
-        dd($rsync_command);
+        $this->info("While testing, just copy and past this command to synch storage files:");
+        $this->comment($rsync_command);
+        $this->info("Once we know this definitely works, we can get this artisan command to run it automatically.");
 
-        $this->info('Done.');
+        $this->line('Done.');
     }
 }
