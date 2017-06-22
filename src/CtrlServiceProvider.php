@@ -29,6 +29,7 @@ class CtrlServiceProvider extends ServiceProvider{
        \Sevenpointsix\Ctrl\Commands\CtrlSynch::class,
        \Sevenpointsix\Ctrl\Commands\CtrlTables::class,
        \Sevenpointsix\Ctrl\Commands\CtrlSymLink::class,
+       \Sevenpointsix\Ctrl\Commands\CtrlStorage::class,
     ];
 
 	public function boot()
