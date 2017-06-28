@@ -1294,6 +1294,18 @@ class CtrlController extends Controller
 	/**
 	 * TODO: establish what image and file columns we have here, and then call editColumn dynamically below;
 	 */
+		$imageColumns = [];
+		$fileColumns = [];
+		foreach ($headers as $header) {
+			switch ($header->field_type) {
+				case 'image':
+					$imageColumns[] = $header->name;
+					break;
+				case 'file':
+					$fileColumns[] = $header->name;
+					break;
+			}
+		}
 
         $datatable = Datatables::of($objects)
         	->setRowId('id') // For reordering
@@ -1301,8 +1313,10 @@ class CtrlController extends Controller
         		return '<i class="fa fa-reorder"></i>';
         	}) // Set the displayed value of the order column to just show the icon
         	// ->editColumn('src', '<div class="media"><div class="media-left"><a href="{{$src}}" data-toggle="lightbox" data-title="{{$src}}"><img class="media-object" src="{{$src}}" height="30"></a></div><div class="media-body" style="vertical-align: middle">{{$src}}</div></div>') // Draw the actual image, if this is an image field
-        	->editColumn('src', function($object) {
-	    		if ($src = $object->src) { // If we have a "src" column, assume (for now!) that we render it as an image. We could probably load the corresponding ctrlproperty here and confirm this:
+        ;
+        foreach ($imageColumns as $imageColumn) {
+        	$datatable->editColumn($imageColumn, function($object) use ($imageColumn) {
+	    		if ($src = $object->$imageColumn) { // If we have a "src" column, assume (for now!) that we render it as an image. We could probably load the corresponding ctrlproperty here and confirm this:
 	    			if (strpos($src, '/') !== 0) $src = "/$src"; // We need a leading slash on the image source here
 
 	    			$path_parts = pathinfo($src);
@@ -1310,8 +1324,9 @@ class CtrlController extends Controller
 
 					return sprintf('<div class="media"><div class="media-left"><a href="%1$s" data-toggle="lightbox" data-title="%2$s"><img class="media-object" src="%1$s" height="30"></a></div><div class="media-body" style="vertical-align: middle">%2$s</div></div>',$src, $basename);
 				}
-        	})
-        	->editColumn('file', function($object) {  // If we have a "file" column, assume it's a clickable link. DEFINITELY need to query ctrlproperty->type here,see 'src' above:
+        	});
+        }
+        $datatable->editColumn('file', function($object) {  // If we have a "file" column, assume it's a clickable link. DEFINITELY need to query ctrlproperty->type here,see 'src' above:
 	    		if ($file = $object->file) {
 	    			if (strpos($file, '/') !== 0) $file = "/$file";
 
