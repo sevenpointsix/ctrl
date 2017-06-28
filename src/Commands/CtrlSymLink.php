@@ -124,6 +124,12 @@ class CtrlSymLink extends Command
         else {
             $this->comment('Don\'t forget to switch database in .env if necessary.');
         }
+
+        /**
+         * I've seen issues before where the previous custom Ctrl views persisted, so clear them:
+         */
+        $this->call('view:clear');
+
         $this->info('Done.');
     }
 }
