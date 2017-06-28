@@ -175,6 +175,38 @@
 		}
 
 		/**
+		 * Add custom buttons to the DataTable
+		 * @param  integer $ctrl_class_id The ID of the class we're listing
+		 * @param  integer $object_id The ID of the object we're editing
+		 * @param  string $filter_string Optional list filter; such as 43,1, which will set the value of the ctrl_property 43 to 1 when we save the form
+     	 * @return array                 An array of buttons, as []['icon'=>'','count'=>'','title'=>'','link'=>'','class'=>'','rel'=>'']
+		 */
+		protected function custom_buttons($ctrl_class_id, $object_id, $filter_string = null) {
+
+			$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
+
+			$custom_buttons = [];
+
+			switch ($ctrl_class->name) {
+				case 'Test':
+					// Fill in some variables here... count, icon, etc.
+					$count = 100;
+					$custom_button = [
+						'icon'  => 'fa fa-share-alt',
+						'count' => $count,
+						'title' => 'Shared Content',
+						'link'  => '#',
+						'class' => 'shared-content',
+						'rel'   => ''
+					];
+					$custom_buttons[] = $custom_button;
+				break;
+			}
+
+			return $custom_buttons;
+		}
+
+		/**
 		 * Manipulate the DOM of a page; this is a flexible way to tweak a page or add custom content
 		 * @param  Request  $request
 		 * @param  string $dom The current dom
