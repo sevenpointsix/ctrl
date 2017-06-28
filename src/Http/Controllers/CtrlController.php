@@ -1295,14 +1295,17 @@ class CtrlController extends Controller
 	 * TODO: establish what image and file columns we have here, and then call editColumn dynamically below;
 	 */
 		$imageColumns = [];
-		$fileColumns = [];
+		$fileColumns  = [];
+		$rawColumns   = ['order','action']; // Columns that allow raw HTML
 		foreach ($headers as $header) {
 			switch ($header->field_type) {
 				case 'image':
 					$imageColumns[] = $header->name;
+					$rawColumns[]   = $header->name;
 					break;
 				case 'file':
 					$fileColumns[] = $header->name;
+					$rawColumns[]  = $header->name;
 					break;
 			}
 		}
@@ -1316,30 +1319,44 @@ class CtrlController extends Controller
         ;
         foreach ($imageColumns as $imageColumn) {
         	$datatable->editColumn($imageColumn, function($object) use ($imageColumn) {
-	    		if ($src = $object->$imageColumn) { // If we have a "src" column, assume (for now!) that we render it as an image. We could probably load the corresponding ctrlproperty here and confirm this:
-	    			if (strpos($src, '/') !== 0) $src = "/$src"; // We need a leading slash on the image source here
+	    		if ($src = $object->$imageColumn) {
+
+	    			$src = asset('storage/'.ltrim($src,'/'));
 
 	    			$path_parts = pathinfo($src);
 	    			$basename   = str_limit($path_parts['basename'],20);
 
-					return sprintf('<div class="media"><div class="media-left"><a href="%1$s" data-toggle="lightbox" data-title="%2$s"><img class="media-object" src="%1$s" height="30"></a></div><div class="media-body" style="vertical-align: middle">%2$s</div></div>',$src, $basename);
+	    			if (!file_exists($src)) {
+	    				return 'Image missing';
+	    			}
+	    			else {
+						return sprintf('<div class="media"><div class="media-left"><a href="%1$s" data-toggle="lightbox" data-title="%2$s"><img class="media-object" src="%1$s" height="30"></a></div><div class="media-body" style="vertical-align: middle"></div></div>',$src, $basename);
+					}
 				}
         	});
         }
-        $datatable->editColumn('file', function($object) {  // If we have a "file" column, assume it's a clickable link. DEFINITELY need to query ctrlproperty->type here,see 'src' above:
-	    		if ($file = $object->file) {
-	    			if (strpos($file, '/') !== 0) $file = "/$file";
+        foreach ($fileColumns as $fileColumn) {
+        	$datatable->editColumn($fileColumn, function($object) {  // If we have a "file" column, assume it's a clickable link. DEFINITELY need to query ctrlproperty->type here,see 'src' above:
+	    		if ($file = $object->$fileColumn) {
+
+	    			$file = asset('storage/'.ltrim($file,'/'));
 
 	    			$path_parts = pathinfo($file);
 	    			$basename   = str_limit($path_parts['basename'],20);
 
-					return sprintf('<i class="fa fa-download"></i> <a href="%1$s">%2$s</a>',$file, $basename);
+	    			if (!file_exists($file)) {
+	    				return 'File missing';
+	    			}
+	    			else {
+						return sprintf('<i class="fa fa-download"></i> <a href="%1$s">%2$s</a>',$file, $basename);
+					}
 				}
-        	})
-            ->addColumn('action', function ($object) use ($ctrl_class, $filter_string) {
+        	});
+        }
+        $datatable->addColumn('action', function ($object) use ($ctrl_class, $filter_string) {
             	return $this->get_row_buttons($ctrl_class->id, $object->id, $filter_string);
             })
-            ->rawColumns(['order','src','file','action']) // Allow HTML in columns; see https://github.com/yajra/laravel-datatables/issues/949
+            ->rawColumns($rawColumns) // Allow HTML in columns; see https://github.com/yajra/laravel-datatables/issues/949
             // Is this the best place to filter results if necessary?
             // I think so. See: http://datatables.yajrabox.com/eloquent/custom-filter
         	->filter(function ($query) use ($filter_array, $ctrl_class, $filter_string) {
