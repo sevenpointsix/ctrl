@@ -1291,6 +1291,10 @@ class CtrlController extends Controller
 		}
 		*/
 
+	/**
+	 * TODO: establish what image and file columns we have here, and then call editColumn dynamically below;
+	 */
+
         $datatable = Datatables::of($objects)
         	->setRowId('id') // For reordering
         	->editColumn('order', function($object) { // Set the displayed value of the order column to just show the icon
