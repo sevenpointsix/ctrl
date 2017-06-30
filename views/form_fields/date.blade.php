@@ -56,8 +56,9 @@
                 vertical: 'bottom'
             },
             showClose: true, // Has no effect when sideBySide is true, but fine for date/time fields
-            toolbarPlacement:'bottom' // Aha! Fixes showClose for sideBySide, see https://github.com/Eonasdan/bootstrap-datetimepicker/issues/1267
+            toolbarPlacement:'bottom', // Aha! Fixes showClose for sideBySide, see https://github.com/Eonasdan/bootstrap-datetimepicker/issues/1267
             // inline: true // Nice but needs wrapping in columns, otherwise it has 100% width
+            showClear: true
         });
     });
 </script>
