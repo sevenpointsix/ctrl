@@ -1337,7 +1337,7 @@ class CtrlController extends Controller
         	});
         }
         foreach ($fileColumns as $fileColumn) {
-        	$datatable->editColumn($fileColumn, function($object) {  // If we have a "file" column, assume it's a clickable link. DEFINITELY need to query ctrlproperty->type here,see 'src' above:
+        	$datatable->editColumn($fileColumn, function($object) use ($fileColumn) {  // If we have a "file" column, assume it's a clickable link. DEFINITELY need to query ctrlproperty->type here,see 'src' above:
 	    		if ($file = $object->$fileColumn) {
 
 	    			$file = asset('storage/'.ltrim($file,'/'));
