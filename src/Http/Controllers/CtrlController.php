@@ -1688,7 +1688,7 @@ class CtrlController extends Controller
 		// but Office exports tab-delimited files as UTF-16, which we can't run through INFILE, so we need to convert it
 		$current_encoding = $this->detect_utf_encoding($csv_file);
 
-		$fh = fopen($csv_file,'r+');
+		$fh = fopen(storage_path('app/public/'.$csv_file),'r+');
 
 		$csv_rows = '';
 
@@ -1712,7 +1712,7 @@ class CtrlController extends Controller
 		}
 
 		$csv_rows = mb_convert_encoding($csv_rows, 'UTF-8',$current_encoding);
-		file_put_contents($csv_file, $csv_rows);
+		file_put_contents(storage_path('app/public/'.$csv_file), $csv_rows);
 		fclose($fh);
 
 		return true;
@@ -1728,7 +1728,11 @@ class CtrlController extends Controller
 		define ('UTF16_LITTLE_ENDIAN_BOM', chr(0xFF) . chr(0xFE));
 		define ('UTF8_BOM'               , chr(0xEF) . chr(0xBB) . chr(0xBF));
 
-	    $text = file_get_contents($filename);
+		/**
+		 * $filename at this point is relative, so point file_get_contents to the storage folder
+		 */
+		// $text = file_get_contents($filename);
+		$text = Storage::disk('public')->get($filename);
 	    $first2 = substr($text, 0, 2);
 	    $first3 = substr($text, 0, 3);
 	    $first4 = substr($text, 0, 3);
