@@ -1340,16 +1340,17 @@ class CtrlController extends Controller
         	$datatable->editColumn($fileColumn, function($object) use ($fileColumn) {  // If we have a "file" column, assume it's a clickable link. DEFINITELY need to query ctrlproperty->type here,see 'src' above:
 	    		if ($file = $object->$fileColumn) {
 
-	    			$file = asset('storage/'.ltrim($file,'/'));
+	    			$path = storage_path('app/public/'.ltrim($file,'/'));
+	    			$url  = asset('storage/'.ltrim($file,'/'));
 
-	    			$path_parts = pathinfo($file);
+	    			$path_parts = pathinfo($url);
 	    			$basename   = str_limit($path_parts['basename'],20);
 
-	    			if (!file_exists($file)) {
+	    			if (!file_exists($path)) {
 	    				return 'File missing';
 	    			}
 	    			else {
-						return sprintf('<i class="fa fa-download"></i> <a href="%1$s">%2$s</a>',$file, $basename);
+						return sprintf('<i class="fa fa-download"></i> <a href="%1$s">%2$s</a>',$url, $basename);
 					}
 				}
         	});
