@@ -1321,16 +1321,17 @@ class CtrlController extends Controller
         	$datatable->editColumn($imageColumn, function($object) use ($imageColumn) {
 	    		if ($src = $object->$imageColumn) {
 
-	    			$src = asset('storage/'.ltrim($src,'/'));
+	    			$path = storage_path('app/public/'.ltrim($src,'/'));
+	    			$url  = asset('storage/'.ltrim($src,'/'));
 
-	    			$path_parts = pathinfo($src);
+	    			$path_parts = pathinfo($url);
 	    			$basename   = str_limit($path_parts['basename'],20);
 
-	    			if (!file_exists($src)) {
-	    				return 'Image missing';
+	    			if (!file_exists($path)) {
+	    				return 'Image missing '.$path;
 	    			}
 	    			else {
-						return sprintf('<div class="media"><div class="media-left"><a href="%1$s" data-toggle="lightbox" data-title="%2$s"><img class="media-object" src="%1$s" height="30"></a></div><div class="media-body" style="vertical-align: middle"></div></div>',$src, $basename);
+						return sprintf('<div class="media"><div class="media-left"><a href="%1$s" data-toggle="lightbox" data-title="%2$s"><img class="media-object" src="%1$s" height="30"></a></div></div>',$url, $basename);
 					}
 				}
         	});
