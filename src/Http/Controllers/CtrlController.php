@@ -140,7 +140,9 @@ class CtrlController extends Controller
 
 			}
 			else {
-				$can_list = $can_edit = $can_add = true;
+				$can_list = $ctrl_class->can('list');
+				$can_edit = $ctrl_class->can('edit');
+				$can_add  = $ctrl_class->can('add');				
 			}
 
 			/**
@@ -180,7 +182,7 @@ class CtrlController extends Controller
 			if ($can_edit && !$can_list && !$can_add) {
 
 				/**
-				 * Surely we should always expect to an ite in this instance?
+				 * Surely we should always expect to find an item in this instance?
 				 */
 				if (is_null($first_object)) {
 					trigger_error("No {$ctrl_class->name} object found");
