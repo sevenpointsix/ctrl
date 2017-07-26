@@ -1,5 +1,5 @@
 /*!
- * froala_editor v2.6.0 (https://www.froala.com/wysiwyg-editor)
+ * froala_editor v2.6.4 (https://www.froala.com/wysiwyg-editor)
  * License https://froala.com/wysiwyg-editor/terms/
  * Copyright 2014-2017 Froala Labs
  */
@@ -305,7 +305,7 @@
       wrap_correction_left -= editor.helpers.getPX($container.css('border-left-width'));
       wrap_correction_top -= editor.helpers.getPX($container.css('border-top-width'));
 
-      if (editor.$el.is('img')) {
+      if (editor.$el.is('img') && editor.$sc.is('body')) {
         wrap_correction_top = 0;
         wrap_correction_left = 0;
       }
@@ -352,7 +352,13 @@
         var oel = editor.$oel.get(0);
         var doc = oel.ownerDocument;
         var win = doc.defaultView || doc.parentWindow;
-        var editor_inside_iframe = win.location != win.parent.location;
+        var editor_inside_iframe = false;
+
+        try {
+          editor_inside_iframe = win.location != win.parent.location;
+        }
+        catch (ex) {
+        }
 
         if (editor_inside_iframe && win.frameElement) {
           start_x += editor.helpers.getPX($(win.frameElement).offset().left) + win.frameElement.clientLeft;
@@ -444,7 +450,10 @@
             $current_image.css('width', real_image_size);
           }
 
-          $current_image.css('height', $handler.data('start-height') * $current_image.width() / $handler.data('start-width'));
+          // https://github.com/froala/wysiwyg-editor/issues/1963.
+          if (($current_image.attr('style') || '').match(/(^height:)|(; *height:)/)) {
+            $current_image.css('height', $handler.data('start-height') * $current_image.width() / $handler.data('start-width'));
+          }
         }
 
         _repositionResizer();
@@ -482,17 +491,21 @@
      * Throw an image error.
      */
 
-    function _throwError (code, response) {
+    function _throwError (code, response, $img) {
       editor.edit.on();
 
       if ($current_image) $current_image.addClass('fr-error');
       _showErrorMessage(editor.language.translate('Something went wrong. Please try again.'));
 
+      // Remove image if it exists.
+      if (!$current_image && $img) remove($img);
+
       editor.events.trigger('image.error', [{
           code: code,
           message: error_messages[code]
         },
-        response
+        response,
+        $img
       ]);
     }
 
@@ -556,7 +569,7 @@
       }
 
       if (typeof no_message == 'undefined') {
-        _setProgressMessage('Uploading', 0);
+        _setProgressMessage(editor.language.translate('Uploading'), 0);
       }
     }
 
@@ -641,7 +654,7 @@
 
       if ($input.val().length > 0) {
         showProgressBar();
-        _setProgressMessage('Loading image');
+        _setProgressMessage(editor.language.translate('Loading image'));
         insert($input.val(), true, [], $current_image);
         $input.val('');
         $input.blur();
@@ -675,7 +688,7 @@
 
     function insert (link, sanitize, data, $existing_img, response) {
       editor.edit.off();
-      _setProgressMessage('Loading image');
+      _setProgressMessage(editor.language.translate('Loading image'));
 
       if (sanitize) link = editor.helpers.sanitizeURL(link);
 
@@ -690,10 +703,17 @@
 
           var old_src = $existing_img.data('fr-old-src');
 
+          if ($existing_img.data('fr-image-pasted')) {
+            old_src = null;
+          }
+
           if (editor.$wp) {
 
             // Clone existing image.
-            $img = $existing_img.clone().removeData('fr-old-src').removeClass('fr-uploading');
+            $img = $existing_img.clone()
+                      .removeData('fr-old-src')
+                      .removeClass('fr-uploading')
+                      .removeAttr('data-fr-image-pasted');
 
             // Remove load event.
             $img.off('load');
@@ -753,7 +773,7 @@
         _throwError(BAD_LINK);
       }
 
-      showProgressBar('Loading image');
+      showProgressBar(editor.language.translate('Loading image'));
 
       image.src = link;
     }
@@ -769,7 +789,7 @@
 
           return false;
         }
-        var resp = $.parseJSON(response);
+        var resp = JSON.parse(response);
 
         if (resp.link) {
 
@@ -823,7 +843,7 @@
      */
 
     function _imageUploaded ($img) {
-      _setProgressMessage('Loading image');
+      _setProgressMessage(editor.language.translate('Loading image'));
       var status = this.status;
       var response = this.response;
       var responseXML = this.responseXML;
@@ -839,7 +859,7 @@
             }
           }
           else {
-            _throwError(BAD_RESPONSE, response || responseXML);
+            _throwError(BAD_RESPONSE, response || responseXML, $img);
           }
         }
         else {
@@ -851,14 +871,14 @@
             }
           }
           else {
-            _throwError(ERROR_DURING_UPLOAD, response || responseText);
+            _throwError(ERROR_DURING_UPLOAD, response || responseText, $img);
           }
         }
       }
       catch (ex) {
 
         // Bad response.
-        _throwError(BAD_RESPONSE, response || responseText);
+        _throwError(BAD_RESPONSE, response || responseText, $img);
       }
     }
 
@@ -877,7 +897,7 @@
     function _imageUploadProgress (e) {
       if (e.lengthComputable) {
         var complete = (e.loaded / e.total * 100 | 0);
-        _setProgressMessage('Uploading', complete);
+        _setProgressMessage(editor.language.translate('Uploading'), complete);
       }
     }
 
@@ -1053,6 +1073,11 @@
         }
         var image = images[0];
 
+        // Check if there is image name set.
+        if (!image.name) {
+          image.name = (new Date()).getTime() + '.jpg';
+        }
+
         // Check image max size.
         if (image.size > editor.opts.imageMaxSize) {
           _throwError(MAX_SIZE_EXCEEDED);
@@ -1100,7 +1125,7 @@
           }
 
           // Set the image in the request.
-          form_data.append(editor.opts.imageUploadParam, image);
+          form_data.append(editor.opts.imageUploadParam, image, image.name);
 
           // Create XHR request.
           var url = editor.opts.imageUploadURL;
@@ -1154,6 +1179,12 @@
         }
       });
 
+      if (editor.helpers.isIOS()) {
+        editor.events.$on($popup, 'touchend', '.fr-image-upload-layer input[type="file"]', function () {
+          $(this).trigger('click');
+        });
+      }
+
       editor.events.$on($popup, 'change', '.fr-image-upload-layer input[type="file"]', function () {
         if (this.files) {
           var inst = $popup.data('instance') || editor;
@@ -1194,7 +1225,16 @@
 
           if (!$popup) $popup = _initInsertPopup();
           editor.popups.setContainer('image.insert', editor.$sc);
-          editor.popups.show('image.insert', e.originalEvent.pageX, e.originalEvent.pageY);
+
+          var left = e.originalEvent.pageX;
+          var top = e.originalEvent.pageY;
+
+          if (editor.opts.iframe) {
+            top += editor.$iframe.offset().top;
+            left += editor.$iframe.offset().left;
+          }
+
+          editor.popups.show('image.insert', left, top);
           showProgressBar();
 
           // Dropped file is an image that we allow.
@@ -1219,69 +1259,6 @@
       }
     }
 
-    function _placeCursor () {
-      var t;
-      var p_node;
-      var r = editor.selection.ranges(0);
-
-      if (r.collapsed && r.startContainer.nodeType == Node.ELEMENT_NODE) {
-
-        // Click after image.
-        if (r.startContainer.childNodes.length == r.startOffset) {
-          t = r.startContainer.childNodes[r.startOffset - 1];
-
-          if (t && t.tagName == 'IMG' && $(t).css('display') == 'block') {
-
-            // Check if image is last node.
-            p_node = editor.node.blockParent(t);
-
-            if (p_node && editor.html.defaultTag()) {
-              if (!p_node.nextSibling) {
-                if (['TD', 'TH'].indexOf(p_node.tagName) < 0) {
-                  $(p_node).after('<' + editor.html.defaultTag() + '><br>' + $.FE.MARKERS + '</' + editor.html.defaultTag() + '>');
-                }
-                else {
-                  $(t).after('<br>' + $.FE.MARKERS);
-                }
-                editor.selection.restore();
-              }
-            }
-            else if (!p_node) {
-              $(t).after('<br>' + $.FE.MARKERS);
-              editor.selection.restore();
-            }
-          }
-        }
-
-        // Click before image.
-        else if (r.startOffset === 0 && r.startContainer.childNodes.length > r.startOffset) {
-          t = r.startContainer.childNodes[r.startOffset];
-
-          if (t && t.tagName == 'IMG' && $(t).css('display') == 'block') {
-
-            // Check if image is last node.
-            p_node = editor.node.blockParent(t);
-
-            if (p_node && editor.html.defaultTag()) {
-              if (!p_node.previousSibling) {
-                if (['TD', 'TH'].indexOf(p_node.tagName) < 0) {
-                  $(p_node).before('<' + editor.html.defaultTag() + '><br>' + $.FE.MARKERS + '</' + editor.html.defaultTag() + '>');
-                }
-                else {
-                  $(t).before('<br>' + $.FE.MARKERS);
-                }
-                editor.selection.restore();
-              }
-            }
-            else if (!p_node) {
-              $(t).before($.FE.MARKERS + '<br>');
-              editor.selection.restore();
-            }
-          }
-        }
-      }
-    }
-
     function _initEvents () {
 
       // Mouse down on image. It might start move.
@@ -1300,7 +1277,7 @@
           editor.$el.attr('contenteditable', false);
         }
 
-        if (!editor.draggable) e.preventDefault();
+        if (!editor.draggable && e.type != 'touchstart') e.preventDefault();
 
         e.stopPropagation();
       });
@@ -1357,10 +1334,6 @@
           _exitEdit();
         }
       });
-
-      if (!editor.browser.edge) {
-        editor.events.on('mouseup', _placeCursor);
-      }
 
       editor.events.on('blur image.hideResizer commands.undo commands.redo element.dropped', function () {
         mousedown = false;
@@ -1955,7 +1928,7 @@
         editor.events.on('window.keydown keydown', _editorKeydownHandler, true)
 
         editor.events.on('keyup', function (e) {
-          if (e.which == $.FE.KEYCODE.ENTER) {
+          if ($current_image && e.which == $.FE.KEYCODE.ENTER) {
 
             return false;
           }
@@ -1993,7 +1966,6 @@
 
       // Copy/cut image.
       editor.events.on('window.cut window.copy', function (e) {
-
         // Do copy only if image.edit popups is visible and not focused.
         if ($current_image && editor.popups.isVisible('image.edit') && !editor.popups.get('image.edit').find(':focus').length) {
           _selectImage();
@@ -2014,6 +1986,26 @@
           }
         }
       }, true);
+
+      // Fix IE copy not working when selection is collapsed.
+      if (editor.browser.msie) {
+        editor.events.on('keydown', function (e) {
+          // Selection is collapsed and we have an image.
+          if (!(editor.selection.isCollapsed() && $current_image)) return true;
+
+          var key_code = e.which;
+
+          // Copy.
+          if (key_code == $.FE.KEYCODE.C && editor.keys.ctrlKey(e)) {
+            editor.events.trigger('window.copy');
+          }
+
+          // Cut.
+          else if (key_code == $.FE.KEYCODE.X && editor.keys.ctrlKey(e)) {
+            editor.events.trigger('window.cut');
+          }
+        });
+      }
 
       // Do not leave page while uploading.
       editor.events.$on($(editor.o_win), 'keydown', function (e) {
@@ -2102,6 +2094,34 @@
       });
     }
 
+    function _processPastedImage (img) {
+      if (editor.events.trigger('image.beforePasteUpload', [img]) === false) {
+
+        return false;
+      }
+
+      // Show the progress bar.
+      $current_image = $(img);
+      _repositionResizer();
+      _showEditPopup();
+      replace();
+      showProgressBar();
+      editor.edit.off();
+
+      // Convert image to blob.
+      var binary = atob($(img).attr('src').split(',')[1]);
+      var array = [];
+
+      for (var i = 0; i < binary.length; i++) {
+        array.push(binary.charCodeAt(i));
+      }
+      var upload_img = new Blob([new Uint8Array(array)], {
+        type: 'image/jpeg'
+      });
+
+      upload([upload_img], $current_image);
+    }
+
     function _uploadPastedImages () {
       if (!editor.opts.imagePaste) {
         editor.$el.find('img[data-fr-image-pasted]').remove();
@@ -2116,42 +2136,39 @@
             if (width && width != 'auto') {
               width = width + (editor.opts.imageResizeWithPercent ? '%' : 'px');
             }
-            $(img).css('width', width);
-
             $(img)
+              .css('width', width)
               .removeClass('fr-dii fr-dib fr-fir fr-fil')
               .addClass((editor.opts.imageDefaultDisplay ? 'fr-di' + editor.opts.imageDefaultDisplay[0] : '') + (editor.opts.imageDefaultAlign ? (editor.opts.imageDefaultAlign != 'center' ? ' fr-fi' + editor.opts.imageDefaultAlign[0] : '') : ''));
           }
 
           // Data images.
           if (img.src.indexOf('data:') === 0) {
-            if (editor.events.trigger('image.beforePasteUpload', [img]) === false) {
+            _processPastedImage(img);
+          }
 
-              return false;
-            }
+          // New way Safari is pasting images.
+          else if (img.src.indexOf('blob:') === 0) {
+            var _img = new Image();
+            _img.crossOrigin = 'Anonymous';
+            _img.onload = function () {
+              // Create canvas.
+              var canvas = editor.o_doc.createElement('CANVAS');
+              var context = canvas.getContext('2d');
 
-            // Show the progress bar.
-            $current_image = $(img);
-            _repositionResizer();
-            _showEditPopup();
-            replace();
-            showProgressBar();
-            editor.edit.off();
+              // Set height.
+              canvas.height = this.naturalHeight;
+              canvas.width = this.naturalWidth;
 
-            // Convert image to blob.
-            var binary = atob($(img).attr('src').split(',')[1]);
-            var array = [];
+              // Draw image.
+              context.drawImage(this, 0, 0);
 
-            for (var i = 0; i < binary.length; i++) {
-              array.push(binary.charCodeAt(i));
-            }
-            var upload_img = new Blob([new Uint8Array(array)], {
-              type: 'image/jpeg'
-            });
+              // Update image and process it.
+              img.src = canvas.toDataURL('image/png');
+              _processPastedImage(img);
+            };
 
-            upload([upload_img], $(img));
-
-            $(img).removeAttr('data-fr-image-pasted');
+            _img.src = img.src;
           }
 
           // Images without http (Safari ones.).
@@ -2245,11 +2262,28 @@
         editor.size.syncIframe();
       }
 
+      // Store current image.
       $current_image = $(this);
-      _selectImage();
+
+      // Select image.
+      if (!editor.browser.msie) _selectImage();
+
+      // Reposition resizer.
       _repositionResizer();
       _showEditPopup();
-      editor.selection.clear();
+
+      // Clear selection.
+      if (!editor.browser.msie) {
+        editor.selection.clear();
+      }
+
+      // Fix for image remaining selected.
+      if (editor.helpers.isIOS()) {
+        editor.events.disableBlur();
+        editor.$el.blur();
+      }
+
+      // Refresh buttons.
       editor.button.bulkRefresh();
       editor.events.trigger('video.hideResizer');
     }
@@ -2289,7 +2323,14 @@
     function _setStyle ($img, _display, _align) {
       if (!editor.opts.htmlUntouched && editor.opts.useClasses) {
         $img.removeClass('fr-fil fr-fir fr-dib fr-dii');
-        $img.addClass('fr-fi' + _align[0] + ' fr-di' + _display[0]);
+
+        if (_align) {
+          $img.addClass('fr-fi' + _align[0]);
+        }
+
+        if (_display) {
+          $img.addClass('fr-di' + _display[0]);
+        }
       }
       else {
         if (_display == 'inline') {

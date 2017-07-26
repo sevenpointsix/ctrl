@@ -1,5 +1,5 @@
 /*!
- * froala_editor v2.6.0 (https://www.froala.com/wysiwyg-editor)
+ * froala_editor v2.6.4 (https://www.froala.com/wysiwyg-editor)
  * License https://froala.com/wysiwyg-editor/terms/
  * Copyright 2014-2017 Froala Labs
  */
@@ -397,9 +397,7 @@
 
       if (sanitize) link = editor.helpers.sanitizeURL(link);
 
-      var video = document.createElement('video');
-
-      video.oncanplay = function () {
+      var _add = function () {
         var $video;
         var attr;
 
@@ -471,13 +469,9 @@
         }
       }
 
-      video.onerror = function () {
-        _throwError(BAD_LINK);
-      }
-
       showProgressBar('Loading video');
 
-      video.src = link;
+      _add();
     }
 
     /**
@@ -503,7 +497,7 @@
       }
 
       if (typeof no_message == 'undefined') {
-        _setProgressMessage('Uploading', 0);
+        _setProgressMessage(editor.language.translate('Uploading'), 0);
       }
     }
 
@@ -643,7 +637,7 @@
           return false;
         }
 
-        var resp = $.parseJSON(response);
+        var resp = JSON.parse(response);
 
         if (resp.link) {
 
@@ -752,7 +746,7 @@
     function _videoUploadProgress (e) {
       if (e.lengthComputable) {
         var complete = (e.loaded / e.total * 100 | 0);
-        _setProgressMessage('Uploading', complete);
+        _setProgressMessage(editor.language.translate('Uploading'), complete);
       }
     }
 
@@ -787,10 +781,8 @@
       }
 
       // Create video object and set the load event.
-      var $video = $('<span contenteditable="false" draggable="true" class="fr-video fr-dv' + (editor.opts.videoDefaultDisplay[0]) + (editor.opts.videoDefaultAlign != 'center' ? ' fr-fv' + editor.opts.videoDefaultAlign[0] : '') + '"><video src="' + link + '" ' + data_str + (width ? ' style="width: ' + width + ';"' : '') + '" controls>' + editor.language.translate('Your browser does not support HTML5 video.') + '</video></span>');
+      var $video = $('<span contenteditable="false" draggable="true" class="fr-video fr-dv' + (editor.opts.videoDefaultDisplay[0]) + (editor.opts.videoDefaultAlign != 'center' ? ' fr-fv' + editor.opts.videoDefaultAlign[0] : '') + '"><video src="' + link + '" ' + data_str + (width ? ' style="width: ' + width + ';" ' : '') + ' controls>' + editor.language.translate('Your browser does not support HTML5 video.') + '</video></span>');
       $video.toggleClass('fr-draggable', editor.opts.videoMove);
-
-      $video.find('video').on('canplay', loadCallback);
 
       // Make sure we have focus.
       // Call the event.
@@ -817,8 +809,16 @@
       }
 
       $marker.replaceWith($video);
+
       editor.html.wrap();
       editor.selection.clear();
+
+      if ($video.find('video').get(0).readyState > $video.find('video').get(0).HAVE_FUTURE_DATA || editor.helpers.isIOS()) {
+        loadCallback.call($video.find('video').get(0));
+      }
+      else {
+        $video.find('video').on('canplaythrough load', loadCallback);
+      }
 
       return $video;
     }
@@ -849,7 +849,13 @@
         var oel = editor.$oel.get(0);
         var doc = oel.ownerDocument;
         var win = doc.defaultView || doc.parentWindow;
-        var editor_inside_iframe = win.location != win.parent.location;
+        var editor_inside_iframe = false;
+
+        try {
+          editor_inside_iframe = win.location != win.parent.location;
+        }
+        catch (ex) {
+        }
 
         if (editor_inside_iframe && win.frameElement) {
           c_x += editor.helpers.getPX($(win.frameElement).offset().left) + win.frameElement.clientLeft;
@@ -1343,7 +1349,9 @@
           xhr.onabort = _videoUploadAborted;
 
           showProgressBar();
+          editor.events.disableBlur();
           editor.edit.off();
+          editor.events.enableBlur();
 
           var $popup = editor.popups.get('video.insert');
 
@@ -1397,6 +1405,12 @@
           inst.events.enableBlur();
         }
       });
+
+      if (editor.helpers.isIOS()) {
+        editor.events.$on($popup, 'touchend', '.fr-video-upload-layer input[type="file"]', function () {
+          $(this).trigger('click');
+        });
+      }
 
       editor.events.$on($popup, 'change', '.fr-video-upload-layer input[type="file"]', function () {
         if (this.files) {

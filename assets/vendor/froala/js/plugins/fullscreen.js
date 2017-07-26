@@ -1,5 +1,5 @@
 /*!
- * froala_editor v2.6.0 (https://www.froala.com/wysiwyg-editor)
+ * froala_editor v2.6.4 (https://www.froala.com/wysiwyg-editor)
  * License https://froala.com/wysiwyg-editor/terms/
  * Copyright 2014-2017 Froala Labs
  */
@@ -150,6 +150,10 @@
           if ($parent_node.css('overflow') != $parent_node.data('overflow')) {
             $parent_node.css('overflow', $parent_node.data('overflow'));
           }
+          $parent_node.removeData('overflow');
+        }
+        else {
+          $parent_node.css('overflow', '');
           $parent_node.removeData('overflow');
         }
 

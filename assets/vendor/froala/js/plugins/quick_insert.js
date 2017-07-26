@@ -1,5 +1,5 @@
 /*!
- * froala_editor v2.6.0 (https://www.froala.com/wysiwyg-editor)
+ * froala_editor v2.6.4 (https://www.froala.com/wysiwyg-editor)
  * License https://froala.com/wysiwyg-editor/terms/
  * Copyright 2014-2017 Froala Labs
  */
@@ -203,7 +203,7 @@
         }
 
         // Tag must be empty block and direct child of element in order to show the quick insert.
-        if (tag && editor.node.isEmpty(tag) && editor.node.isElement(tag.parentNode)) {
+        if (tag && editor.node.isEmpty(tag) && editor.node.isElement(tag.parentNode) && editor.opts.quickInsertTags.indexOf(tag.tagName.toLowerCase()) >= 0) {
 
           // If the quick insert is not repositioned, just close the helper.
           if ($quick_insert && $quick_insert.data('tag').is($(tag)) && $quick_insert.hasClass('fr-on')) {

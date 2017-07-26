@@ -1,5 +1,5 @@
 /*!
- * froala_editor v2.6.0 (https://www.froala.com/wysiwyg-editor)
+ * froala_editor v2.6.4 (https://www.froala.com/wysiwyg-editor)
  * License https://froala.com/wysiwyg-editor/terms/
  * Copyright 2014-2017 Froala Labs
  */
@@ -34,6 +34,7 @@
   
   $.extend($.FE.DEFAULTS, {
     scaytAutoload: false,
+    scaytCustomerId: '1:tLBmI3-7rr3J1-GMEFA1-mIewo-hynTZ1-PV38I1-uEXCy2-Rn81L-gXuG4-NUNri4-5q9Q34-Jd',
     scaytOptions: {
       enableOnTouchDevices: false,
       localization:'en',
@@ -46,7 +47,7 @@
       serviceHost:'svc.webspellchecker.net',
       servicePath:'spellcheck/script/ssrv.cgi',
       contextMenuForMisspelledOnly: true,
-      scriptPath: 'https://demo.webspellchecker.net/froala/customscayt.js'
+      scriptPath: 'https://svc.webspellchecker.net/spellcheck31/lf/scayt3/customscayt/customscayt.js'
     }
   });
 
@@ -59,32 +60,38 @@
         var active = !object.isDisabled();
         $btn.toggleClass('fr-active', active).attr('aria-pressed', active);
 
-        editor.$el.attr('spellcheck', !active);
+        editor.$el.attr('spellcheck', editor.opts.spellcheck && !active);
       }
     }
 
     // Remove markup from the current selection.
-    function _beforeCommand (button) {
-      if (button == 'bold' || button == 'italic' || button == 'underline' || button == 'strikeThrough' || button == 'subscript' || button == 'superscript' || button == 'fontFamily' || button == 'fontSize') {
+    function _beforeCommand (cmd) {
+      if (!object || object.isDisabled()) return;
+
+      if (['bold', 'italic', 'underline', 'strikeThrough', 'subscript', 'superscript', 'fontFamily', 'fontSize'].indexOf(cmd) >= 0) {
         object.removeMarkupInSelectionNode({
           removeInside: true
         });
       }
 
-      if (button == 'html') {
+      if (cmd == 'html') {
         toggle();
       }
     }
 
     // Reload markup on the current selection.
-    function _afterCommand (button) {
-      if (button == 'bold' || button == 'italic' || button == 'underline' || button == 'strikeThrough' || button == 'subscript' || button == 'superscript' || button == 'fontFamily' || button == 'fontSize') {
+    function _afterCommand (cmd) {
+      if (!object || object.isDisabled()) return;
+
+      if (['bold', 'italic', 'underline', 'strikeThrough', 'subscript', 'superscript', 'fontFamily', 'fontSize'].indexOf(cmd) >= 0) {
         object.reloadMarkup();
       }
     }
 
     // Key press.
     function _keyPress (e) {
+      if (!object || object.isDisabled()) return;
+
       var key_code = e.which;
 
       // Reload markup on ENTER.
@@ -95,18 +102,28 @@
 
     // Toggle spellchecker.
     function toggle () {
-      if (object) {
-        object.setDisabled(!object.isDisabled());
-      }
+      if (!object) return;
+
+      object.setDisabled(!object.isDisabled());
     }
 
-    // Initialize.
-    function _init () {
+    function _loaded () {
+      // Set events.
+      editor.events.on('commands.before', _beforeCommand);
+      editor.events.on('commands.after', _afterCommand);
+      editor.events.on('keydown', _keyPress, true);
 
+      // Refresh;
+      refresh(editor.$tb.find('[data-cmd="spellChecker"]'));
+    }
+
+    function _doInit () {
       // Get SCAYT default options and overide them.
       var scayt_options = editor.opts.scaytOptions;
-      scayt_options.container = editor.$el.get(0);
+      scayt_options.customerId = editor.opts.scaytCustomerId;
+      scayt_options.container = editor.$iframe ? editor.$iframe.get(0) : editor.$el.get(0);
       scayt_options.autoStartup = editor.opts.scaytAutoload;
+      scayt_options.onLoad = _loaded;
 
       // Set language.
       if (editor.opts.language !== null) {
@@ -118,24 +135,38 @@
         editor.opts.spellcheck = false;
       }
 
-      // Set events.
-      editor.events.on('commands.before', _beforeCommand);
-      editor.events.on('commands.after', _afterCommand);
-      editor.events.on('keydown', _keyPress, true);
+      object = new SCAYT.CUSTOMSCAYT(scayt_options);
+    }
 
-      // Init SCAYT.
-      var script = document.createElement('script');
-      script.type = 'text/javascript';
-      script.src = editor.opts.scaytOptions.scriptPath;
-      script.innerText = '';
-      script.onload = function () {
+    // Initialize.
+    function _init () {
+      if (!editor.$wp) return false;
 
-        /*global SCAYT */
-        object = new SCAYT.CUSTOMSCAYT(scayt_options);
-        refresh(editor.$tb.find('[data-cmd="spellChecker"]'))
+      if (typeof SCAYT !== 'undefined') {
+        _doInit();
       }
+      else {
+        if (!editor.shared.spellCheckerLoaded) editor.shared.spellCheckerCallbacks = [];
+        editor.shared.spellCheckerCallbacks.push(_doInit);
 
-      document.getElementsByTagName('head')[0].appendChild(script);
+        if (!editor.shared.spellCheckerLoaded) {
+          editor.shared.spellCheckerLoaded = true;
+
+          // Init SCAYT.
+          var script = document.createElement('script');
+          script.type = 'text/javascript';
+          script.src = editor.opts.scaytOptions.scriptPath;
+          script.innerText = '';
+          script.onload = function () {
+            /*global SCAYT */
+            for (var i = 0; i < editor.shared.spellCheckerCallbacks.length; i++) {
+              editor.shared.spellCheckerCallbacks[i]();
+            }
+          }
+
+          document.getElementsByTagName('head')[0].appendChild(script);
+        }
+      }
     }
 
     return {

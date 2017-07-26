@@ -1,5 +1,5 @@
 /*!
- * froala_editor v2.6.0 (https://www.froala.com/wysiwyg-editor)
+ * froala_editor v2.6.4 (https://www.froala.com/wysiwyg-editor)
  * License https://froala.com/wysiwyg-editor/terms/
  * Copyright 2014-2017 Froala Labs
  */
@@ -127,7 +127,7 @@
       if (editor.opts.fontFamilySelection) {
         var val = $(editor.selection.element()).css('font-family').replace(/(sans-serif|serif|monospace|cursive|fantasy)/gi, '').replace(/"|'|/g, '').split(',');
 
-        $btn.find('> span').text(editor.opts.fontFamily[_getSelection()] || val[0] || editor.opts.fontFamilyDefaultSelection);
+        $btn.find('> span').text(editor.opts.fontFamily[_getSelection()] || val[0] || editor.language.translate(editor.opts.fontFamilyDefaultSelection));
       }
     }
 

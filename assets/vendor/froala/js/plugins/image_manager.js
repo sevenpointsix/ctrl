@@ -1,5 +1,5 @@
 /*!
- * froala_editor v2.6.0 (https://www.froala.com/wysiwyg-editor)
+ * froala_editor v2.6.4 (https://www.froala.com/wysiwyg-editor)
  * License https://froala.com/wysiwyg-editor/terms/
  * Copyright 2014-2017 Froala Labs
  */
@@ -765,7 +765,7 @@
      * Method to check if an image has a specific tag.
      */
     function _imageHasTag ($image, tag) {
-      var tags = $image.attr('data-tag').split(',');
+      var tags = ($image.attr('data-tag') || '').split(',');
 
       for (var i = 0; i < tags.length; i++) {
         if (tags[i] == tag) {

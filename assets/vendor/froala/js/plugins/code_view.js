@@ -1,5 +1,5 @@
 /*!
- * froala_editor v2.6.0 (https://www.froala.com/wysiwyg-editor)
+ * froala_editor v2.6.4 (https://www.froala.com/wysiwyg-editor)
  * License https://froala.com/wysiwyg-editor/terms/
  * Copyright 2014-2017 Froala Labs
  */
@@ -111,23 +111,14 @@
         else {
           editor.events.$on($html_area, 'keydown keyup change input', function () {
             if (!editor.opts.height) {
-              if (!this.rows) {
-                this.rows = 1;
-              }
+              this.rows = 1;
 
               // Textarea has no content anymore.
               if (this.value.length === 0) {
-                this.rows = 1;
+                this.style.height = 'auto';
               }
 
               else {
-                this.style.height = 'auto';
-
-                // Decrease height in case text is deleted.
-                while (this.rows > 1 && this.scrollHeight <= this.offsetHeight) {
-                  this.rows = this.rows - 1;
-                }
-
                 this.style.height = this.scrollHeight + 'px';
               }
             }

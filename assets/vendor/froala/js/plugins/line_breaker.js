@@ -1,5 +1,5 @@
 /*!
- * froala_editor v2.6.0 (https://www.froala.com/wysiwyg-editor)
+ * froala_editor v2.6.4 (https://www.froala.com/wysiwyg-editor)
  * License https://froala.com/wysiwyg-editor/terms/
  * Copyright 2014-2017 Froala Labs
  */
@@ -227,6 +227,8 @@
         else if ($tag.parents(editor.opts.lineBreakerTags.join(',')).length > 0) {
           tag = $tag.parents(editor.opts.lineBreakerTags.join(',')).get(0);
 
+          if (editor.$el.find(tag).length === 0 || !$(tag).is(editor.opts.lineBreakerTags.join(','))) return null;
+
           return $(tag);
         }
       }
@@ -418,7 +420,7 @@
       if ($tag1 == null) {
 
         // If the tag is in a TD tag then just add <br> no matter what the default_tag is.
-        if (default_tag && $tag2.parent().get(0).tagName != 'TD') {
+        if (default_tag && $tag2.parent().get(0).tagName != 'TD' && $tag2.parents(default_tag).length === 0) {
           $tag2.before('<' + default_tag + '>' + $.FE.MARKERS + '<br></' + default_tag + '>')
         }
         else {

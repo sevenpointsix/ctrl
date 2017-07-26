@@ -1,5 +1,5 @@
 /*!
- * froala_editor v2.6.0 (https://www.froala.com/wysiwyg-editor)
+ * froala_editor v2.6.4 (https://www.froala.com/wysiwyg-editor)
  * License https://froala.com/wysiwyg-editor/terms/
  * Copyright 2014-2017 Froala Labs
  */
@@ -387,6 +387,8 @@
 
       // Save step when something else is dragged into the editor.
       else {
+        if ($draggable_helper) $draggable_helper.removeClass('fr-visible');
+
         if (!editor.undo.canDo()) editor.undo.saveStep();
 
         setTimeout(function () {

@@ -1,5 +1,5 @@
 /*!
- * froala_editor v2.6.0 (https://www.froala.com/wysiwyg-editor)
+ * froala_editor v2.6.4 (https://www.froala.com/wysiwyg-editor)
  * License https://froala.com/wysiwyg-editor/terms/
  * Copyright 2014-2017 Froala Labs
  */
@@ -36,7 +36,8 @@
   $.extend($.FE.DEFAULTS, {
     wordDeniedTags: [],
     wordDeniedAttrs: [],
-    wordAllowedStyleProps: ['font-family', 'font-size', 'background', 'color', 'width', 'text-align', 'vertical-align', 'background-color']
+    wordAllowedStyleProps: ['font-family', 'font-size', 'background', 'color', 'width', 'text-align', 'vertical-align', 'background-color', 'padding', 'margin', 'height', 'margin-top', 'margin-left', 'margin-right', 'margin-bottom'],
+    wordPasteModal: true
   });
 
   $.FE.PLUGINS.wordPaste = function (editor) {
@@ -49,13 +50,18 @@
      * Init Word Paste.
      */
     function _init () {
-
       editor.events.on('paste.wordPaste', function (html) {
         clipboard_html = html;
-        _showModal();
+
+        if (editor.opts.wordPasteModal) {
+          _showModal();
+        }
+        else {
+          clean(true);
+        }
 
         return false;
-      })
+      });
     }
 
     /*
@@ -65,8 +71,8 @@
 
       // Begin body.
       var body = '<div class="fr-word-paste-modal" style="padding: 20px 20px 10px 20px;">';
-      body += '<p style="text-align: left;">The pasted content is coming from a Microsoft Word document. Do you want to keep the format or clean it up?</p>'
-      body += '<div style="text-align: right; margin-top: 50px;"><button class="fr-remove-word fr-command">Clean</button> <button class="fr-keep-word fr-command">Keep</button></div>';
+      body += '<p style="text-align: left;">' + editor.language.translate('The pasted content is coming from a Microsoft Word document. Do you want to keep the format or clean it up?') + '</p>';
+      body += '<div style="text-align: right; margin-top: 50px;"><button class="fr-remove-word fr-command">' + editor.language.translate('Clean') + '</button> <button class="fr-keep-word fr-command">' + editor.language.translate('Keep') + '</button></div>';
 
       // End body.
       body += '</div>';
@@ -79,21 +85,25 @@
      */
     function _showModal () {
       if (!$modal) {
-        var head = '<h4><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 74.95 73.23" style="height: 25px; vertical-align: text-bottom; margin-right: 5px; display: inline-block"><defs><style>.a{fill:#2a5699;}.b{fill:#fff;}</style></defs><path class="a" d="M615.15,827.22h5.09V834c9.11.05,18.21-.09,27.32.05a2.93,2.93,0,0,1,3.29,3.25c.14,16.77,0,33.56.09,50.33-.09,1.72.17,3.63-.83,5.15-1.24.89-2.85.78-4.3.84-8.52,0-17,0-25.56,0v6.81h-5.32c-13-2.37-26-4.54-38.94-6.81q0-29.8,0-59.59c13.05-2.28,26.11-4.5,39.17-6.83Z" transform="translate(-575.97 -827.22)"/><path class="b" d="M620.24,836.59h28.1v54.49h-28.1v-6.81h22.14v-3.41H620.24v-4.26h22.14V873.2H620.24v-4.26h22.14v-3.41H620.24v-4.26h22.14v-3.41H620.24v-4.26h22.14v-3.41H620.24V846h22.14v-3.41H620.24Zm-26.67,15c1.62-.09,3.24-.16,4.85-.25,1.13,5.75,2.29,11.49,3.52,17.21,1-5.91,2-11.8,3.06-17.7,1.7-.06,3.41-.15,5.1-.26-1.92,8.25-3.61,16.57-5.71,24.77-1.42.74-3.55,0-5.24.09-1.13-5.64-2.45-11.24-3.47-16.9-1,5.5-2.29,10.95-3.43,16.42q-2.45-.13-4.92-.3c-1.41-7.49-3.07-14.93-4.39-22.44l4.38-.18c.88,5.42,1.87,10.82,2.64,16.25,1.2-5.57,2.43-11.14,3.62-16.71Z" transform="translate(-575.97 -827.22)"/></svg> Word Paste Detected</h4>';
+        var head = '<h4><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 74.95 73.23" style="height: 25px; vertical-align: text-bottom; margin-right: 5px; display: inline-block"><defs><style>.a{fill:#2a5699;}.b{fill:#fff;}</style></defs><path class="a" d="M615.15,827.22h5.09V834c9.11.05,18.21-.09,27.32.05a2.93,2.93,0,0,1,3.29,3.25c.14,16.77,0,33.56.09,50.33-.09,1.72.17,3.63-.83,5.15-1.24.89-2.85.78-4.3.84-8.52,0-17,0-25.56,0v6.81h-5.32c-13-2.37-26-4.54-38.94-6.81q0-29.8,0-59.59c13.05-2.28,26.11-4.5,39.17-6.83Z" transform="translate(-575.97 -827.22)"/><path class="b" d="M620.24,836.59h28.1v54.49h-28.1v-6.81h22.14v-3.41H620.24v-4.26h22.14V873.2H620.24v-4.26h22.14v-3.41H620.24v-4.26h22.14v-3.41H620.24v-4.26h22.14v-3.41H620.24V846h22.14v-3.41H620.24Zm-26.67,15c1.62-.09,3.24-.16,4.85-.25,1.13,5.75,2.29,11.49,3.52,17.21,1-5.91,2-11.8,3.06-17.7,1.7-.06,3.41-.15,5.1-.26-1.92,8.25-3.61,16.57-5.71,24.77-1.42.74-3.55,0-5.24.09-1.13-5.64-2.45-11.24-3.47-16.9-1,5.5-2.29,10.95-3.43,16.42q-2.45-.13-4.92-.3c-1.41-7.49-3.07-14.93-4.39-22.44l4.38-.18c.88,5.42,1.87,10.82,2.64,16.25,1.2-5.57,2.43-11.14,3.62-16.71Z" transform="translate(-575.97 -827.22)"/></svg> ' + editor.language.translate('Word Paste Detected') + '</h4>';
         var body = _buildModalBody();
 
         var modalHash = editor.modals.create(modal_id, head, body);
 
         var $body = modalHash.$body;
+        $modal = modalHash.$modal;
 
         modalHash.$modal.addClass('fr-middle');
 
         editor.events.bindClick($body, 'button.fr-remove-word', function () {
-          _cleanWord();
+          var inst = $modal.data('instance') || editor;
+          inst.wordPaste.clean();
         });
 
         editor.events.bindClick($body, 'button.fr-keep-word', function () {
-          _cleanWord(true);
+          var inst = $modal.data('instance') || editor;
+
+          inst.wordPaste.clean(true);
         });
 
         // Resize help modal on window resize.
@@ -119,27 +129,31 @@
     /*
      * Word paste cleanup.
      */
-    function _cleanWord (keep_formatting) {
+    function clean (keep_formatting) {
+      var wordAllowedStylePropsBackup = editor.opts.wordAllowedStyleProps;
 
-      if (keep_formatting) {
-
-        // Strip spaces at the beginning.
-        clipboard_html = clipboard_html.replace(/^\n*/g, '').replace(/^ /g, '');
-
-        // Firefox paste.
-        if (clipboard_html.indexOf('<colgroup>') === 0) {
-          clipboard_html = '<table>' + clipboard_html + '</table>';
-        }
-
-        clipboard_html = _wordClean(clipboard_html, editor.paste.getRtfClipboard());
-
-        clipboard_html = editor.paste.removeEmptyTags(clipboard_html);
+      if (!keep_formatting) {
+        editor.opts.wordAllowedStyleProps = [];
       }
+
+      // Strip spaces at the beginning.
+      clipboard_html = clipboard_html.replace(/^\n*/g, '').replace(/^ /g, '');
+
+      // Firefox paste.
+      if (clipboard_html.indexOf('<colgroup>') === 0) {
+        clipboard_html = '<table>' + clipboard_html + '</table>';
+      }
+
+      clipboard_html = _wordClean(clipboard_html, editor.paste.getRtfClipboard());
+
+      clipboard_html = editor.paste.removeEmptyTags(clipboard_html);
 
       _hideModal();
 
       // Clean the processed clipboard_html.
-      editor.paste.clean(clipboard_html, true, keep_formatting);
+      editor.paste.clean(clipboard_html, true, true);
+
+      editor.opts.wordAllowedStyleProps = wordAllowedStylePropsBackup;
     }
 
     /**
@@ -415,61 +429,6 @@
     }
 
     /*
-     * Convert contents of an element into a span.
-     */
-    function _wrapInnerHtmlInSpan (el) {
-
-      var child_tag = null;
-
-      // Do not wrap if span or other special tags are in its inner html.
-      if (el.firstElementChild) {
-        child_tag = el.firstElementChild.tagName;
-
-        if (['SPAN', 'STRONG', 'B', 'S', 'EM', 'U', 'SUB', 'SUP'].indexOf(child_tag) != -1) {
-
-          // Append style to first inner span.
-          if (el.tagName != 'TD') {
-            var child = el.firstElementChild;
-
-            while (child) {
-              if (child.tagName == 'SPAN') {
-                _appendStyle(child, el.getAttribute('style'));
-                break;
-              }
-
-              child = child.firstElementChild;
-            }
-          }
-
-          return;
-        }
-      }
-
-      // Skip if a child is a div.
-      if (child_tag == 'DIV') {
-
-        return;
-      }
-
-      // Element style.
-      var el_style = el.getAttribute('style');
-
-      // Create span.
-      var span = document.createElement('span');
-
-      // Clean style.
-      if (el_style) {
-        el_style = _normalizeAttribute(el_style);
-
-        span.setAttribute('style', el_style);
-      }
-      span.innerHTML = el.innerHTML;
-
-      // Set span as el only child.
-      el.innerHTML = span.outerHTML;
-    }
-
-    /*
      * Clean tr element.
      */
     function _cleanTr (tr, head_style_hash) {
@@ -526,20 +485,27 @@
 
             // Only one span inside.
             if (td_child.children.length == 1 && td_child.firstElementChild && td_child.firstElementChild.tagName == 'SPAN') {
-              child_clone = td_child.firstElementChild;
 
-              if (!has_single_child) {
-                child_clone = _changeTagName(child_clone, 'div');
-              }
-
-              if (!has_single_child) {
-                _appendStyle(child_clone, td_child.getAttribute('style'));
+              if (editor.node.openTagString(td_child.firstElementChild) === '<span lang="EN-US">') {
+                td_child.firstElementChild.outerHTML = td_child.firstElementChild.innerHTML;
               }
               else {
-                _appendStyle(child, td_child.getAttribute('style'));
-              }
 
-              child.replaceChild(child_clone, td_child);
+                child_clone = td_child.firstElementChild;
+
+                if (!has_single_child) {
+                  child_clone = _changeTagName(child_clone, 'div');
+                }
+
+                if (!has_single_child) {
+                  _appendStyle(child_clone, td_child.getAttribute('style'));
+                }
+                else {
+                  _appendStyle(child, td_child.getAttribute('style'));
+                }
+
+                child.replaceChild(child_clone, td_child);
+              }
             }
 
             // Many spans.
@@ -551,7 +517,9 @@
               }
             }
 
-            td_child = child_clone;
+            if (child_clone) {
+              td_child = child_clone;
+            }
 
             // Set alignment to td parent.
             if (has_single_child) {
@@ -590,9 +558,6 @@
           if (head_style_hash.td) {
             _appendStyle(child, head_style_hash.td);
           }
-
-          _wrapInnerHtmlInSpan(child);
-          _setFont(child);
         }
 
         var style = child.getAttribute('style');
@@ -648,9 +613,6 @@
 
         // Store rowspan.
         var rowspan = child.getAttribute('rowspan');
-
-        // Clear other attributes.
-        editor.node.clearAttributes(child);
 
         // Restore colspan.
         if (colspan) {
@@ -846,39 +808,6 @@
 
       if (new_style) {
         el.setAttribute('style', new_style);
-      }
-    }
-
-    /*
-     * Wrap an element's innerHTML in strong tag if font-weight is found and in em tag if font-style is found.
-     */
-    function _setFont (el) {
-      var style = el.getAttribute('style');
-
-      if (style) {
-        style = _normalizeAttribute(style);
-
-        // Get font-weight.
-        var font_weight_matches = style.match(/(^|;)font-weight:.+?[; "]{1,1}/gi);
-        var font_weight_value = null;
-
-        if (font_weight_matches) {
-          font_weight_value = font_weight_matches[font_weight_matches.length - 1].replace(/(^|;)font-weight:(.+?)[; "]{1,1}/gi, '$2');
-        }
-
-        // Wrap to strong tag too if font-weight is found.
-        if (font_weight_value && (font_weight_value >= 700 || font_weight_value == 'bold')) {
-          var strong = document.createElement('strong');
-          strong.innerHTML = el.innerHTML;
-          el.innerHTML = strong.outerHTML;
-        }
-
-        // Wrap to em tag too if font-style italic or oblique is found.
-        if (/(^|;)font-style:(italic|oblique)[; ]/gi.test(style)) {
-          var em = document.createElement('em');
-          em.innerHTML = el.innerHTML;
-          el.innerHTML = em.outerHTML;
-        }
       }
     }
 
@@ -1123,8 +1052,28 @@
       var paragraph_tag_list = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'PRE'];
 
       if (paragraph_tag_list.indexOf(tag_name) != -1) {
-        _wrapInnerHtmlInSpan(el);
-        _setFont(el);
+
+        // Set style from head.
+        var el_class = el.getAttribute('class');
+
+        if (el_class) {
+          if (head_style_hash && head_style_hash[tag_name.toLowerCase() + '.' + el_class]) {
+            _appendStyle(el, head_style_hash[tag_name.toLowerCase() + '.' + el_class]);
+          }
+
+          // Remove mso values from class.
+          if (el_class.toLowerCase().indexOf('mso') != -1) {
+            var cleaned_class = _normalizeAttribute(el_class);
+            cleaned_class = cleaned_class.replace(/[0-9a-z-_]*mso[0-9a-z-_]*/gi, '');
+
+            if (cleaned_class) {
+              el.setAttribute('class', cleaned_class);
+            }
+            else {
+              el.removeAttribute('class');
+            }
+          }
+        }
 
         // keep only text-align in style.
         var paragraph_style = el.getAttribute('style');
@@ -1138,45 +1087,12 @@
           }
         }
 
-        if (paragraph_text_align) {
-          el.setAttribute('style', paragraph_text_align);
-        }
-        else {
-
-          el.removeAttribute('style');
-        }
-      }
-
-
-      if (tag_name == 'P') {
         _cleanAlignment(el);
       }
 
       // Clean tr.
       if (tag_name == 'TR') {
         _cleanTr(el, head_style_hash);
-      }
-
-      var el_class = el.getAttribute('class');
-
-      if (el_class) {
-
-        if (head_style_hash && tag_name == 'P' && head_style_hash['p.' + el_class]) {
-          _appendStyle(el, head_style_hash['p.' + el_class]);
-        }
-
-        // Remove mso values from class.
-        if (el_class.toLowerCase().indexOf('mso') != -1) {
-          var cleaned_class = _normalizeAttribute(el_class);
-          cleaned_class = cleaned_class.replace(/[0-9a-z-_]*mso[0-9a-z-_]*/gi, '');
-
-          if (cleaned_class) {
-            el.setAttribute('class', cleaned_class);
-          }
-          else {
-            el.removeAttribute('class');
-          }
-        }
       }
 
       // Clean empty links.
@@ -1191,8 +1107,7 @@
 
       // Clean table.
       if (tag_name == 'TABLE') {
-        editor.node.clearAttributes(el);
-        el.setAttribute('style', 'width: 100%;');
+        el.style.width = '100%';
       }
 
       // Remove lang attribute.
@@ -1429,7 +1344,8 @@
     }
 
     return {
-      _init: _init
+      _init: _init,
+      clean: clean
     };
   };
 

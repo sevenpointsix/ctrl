@@ -1,5 +1,5 @@
 /*!
- * froala_editor v2.6.0 (https://www.froala.com/wysiwyg-editor)
+ * froala_editor v2.6.4 (https://www.froala.com/wysiwyg-editor)
  * License https://froala.com/wysiwyg-editor/terms/
  * Copyright 2014-2017 Froala Labs
  */
@@ -33,11 +33,14 @@
 
   $.extend($.FE.DEFAULTS, {
     aviaryKey: '542e1ff5d5144b9b81cef846574ba6cf',
-    aviaryScriptURL: 'https://dme0ih8comzn4.cloudfront.net/imaging/v3/editor.js'
+    aviaryScriptURL: 'https://dme0ih8comzn4.cloudfront.net/imaging/v3/editor.js',
+    aviaryOptions: {
+      displayImageSize: true,
+      theme: 'minimum'
+    }
   });
 
   $.FE.PLUGINS.imageAviary = function (editor) {
-    var feather_editor;
     var current_image;
 
     // Load script in the editor.
@@ -45,6 +48,7 @@
 
       var script = document.createElement('script');
       script.type = 'text/javascript';
+      script.defer = 'defer';
       script.src = src;
       script.innerText = '';
       script.onload = callback;
@@ -53,15 +57,22 @@
     }
 
     function _init () {
-      _loadScript(editor.opts.aviaryScriptURL, _initAviary);
+      if (!editor.shared.feather_editor) {
+        editor.shared.feather_editor = true;
+
+        if (typeof Aviary === 'undefined') {
+          _loadScript(editor.opts.aviaryScriptURL, _initAviary);
+        }
+        else {
+          _initAviary();
+        }
+      }
     }
 
     function _initAviary() {
       /*global Aviary*/
-      feather_editor = new Aviary.Feather({
+      editor.shared.feather_editor = new Aviary.Feather($.extend({
         apiKey: editor.opts.aviaryKey,
-        displayImageSize: true,
-        theme: 'minimum',
         onSave: function (image, new_url) {
 
           // Read image and upload it.
@@ -83,38 +94,41 @@
               array.push(binary.charCodeAt(i));
             }
             var upload_img = new Blob([new Uint8Array(array)], {
-              type: 'image/jpeg'
+              type: 'image/png'
             });
 
             // Select image and upload.
-            editor.image.edit($(current_image));
-            editor.image.upload([upload_img]);
+            editor.shared.feather_editor.instance.image.edit($(editor.shared.feather_editor.current_image));
+            editor.shared.feather_editor.instance.image.upload([upload_img]);
 
             // Close editor.
-            feather_editor.close();
+            editor.shared.feather_editor.close();
           };
           img.src = new_url;
 
-          feather_editor.showWaitIndicator();
+          editor.shared.feather_editor.showWaitIndicator();
         },
         onError: function (errorObj) {
           throw new Error(errorObj.message);
         },
         onClose: function () {
-          if (!editor.image.get()) {
-            editor.image.edit($(current_image));
+          if (!editor.shared.feather_editor.instance.image.get()) {
+            editor.shared.feather_editor.instance.image.edit($(editor.shared.feather_editor.current_image));
           }
         }
-      });
+      }, editor.opts.aviaryOptions));
     }
 
-    function launch () {
-      current_image = editor.image.get()[0];
+    function launch (instance) {
+      if (typeof instance.shared.feather_editor === 'object') {
+        instance.shared.feather_editor.current_image = instance.image.get()[0];
+        instance.shared.feather_editor.instance = instance;
 
-      feather_editor.launch({
-        image: current_image,
-        url: current_image.src
-      });
+        instance.shared.feather_editor.launch({
+          image: instance.image.get()[0],
+          url: instance.image.get()[0].src
+        });
+      }
     }
 
     return {
@@ -133,7 +147,7 @@
     undo: false,
     focus: false,
     callback: function (cmd, val) {
-      this.imageAviary.launch(val);
+      this.imageAviary.launch(this);
     },
     plugin: 'imageAviary'
   });

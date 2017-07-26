@@ -1,5 +1,5 @@
 /*!
- * froala_editor v2.6.0 (https://www.froala.com/wysiwyg-editor)
+ * froala_editor v2.6.4 (https://www.froala.com/wysiwyg-editor)
  * License https://froala.com/wysiwyg-editor/terms/
  * Copyright 2014-2017 Froala Labs
  */
@@ -33,13 +33,7 @@
 
   
 
-  // Extend defaults.
-  $.extend($.FE.DEFAULTS, {
-
-  });
-
-  // Exclude double dots using negative lookahead: (?!\\.)
-  $.FE.URLRegEx = '(^| |\\u00A0)((https?:\\/\\/(www\\.)?)?(([-a-zA-Z0-9@:%_\\+~#=]{2,256}\\.[a-z]{2,6}\\b((\\.?[-a-zA-Z0-9@:%_\\+~#?&/=]{1,})*))|([\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}([-a-zA-Z0-9@:%_\\+~#?&/=]*))))$';
+  $.FE.URLRegEx = '(^| |\\u00A0)(' + $.FE.LinkRegEx + '|' + '([a-z0-9+-_.]{1,}@[a-z0-9+-_.]{1,})' + ')$';
 
   $.FE.PLUGINS.url = function (editor) {
     var rel = null;
@@ -51,8 +45,16 @@
 
       var link = p2;
 
-      // no protocol found.
-      if (!/^((http|https|ftp|ftps)\:\/\/)/i.test(link)) {
+      // Convert email.
+      if (editor.opts.linkConvertEmailAddress) {
+        var regex = $.FE.MAIL_REGEX;
+
+        if (regex.test(link) && !/^mailto:.*/i.test(link)) {
+          link = 'mailto:' + link;
+        }
+      }
+
+      if (!/^((http|https|ftp|ftps|mailto|tel|sms|notes|data)\:)/i.test(link)) {
         link = '//' + link;
       }
 
@@ -81,11 +83,23 @@
       return html.replace(_getRegEx(), _linkReplaceHandler);
     }
 
+    function _isA (node) {
+      if (!node) return false;
+
+      if (node.tagName === 'A') return true;
+
+      if (node.parentNode && node.parentNode != editor.el) return _isA(node.parentNode);
+
+      return false;
+    }
+
     function _inlineType () {
       var range = editor.selection.ranges(0);
       var node = range.startContainer;
 
       if (!node || node.nodeType !== Node.TEXT_NODE) return false;
+
+      if (_isA(node)) return false;
 
       if (_getRegEx().test(node.textContent)) {
         $(node).before(_convertToLink(node.textContent));
@@ -117,28 +131,10 @@
       editor.events.on('keydown', function (e) {
         var keycode = e.which;
 
-        if (keycode == $.FE.KEYCODE.ENTER || keycode == $.FE.KEYCODE.SPACE || keycode == $.FE.KEYCODE.PERIOD) {
+        if (editor.selection.isCollapsed() && (keycode == $.FE.KEYCODE.ENTER || keycode == $.FE.KEYCODE.SPACE || keycode == $.FE.KEYCODE.PERIOD)) {
           _inlineType();
         }
       }, true);
-
-      editor.events.on('keydown', function (e) {
-        var keycode = e.which;
-
-        if (keycode == $.FE.KEYCODE.ENTER) {
-          var el = editor.selection.element();
-
-          if ((el.tagName == 'A' || $(el).parents('a').length) && editor.selection.info(el).atEnd) {
-            e.stopImmediatePropagation();
-
-            if (el.tagName !== 'A') el = $(el).parents('a')[0];
-            $(el).after('&nbsp;' + $.FE.MARKERS);
-            editor.selection.restore();
-
-            return false;
-          }
-        }
-      });
     }
 
     return {
