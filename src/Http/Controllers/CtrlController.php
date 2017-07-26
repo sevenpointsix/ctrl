@@ -542,11 +542,21 @@ class CtrlController extends Controller
         	// We could exclude the column here if it's found in the $filter array; but really, we'd be unlikely to have a filterable column as a header anyway. Implement this if it becomes necessary.
         	// Aha, this IS necessary; for example, when we want to only show the "Carousel" categories on Argos.
         	$make_searchable = true;
+			$make_orderable = true;
+			if ($header->field_type == 'image') {
+				/**
+				* It makes no sense to search (or order) image columns either
+				**/
+				$make_searchable = false;
+				$make_orderable = false;
+			}
+			else {
         	foreach ($filter_array as $filter) {
         		if ($header->id == $filter['ctrl_property_id']) {
         			// This header (a header being a CTRL Property) exists in the filter array, so don't allow it to be searchable
         			$make_searchable = false;
         			break;
+					}				
         		}
         	}
 
@@ -583,7 +593,7 @@ class CtrlController extends Controller
         			$th_columns[] = '<th data-search-dropdown="'.($make_searchable ? 'true' : 'false').'" data-orderable="false">'.$header->label.'</th>';
         		}
         		else {
-        			$th_columns[] = '<th data-search-text="'.($make_searchable ? 'true' : 'false').'">'.$header->label.'</th>';
+        			$th_columns[] = '<th data-search-text="'.($make_searchable ? 'true' : 'false').'" data-orderable="'.($make_orderable ? 'true' : 'false').'">'.$header->label.'</th>';
         		}
         	}
         	else {
@@ -618,7 +628,7 @@ class CtrlController extends Controller
         			$th_columns[] = '<th data-search-dropdown="'.($make_searchable ? 'true' : 'false').'" data-orderable="false">'.$header->label.'</th>';
         		}
         		else {
-        			$th_columns[] = '<th data-search-text="'.($make_searchable ? 'true' : 'false').'">'.$header->label.'</th>';
+        			$th_columns[] = '<th data-search-text="'.($make_searchable ? 'true' : 'false').'" data-orderable="'.($make_orderable ? 'true' : 'false').'">'.$header->label.'</th>';
         		}
 
         	}
