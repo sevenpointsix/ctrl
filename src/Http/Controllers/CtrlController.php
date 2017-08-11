@@ -545,10 +545,10 @@ class CtrlController extends Controller
 			$make_orderable = true;
 			if ($header->field_type == 'image') {
 				/**
-				* It makes no sense to search (or order) image columns either
+				* It makes no sense to search image columns either
+				* Ordering might make sense if you want to list all items without an image first...
 				**/
-				$make_searchable = false;
-				$make_orderable = false;
+				$make_searchable = false;				
 			}
 			else {
         	foreach ($filter_array as $filter) {
