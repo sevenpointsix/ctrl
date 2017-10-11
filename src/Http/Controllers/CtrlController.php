@@ -2185,12 +2185,24 @@ class CtrlController extends Controller
 				$messages["$field_name.email"] = "The &ldquo;{$ctrl_property->label}&rdquo; field must be a valid email address";
 			}
 			if (in_array($ctrl_property->field_type,['date','datetime'])) {
-				$validation[$field_name][] = 'date';
+				if (in_array('required', $flags)) {
+					$validation[$field_name][] = 'date';
+				}
+				else {
+					// Allow empty dates
+					$validation[$field_name][] = 'nullable|date';
+				}
 				$messages["$field_name.date"] = "The &ldquo;{$ctrl_property->label}&rdquo; field must be a valid date";
 			}
 			else if (in_array($ctrl_property->field_type,['time'])) {
-				$validation[$field_name][] = 'date_format:g:i\ A';
-				$messages["$field_name.date"] = "The &ldquo;{$ctrl_property->label}&rdquo; field must be a valid time";
+				if (in_array('required', $flags)) {
+					$validation[$field_name][] = 'date_format:g:i\ A';
+				}
+				else {
+					// Allow empty times
+					$validation[$field_name][] = 'nullable|date_format:g:i\ A';
+				}
+				$messages["$field_name.date_format"] = "The &ldquo;{$ctrl_property->label}&rdquo; field must be a valid time";
 			}
 
 			if (!empty($validation[$field_name])) {
