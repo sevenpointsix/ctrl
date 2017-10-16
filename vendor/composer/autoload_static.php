@@ -15,12 +15,13 @@ class ComposerStaticInitee9dde517c567352976a4705537d4915
         'a0edc8309cc5e1d60e3047b5df6b7052' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/functions_include.php',
         'f0906e6318348a765ffb6eb24e0d0938' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Foundation/helpers.php',
         '58571171fd5812e6e447dce228f52f4d' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Support/helpers.php',
+        '0b47d6d4a00ca9112ba3953b49e7c9a4' => __DIR__ . '/..' . '/yajra/laravel-datatables-oracle/src/helper.php',
     );
 
     public static $prefixLengthsPsr4 = array (
         'Y' => 
         array (
-            'Yajra\\Datatables\\' => 17,
+            'Yajra\\DataTables\\' => 17,
         ),
         'T' => 
         array (
@@ -51,8 +52,10 @@ class ComposerStaticInitee9dde517c567352976a4705537d4915
         ),
         'P' => 
         array (
+            'Psr\\SimpleCache\\' => 16,
             'Psr\\Log\\' => 8,
             'Psr\\Http\\Message\\' => 17,
+            'Psr\\Container\\' => 14,
             'PhpParser\\' => 10,
         ),
         'M' => 
@@ -72,9 +75,14 @@ class ComposerStaticInitee9dde517c567352976a4705537d4915
         array (
             'GuzzleHttp\\Psr7\\' => 16,
         ),
+        'E' => 
+        array (
+            'Egulias\\EmailValidator\\' => 23,
+        ),
         'D' => 
         array (
             'Dotenv\\' => 7,
+            'Doctrine\\Common\\Inflector\\' => 26,
         ),
         'C' => 
         array (
@@ -84,7 +92,7 @@ class ComposerStaticInitee9dde517c567352976a4705537d4915
     );
 
     public static $prefixDirsPsr4 = array (
-        'Yajra\\Datatables\\' => 
+        'Yajra\\DataTables\\' => 
         array (
             0 => __DIR__ . '/..' . '/yajra/laravel-datatables-oracle/src',
         ),
@@ -160,6 +168,10 @@ class ComposerStaticInitee9dde517c567352976a4705537d4915
         array (
             0 => __DIR__ . '/..' . '/ramsey/uuid/src',
         ),
+        'Psr\\SimpleCache\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/simple-cache/src',
+        ),
         'Psr\\Log\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/log/Psr/Log',
@@ -167,6 +179,10 @@ class ComposerStaticInitee9dde517c567352976a4705537d4915
         'Psr\\Http\\Message\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/http-message/src',
+        ),
+        'Psr\\Container\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/container/src',
         ),
         'PhpParser\\' => 
         array (
@@ -192,9 +208,17 @@ class ComposerStaticInitee9dde517c567352976a4705537d4915
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/psr7/src',
         ),
+        'Egulias\\EmailValidator\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/egulias/email-validator/EmailValidator',
+        ),
         'Dotenv\\' => 
         array (
             0 => __DIR__ . '/..' . '/vlucas/phpdotenv/src',
+        ),
+        'Doctrine\\Common\\Inflector\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/doctrine/inflector/lib/Doctrine/Common/Inflector',
         ),
         'Cron\\' => 
         array (
@@ -241,9 +265,9 @@ class ComposerStaticInitee9dde517c567352976a4705537d4915
         ),
         'D' => 
         array (
-            'Doctrine\\Common\\Inflector\\' => 
+            'Doctrine\\Common\\Lexer\\' => 
             array (
-                0 => __DIR__ . '/..' . '/doctrine/inflector/lib',
+                0 => __DIR__ . '/..' . '/doctrine/lexer/lib',
             ),
         ),
     );

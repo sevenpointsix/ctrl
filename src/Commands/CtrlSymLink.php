@@ -62,7 +62,7 @@ class CtrlSymLink extends Command
             exit();
         }
 
-        $project_root = realpath(base_path().'/../..'); // eg, /Users/chrisgibson/Projects
+        $project_root = realpath(base_path().'/..'); // eg, /Users/chrisgibson/Projects
         $project_path = implode('/', [$project_root,$project_folder]);
 
         if(!File::exists($project_path)) {
@@ -71,7 +71,7 @@ class CtrlSymLink extends Command
             exit();
         }
 
-        $ctrl_path              = implode('/', [$project_path,$webroot,'app','Ctrl']);
+        $ctrl_path              = implode('/', [$project_path,'app','Ctrl']);
 
         if(!File::exists($ctrl_path)) {
             $this->error("$project_folder doesn't seem to contain a valid Ctrl folder");

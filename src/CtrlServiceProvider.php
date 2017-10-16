@@ -135,7 +135,7 @@ class CtrlServiceProvider extends ServiceProvider{
 		]);
 
 		// Register the DataTables service like this (saves having to add it to config/app.php)
-		\App::register('Yajra\Datatables\DatatablesServiceProvider');
+		\App::register('Yajra\DataTables\DataTablesServiceProvider');
 
 		// Excel module used when importing, exporting CSV data
 		\App::register('Maatwebsite\Excel\ExcelServiceProvider');

@@ -22,7 +22,7 @@ use Storage;
 use Log;
 use Schema;
 
-use Datatables;
+use Yajra\DataTables\Facades\DataTables;
 use Maatwebsite\Excel\Facades\Excel;
 use Sunra\PhpSimple\HtmlDomParser; // For manipulating pages, eg, customising the dashboard
 
@@ -142,7 +142,7 @@ class CtrlController extends Controller
 			else {
 				$can_list = $ctrl_class->can('list');
 				$can_edit = $ctrl_class->can('edit');
-				$can_add  = $ctrl_class->can('add');				
+				$can_add  = $ctrl_class->can('add');
 			}
 
 			/**
@@ -548,7 +548,7 @@ class CtrlController extends Controller
 				* It makes no sense to search image columns either
 				* Ordering might make sense if you want to list all items without an image first...
 				**/
-				$make_searchable = false;				
+				$make_searchable = false;
 			}
 			else {
         	foreach ($filter_array as $filter) {
@@ -556,7 +556,7 @@ class CtrlController extends Controller
         			// This header (a header being a CTRL Property) exists in the filter array, so don't allow it to be searchable
         			$make_searchable = false;
         			break;
-					}				
+					}
         		}
         	}
 
@@ -1322,7 +1322,7 @@ class CtrlController extends Controller
 			}
 		}
 
-        $datatable = Datatables::of($objects)
+        $datatable = DataTables::of($objects)
         	->setRowId('id') // For reordering
         	->editColumn('order', function($object) { // Set the displayed value of the order column to just show the icon
         		return '<i class="fa fa-reorder"></i>';
