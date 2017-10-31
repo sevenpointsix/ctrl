@@ -70,8 +70,8 @@ class CtrlStorage extends Command
          * We're going to assume that the name of the website folder on the remote environment
          * matches the one we're using locally...
          */
-        $project_path   = realpath(base_path().'/..'); // eg, /Users/chrisgibson/Projects/argos-support.co.uk
-        $website_folder = last(explode('/',$project_path));
+        $project_path   = realpath(base_path()); // eg, /Users/chrisgibson/Projects/argos-support.co.uk
+        $website_folder = last(explode('/',$project_path)); // eg argos-support.co.uk
 
         $remote_connection = 'phoenixdigital@staging.phoenixdigital.agency';
         $remote_path       = '/var/www/'.$website_folder.'/public_html/storage/app/public/';
