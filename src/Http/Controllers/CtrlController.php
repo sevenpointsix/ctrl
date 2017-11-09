@@ -457,7 +457,7 @@ class CtrlController extends Controller
         		die(vsprintf($sql, $bindings).';'); // dd() wraps the query in "", which makes it tricky to copy and paste into Sequel Pro
         	}
 
-			$objects = $query->take(20)->get();	// Limits the dropdown to 20 items; this may need to be adjusted
+			$objects = $query->take(50)->get();	// Limits the dropdown to 50 items; this may need to be adjusted
 			if (!$objects->isEmpty()) {
 			    foreach ($objects as $object) {
 			    	$result            = new \StdClass;
