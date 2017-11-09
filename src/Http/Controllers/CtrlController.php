@@ -2462,7 +2462,12 @@ class CtrlController extends Controller
 		if ($request->file('file')->isValid()) {
 
 			$path           = $this->upload($request, 'file');
-			$response->link = $path;
+			if (\App::VERSION() >= 5.4) {
+				$response->link = Storage::url($path);
+			}
+			else {
+				$response->link = $path;
+			}
 
 		}
 		else {
@@ -2849,7 +2854,7 @@ class CtrlController extends Controller
 
 	public function convert_filter_string_to_array($filter_string) {
 		$filter_array = [];
-		if (!empty($filter_string)) {
+		if (!empty($filter_string) && strpos($filter_string,'~') !== false) { /* There's an issue here, where the image upload believes it has a filter string but doesn't... this needs to be checked properly. */
 			$filters = explode('~', $filter_string);
 			foreach ($filters as $filter) {
 				$filter_item = [];
