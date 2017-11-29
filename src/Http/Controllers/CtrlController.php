@@ -270,7 +270,7 @@ class CtrlController extends Controller
 					$related_class      = $related_ctrl_class->get_class();
 					$related_object     = $related_class::where('id',$filter['value'])->firstOrFail();
 
-					$description[] = "belonging to the ".strtolower($related_ctrl_class->get_singular) ." <strong><a href=".route('ctrl::edit_object',[$related_ctrl_class->id,$related_object->id]).">".$this->get_object_title($related_object)."</a></strong>";
+					$description[] = "belonging to the ".strtolower($related_ctrl_class->get_singular()) ." <strong><a href=".route('ctrl::edit_object',[$related_ctrl_class->id,$related_object->id]).">".$this->get_object_title($related_object)."</a></strong>";
 				}
 			}
 			$return = $this->comma_and($description);
@@ -2853,7 +2853,12 @@ class CtrlController extends Controller
 
 	public function convert_filter_string_to_array($filter_string) {
 		$filter_array = [];
-		if (!empty($filter_string) && strpos($filter_string,'~') !== false) { /* There's an issue here, where the image upload believes it has a filter string but doesn't... this needs to be checked properly. */
+		if (!empty($filter_string) && (
+				strpos($filter_string,'~') !== false
+				||
+				strpos($filter_string,',') !== false
+			)
+		) { /* There's an issue here, where the image upload (within Redactor I think) believes it has a filter string but doesn't... this needs to be checked properly. */
 			$filters = explode('~', $filter_string);
 			foreach ($filters as $filter) {
 				$filter_item = [];
