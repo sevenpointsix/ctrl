@@ -270,7 +270,7 @@ class CtrlController extends Controller
 					$related_class      = $related_ctrl_class->get_class();
 					$related_object     = $related_class::where('id',$filter['value'])->firstOrFail();
 
-					$description[] = "belonging to the ".strtolower($related_ctrl_class->name) ." <strong><a href=".route('ctrl::edit_object',[$related_ctrl_class->id,$related_object->id]).">".$this->get_object_title($related_object)."</a></strong>";
+					$description[] = "belonging to the ".strtolower($related_ctrl_class->get_singular) ." <strong><a href=".route('ctrl::edit_object',[$related_ctrl_class->id,$related_object->id]).">".$this->get_object_title($related_object)."</a></strong>";
 				}
 			}
 			$return = $this->comma_and($description);
