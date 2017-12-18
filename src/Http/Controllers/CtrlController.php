@@ -1483,8 +1483,26 @@ class CtrlController extends Controller
     		$edit_link = false;
     	}
 
-    	// TODO: check permissions using the module here if necessary
-    	if ($ctrl_class->can('delete')) {
+		// Check permissions:
+
+		/**
+		 * TODO: OK, this needs work. We want to check permissions here for Argos
+		 * so that we can hide the delete flag IF we're listing products within
+		 * a cached list. However, the get_data function has no concept of
+		 * whether we're listing products or not, so the current hook
+		 * (that hides the Add button) can't work. Hmmm.
+		 */
+		if ($this->module->enabled('permissions')) {
+			$can_delete = $this->module->run('permissions',[
+				$ctrl_class->id,
+				'delete',
+			]);
+		}
+		else {
+			$can_delete = $ctrl_class->can('delete');
+		}
+
+    	if ($can_delete) {
     		$delete_link = route('ctrl::delete_object',[$ctrl_class->id,$object_id]);
     	}
     	else {

@@ -21,5 +21,13 @@
             "php artisan vendor:publish --tag=migrations",
             "php artisan vendor:publish --tag=public --force"
         ]
-    }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Sevenpointsix\\Ctrl\\CtrlServiceProvider"
+            ]
+        }
+    },
+
 }
