@@ -2281,14 +2281,33 @@ class CtrlController extends Controller
 	        			->where('table_name',$ctrl_class->table_name)
 	        			->where('COLUMN_NAME',$column)
 	        			->value('IS_NULLABLE');
-	        if (!is_null($nullable) && $nullable == 'YES' && isset($_POST[$column]) && $_POST[$column] === '') {
+	        if (
+					!is_null($nullable)
+					&& $nullable == 'YES'
+					&& isset($_POST[$column])
+					&& $_POST[$column] === ''
+				) {
 	        	$object->$column = null;
 	        }
 	        // Also, if the column ISN'T nullable, and we haven't passed in a value, set the value to '';
 	        // this gets around an issue in Laravel >= 5.3, which uses "strict" MySQL mode and needs columns to have default values
-	        else if (!is_null($nullable) && $nullable == 'NO' && !isset($_POST[$column]) && !$object->$column) {
+	        else if (
+					!is_null($nullable)
+					&& $nullable == 'NO'
+					&& !isset($_POST[$column])
+					&& !$object->$column
+				) {
 	        	$object->$column = '';
-	        }
+			}
+			/*
+			** Also handle checkboxes; set to zero if we don't have a value
+			**/
+			else if (
+				$check_nullable_property->field_type == 'checkbox'
+				&& empty($_POST[$column])
+			) {
+				$object->$column = 0;
+			}
         }
 
         // Set the URL automatically as well:
