@@ -1340,7 +1340,7 @@ class CtrlController extends Controller
 	    			$basename   = str_limit($path_parts['basename'],20);
 
 	    			if (!file_exists($path)) {
-	    				return 'Image missing '.$path;
+	    				return 'Image missing <!--'.$path.'-->';
 	    			}
 	    			else {
 						return sprintf('<div class="media"><div class="media-left"><a href="%1$s" data-toggle="lightbox" data-title="%2$s"><img class="media-object" src="%1$s" height="30"></a></div></div>',$url, $basename);
