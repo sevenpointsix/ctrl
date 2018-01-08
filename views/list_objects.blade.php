@@ -2,14 +2,14 @@
 
 
 @section('css')
-<!-- DataTables --> 
+<!-- DataTables -->
 {{-- <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/t/bs-3.3.6/dt-1.10.11,b-1.1.2,r-2.0.2/datatables.min.css"/> --}}
 {{-- This should prevent bootstrap being loaded twice --}}
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/u/bs/dt-1.10.12,b-1.2.0,r-2.1.0,rr-1.1.2/datatables.min.css"/>
 
 
 <!-- Row reorder -->
-{{--  No longer required? 
+{{--  No longer required?
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.1.1/css/rowReorder.dataTables.min.css" />
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.1.1/css/rowReorder.bootstrap.min.css" />
 --}}
@@ -28,19 +28,19 @@
 	div.dataTables_wrapper div.dataTables_filter { /* Put the search box on the left * /
 		text-align: left;
 	}
-	div.dataTables_wrapper div.dataTables_filter input {		
+	div.dataTables_wrapper div.dataTables_filter input {
 		margin-left: 0; /* Don't need the indent now that we're removing the label  * /
 	}
 	div.dataTables_wrapper div.dataTables_custom_buttons { /* Put the butons on the right * /
 		float: right;
-	}	
+	}
 	*/
-	
+
 	/* Is this actually necessary? It looks fine with the border:;
 	table.dataTable.table-bordered>thead>tr>th.final_header {
 		border-right: none;
-	}	
-	
+	}
+
 	table.dataTable.table-bordered>thead>tr>th.empty_header {
 		border-left: none;
 	}
@@ -74,7 +74,7 @@
 	}
 	*/
 	/* Remove bold text from filter inputs when rendered in the table header */
-	table.dataTable thead th input, 
+	table.dataTable thead th input,
 		table.dataTable thead th select {
 		font-weight: normal;
 	}
@@ -113,7 +113,7 @@
 	    right:0px;
 	    top:4px;
 	    bottom:0;
-	    height:14px;	    
+	    height:14px;
 	    font-size:14px;
 	    cursor:pointer;
 	    color:#aaa;
@@ -149,9 +149,9 @@
     	There's an argument to say that we shouldn't allow any column ordering if we're allowing the table to be reordered, but... that's another discussion.
     */
     table.dataTable thead .sorting_asc_disabled {
-    	padding-right: 30px;    	
+    	padding-right: 30px;
     }
-    table.dataTable thead .sorting_asc_disabled:after {	    
+    table.dataTable thead .sorting_asc_disabled:after {
 	    content: "\e150";
 	    opacity: 0.2;
 	    bottom: 14px;
@@ -185,10 +185,16 @@
 	*/ ?>
 </style>
 
+@if (!empty($custom_css))
+	<style>
+		{!! $custom_css !!}
+	</style>
+@endif
+
 @stop
 
 @section('js')
-<!-- DataTables --> 
+<!-- DataTables -->
 {{--
 <script type="text/javascript" src="https://cdn.datatables.net/t/bs-3.3.6/dt-1.10.11,b-1.1.2,r-2.0.2/datatables.min.js"></script>
 <!-- Row reorder -->
@@ -227,8 +233,8 @@ $(function() {
 	*/
 
 	// Add text search inputs to each column, from https://datatables.net/examples/api/multi_filter.html
-    $('#data-table thead th').each( function () {    	
-    	var column_searchable = $(this).attr('data-search-text');                    	
+    $('#data-table thead th').each( function () {
+    	var column_searchable = $(this).attr('data-search-text');
         var column_title = $(this).text();
         if (column_searchable === 'true') {
         	if ($('#data-table thead th').length > 5) { // If we have more than five columns, make them smaller for legibility:
@@ -251,12 +257,12 @@ $(function() {
 			// No, this works fine in fact -- why did I think it didn't?
 
 		"sPaginationType": "simple_numbers", // use "listbox" for Argos-style dropdowns, but I'm going off these
-		@if ($page_length === false)		
+		@if ($page_length === false)
         "paging": false,
        	@else ($page_length)
         "pageLength": {{ $page_length }},
         @endif
-		
+
 		"orderCellsTop": true, // Is this required? It's designed to prevent the click on a search box propagating to the reorder button, but I think we handle this using stopPropagation above
 		dom: "<'row'<'col-sm-12'tr>>" +
 			 "<'row'<'col-sm-5'i><'col-sm-7'p>>",
@@ -271,34 +277,34 @@ $(function() {
         rowReorder: { update: false }, // Prevents the data from being redrawn after we've reordered; is this what we want? Depends if we get the Ajax saving sorted
         @endif
         drawCallback: function( settings ) {
-        	$('.dropdown-toggle').dropdown(); // Refresh Bootstrap dropdowns       	
+        	$('.dropdown-toggle').dropdown(); // Refresh Bootstrap dropdowns
         	init_row_buttons();
     	},
     	/* No longer necessary, we've removed the main search input
     	language: { 'searchPlaceholder': 'Search...','sSearch':'' }, // Remove the "Search:" label, and add a placeholder
-    	*/    	
+    	*/
     	initComplete: function () { // Add column filters; see https://datatables.net/examples/api/multi_filter_select.html
     		var total_columns = this.api().columns().indexes().length;
             this.api().columns().every( function () {
-                var column = this; 
-                
+                var column = this;
+
                 // Only draw a dropdown for fields marked as such (usually, relationship fields, possibly ENUM?)
-                var column_searchable = $(column.header()).attr('data-search-dropdown');                
+                var column_searchable = $(column.header()).attr('data-search-dropdown');
                 var column_title = $(column.header()).text();
-                if (column_searchable !== 'true') return false; // Ignore columns not marked as searcahble                  		
-                
+                if (column_searchable !== 'true') return false; // Ignore columns not marked as searcahble
+
                 if ($('#data-table thead th').length > 5) { // If we have more than five columns, make them smaller for legibility (as above)
                 	select_html = '<select class="form-control input-sm" onclick="stopPropagation(event);" style="min-width: '+column_title.length+'em"><option value="">'+column_title+'</option></select>';
                 }
                 else {
                 	select_html = '<select class="form-control" onclick="stopPropagation(event);" style="min-width: '+column_title.length+'em"><option value="">'+column_title+'</option></select>';
-                }                
+                }
                 var select = $(select_html)
                     .appendTo( $(column.header()).empty() )
                     .on( 'change', function () {
                     	var val = $.fn.dataTable.util.escapeRegex(
                             $(this).val()
-                        );  
+                        );
                         console.log(val);
                     	// Why regex these? Surely a dropdown will be a list of values that match records exactly?
                     	/* Regex version...
@@ -314,7 +320,7 @@ $(function() {
                 /*
                 	OK, this doesn't work, as it just populates the dropdown with all the UNIQUE values in the column for the given page of the table
                 	So, if we have three "brands" listed on page one, but 40 brands in total (all shown on subsequent pages of the table), we end up
-                	with only three in the dropdown. 
+                	with only three in the dropdown.
                 	Can we use console.log(column.dataSrc()); (eg, brand.title) to load these via Ajax...? I can't see any other way of doing it :-(
                 */
                 // Right, this is a WIP: we'll stick with the 'unique' approach for now, but the Ajax is almost there. See CtrlController::populate_datatables_dropdowns
@@ -336,22 +342,22 @@ $(function() {
 	            }
 	            else if (dropdown_approach == 'ajax') {
 	                var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
-	                var data_src = column.dataSrc();	                
+	                var data_src = column.dataSrc();
 					$.ajax({
-					    url: '{!! route('ctrl::populate_datatables_dropdowns',[$ctrl_class->id,$filter_string]) !!}',			    
+					    url: '{!! route('ctrl::populate_datatables_dropdowns',[$ctrl_class->id,$filter_string]) !!}',
 					    type: 'POST',
 						data: {_token: CSRF_TOKEN, data_src: data_src},
 					    dataType: 'JSON',
 					    success: function (data) {
-					        $.each(data.options, function(d, j) {					        	
+					        $.each(data.options, function(d, j) {
 							    select.append( '<option value="'+d+'">'+j+'</option>' )
 							});
 					    }
-					});                
+					});
 				}
-            } );    
-        
-        }        
+            } );
+
+        }
     });
 
     // Restore search state, from https://datatables.net/forums/discussion/33182/individual-column-searching-with-statesave-not-showing-previous-values
@@ -369,7 +375,7 @@ $(function() {
         // table.draw('page');
     }
 
-    
+
     // Apply the search (again, see https://datatables.net/examples/api/multi_filter.html)
     table.columns().every( function () {
         var that = this;
@@ -384,19 +390,19 @@ $(function() {
 
     } );
 
-    // Re-order rows   
-   table.on('row-reorder', function (e, diff, edit) { // See https://datatables.net/reference/event/row-reorder   		
+    // Re-order rows
+   table.on('row-reorder', function (e, diff, edit) { // See https://datatables.net/reference/event/row-reorder
 	   	var new_order = [];
         for ( var i=0, ien=diff.length ; i<ien ; i++ ) {
 	        var row = $(diff[i].node);
-	        var row_id = row.attr('id');       
+	        var row_id = row.attr('id');
    			// var row_old_order = diff[i].oldPosition + 1; // Not useful
    			// console.log(diff[i].newPosition);
-   			var row_new_order = diff[i].newPosition + 1;   
-	        new_order.push({ 
-		        "id" : row_id,		        
+   			var row_new_order = diff[i].newPosition + 1;
+	        new_order.push({
+		        "id" : row_id,
 		        "order" : row_new_order
-		    }); 
+		    });
 	    }
 	    // Now, send this result to a script that updates object orders, and it should all just work. Do we call draw() afterwards?
 	    var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
@@ -407,13 +413,13 @@ $(function() {
 		    dataType: 'JSON',
 		    success: function (data) {
 		       $.notify({
-					icon: 'fa fa-check-square-o fa-fw',				
-					message: 'Items reordered',					
+					icon: 'fa fa-check-square-o fa-fw',
+					message: 'Items reordered',
 				},{
 					type: "success",
 					newest_on_top: true,
-					delay: 2500,					
-				});		       
+					delay: 2500,
+				});
 		    }
 		});
     }); // .draw(); // Is the redraw actually necessary? NO, and it breaks stateSave...
@@ -433,13 +439,13 @@ $(function() {
 
 
     // Add custom buttons
-     
+
     // $('div.dataTables_custom_buttons').html('<a href="#" class="btn btn-success"><i class="fa fa-plus"></i> Add</a>');
 
     /* Can we add this in the HTML instead? See below:
-    $('div.dataTables_custom_buttons').html('<!-- Split button --><div class="btn-group"><a href="{{ route('ctrl::edit_object',$ctrl_class->id) }}" class="btn btn-success"><i class="fa fa-plus"></i> Add a {{ $ctrl_class->name }}</a></a><button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span><span class="sr-only">Toggle Dropdown</span></button><ul class="dropdown-menu dropdown-menu-right"><li><a href="#">Action</a></li></ul></div>');    
+    $('div.dataTables_custom_buttons').html('<!-- Split button --><div class="btn-group"><a href="{{ route('ctrl::edit_object',$ctrl_class->id) }}" class="btn btn-success"><i class="fa fa-plus"></i> Add a {{ $ctrl_class->name }}</a></a><button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span><span class="sr-only">Toggle Dropdown</span></button><ul class="dropdown-menu dropdown-menu-right"><li><a href="#">Action</a></li></ul></div>');
     */
-   
+
     // This removes the parent "label" from the search filter, from http://stackoverflow.com/questions/170004/how-to-remove-only-the-parent-element-and-not-its-child-elements-in-javascript
     /* No longer necessary, we've removed the main search input
    	var label = $('#data-table_filter label');
@@ -454,36 +460,36 @@ $(function() {
 @stop
 
 @section('content')
-	
+
 	{{-- Is there any value in having a dashboard at all? Can't we just have a "Back to list" button when editing an item, I think that's all we'd use a breadcrumb for anyway... --}}
-	{{-- Yes, agreed. We need a "Back to list" option when editing items OR viewing a filtered list. That's it. 
+	{{-- Yes, agreed. We need a "Back to list" option when editing items OR viewing a filtered list. That's it.
 	<ol class="breadcrumb">
-	  <li><a href="{{ route('ctrl::dashboard') }}">Dashboard</a></li>	  
+	  <li><a href="{{ route('ctrl::dashboard') }}">Dashboard</a></li>
 	  <li class="active">{{ $ctrl_class->name }}</li>
 	</ol>
 	--}}
 
-<?php /* Old version, let's use a navbar instead now that we sometimes have buttons in the header 
+<?php /* Old version, let's use a navbar instead now that we sometimes have buttons in the header
 	<div class="page-header">
-	
+
 		<h1>@if ($icon = $ctrl_class->get_icon())<i class="{{ $icon }}"></i> @endif
-		{{ ucwords($ctrl_class->get_plural()) }} 
+		{{ ucwords($ctrl_class->get_plural()) }}
 		@if ($filter_description)
 			<small>Showing all {{ $ctrl_class->get_plural() }} {!! $filter_description !!}.</small>
 		@endif
 
-		<div class="pull-right">			
+		<div class="pull-right">
 			@if ($filter_description)
 			<a href="{{ route('ctrl::list_objects',$ctrl_class->id) }}" class="btn btn-default">@if ($icon = $ctrl_class->get_icon())<i class="{{ $icon }}"></i> @endif Show all</a>
-			@endif			
+			@endif
 			<a href="#TBC" class="btn btn-default"><i class="fa fa-toggle-left"></i> Back</a>
 		</div>
 
 		</h1>
-		
+
 	</div>
 	*/ ?>
-	
+
 	<nav class="navbar navbar-default page-header">
 	  <div class="container-fluid">
 	    <!-- Brand and toggle get grouped for better mobile display -->
@@ -493,9 +499,9 @@ $(function() {
 	        <span class="icon-bar"></span>
 	        <span class="icon-bar"></span>
 	        <span class="icon-bar"></span>
-	      </button>   
+	      </button>
 	      <a class="navbar-brand">@if ($icon = $ctrl_class->get_icon())<i class="{{ $icon }} fa-fw"></i> @endif
-			{{ ucwords($ctrl_class->get_plural()) }}</a>   
+			{{ ucwords($ctrl_class->get_plural()) }}</a>
 	    </div>
 
 	    <!-- Collect the nav links, forms, and other content for toggling -->
@@ -506,18 +512,18 @@ $(function() {
 			@if ($key) {{-- No longer used, looks rubbish and needs a rethink --}}
 			<a data-toggle="modal" data-target="#help" class="btn btn-default navbar-btn navbar-right"><i class="fa fa-question"></i> Help</a>
 			@endif
-			 
+
 	      <ul class="nav navbar-nav navbar-right">
 
 	  		@if ($show_all_link)
 			<li><a href="{{ $show_all_link }}" _class="btn btn-default navbar-btn">@if ($icon = $ctrl_class->get_icon())<i class="{{ $icon }}"></i> @endif Show all</a></li>
-			@endif	
-
-			@if ($unfiltered_list_link) {{-- Can we link "back" to an unfiltered list? --}}
-				<li><a href="{{ $unfiltered_list_link }}" _class="btn btn-default navbar-btn"><i class="fa fa-toggle-left"></i> Back</a></li>	
 			@endif
 
-			
+			@if ($unfiltered_list_link) {{-- Can we link "back" to an unfiltered list? --}}
+				<li><a href="{{ $unfiltered_list_link }}" _class="btn btn-default navbar-btn"><i class="fa fa-toggle-left"></i> Back</a></li>
+			@endif
+
+
 
 
 			{{-- This may prove useful at some point?
@@ -535,7 +541,7 @@ $(function() {
 	        </li>
 	        --}}
 
-	      </ul>      
+	      </ul>
 
 	    </div><!-- /.navbar-collapse -->
 	  </div><!-- /.container-fluid -->
@@ -552,16 +558,16 @@ $(function() {
                 {{-- <!-- Split button --><div class="btn-group flex"><a href="{{ route('ctrl::edit_object',$ctrl_class->id) }}" class="btn btn-success"><i class="fa fa-plus"></i> Add</a><button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span><span class="sr-only">Toggle Dropdown</span></button><ul class="dropdown-menu dropdown-menu-right"><li><a href="#">Action</a></li></ul></div>--}}
                 </th>
             </tr>
-        </thead>        
+        </thead>
     </table>
 
     <hr />
-    	@if ($key)    	
+    	@if ($key)
 		<div id="key">
     	{!! $key !!}
     	</div>
     @endif
-    
+
 
 @stop
 

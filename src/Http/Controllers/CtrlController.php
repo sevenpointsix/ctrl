@@ -713,7 +713,14 @@ class CtrlController extends Controller
         $key = false;
 
         // Per-page: could add a module here, but for now, just remove all pagination if we can reorder the table
-        $page_length = ($can_reorder) ? false: 10; // 10 being the default
+		$page_length = ($can_reorder) ? false: 10; // 10 being the default
+
+		if ($this->module->enabled('custom_css')) {
+			$custom_css = $this->module->run('custom_css',[
+				$ctrl_class,
+				$filter_string
+			]);
+		}
 
 		return view('ctrl::list_objects',[
 			'ctrl_class'           => $ctrl_class,
@@ -726,7 +733,8 @@ class CtrlController extends Controller
 			'can_reorder'          => $can_reorder,
 			'add_link'             => $add_link,
 			'key'                  => $key,
-			'page_length'          => $page_length
+			'page_length'          => $page_length,
+			'custom_css'		   => $custom_css
 		]);
 	}
 

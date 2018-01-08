@@ -97,6 +97,16 @@
 		}
 
 		/**
+		 * Add custom CSS to a page (currently only enabled for /list I think?)
+		  * @param  object $ctrl_class 	The CtrlClass of objects that we're listing
+		 * @param  string $filter_string Optional list filter; such as 43,1, which will set the value of the ctrl_property 43 to 1 when we save the form
+     	 * @return string                A block of custom CSS
+		 */
+		protected function custom_css($ctrl_class, $filter_string = null) {
+
+		}
+
+		/**
 		 * Import objects from a CSV file
 		 * @param  string $action        There are various things that this function can do; count rows, check headers, import data and so on.
 		 * @param  collection $results The results of the CSV import, as returned by Maatwebsite\Excel
