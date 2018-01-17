@@ -734,7 +734,7 @@ class CtrlController extends Controller
 			'add_link'             => $add_link,
 			'key'                  => $key,
 			'page_length'          => $page_length,
-			'custom_css'		   => $custom_css
+			'custom_css'		   => (!empty($custom_css) ? $custom_css : false)
 		]);
 	}
 
