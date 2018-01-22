@@ -356,8 +356,7 @@ $(function() {
 					});
 				}
             } );
-
-        }
+		}
     });
 
     // Restore search state, from https://datatables.net/forums/discussion/33182/individual-column-searching-with-statesave-not-showing-previous-values

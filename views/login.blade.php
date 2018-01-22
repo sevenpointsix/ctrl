@@ -34,12 +34,12 @@
     </style>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
-    
-    <!-- Google Fonts -->
-    <link href='http://fonts.googleapis.com/css?family=Roboto+Slab:400,700,300' rel='stylesheet' type='text/css'>
-    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300,400,700' rel='stylesheet' type='text/css'>
 
-    
+    <!-- Google Fonts -->
+    <link href='https://fonts.googleapis.com/css?family=Roboto+Slab:400,700,300' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700' rel='stylesheet' type='text/css'>
+
+
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
@@ -47,12 +47,12 @@
     <![endif]-->
   </head>
   <body>
-    
+
     <section id="authenty_preview">
       <section id="signin_main" class="authenty signin-main">
         <div class="section-content">
           <div class="wrap">
-            <div class="container">   
+            <div class="container">
               <div class="form-wrap">
                 <div class="row">
                  @if ($logo)
@@ -96,7 +96,7 @@
                         </div>
                       </div>
                     </div>
-                  </form>   
+                  </form>
 
                 </div>
               </div>
@@ -104,10 +104,10 @@
           </div>
         </div>
       </section>
-    
-    
-      
-    
+
+
+
+
       <section id="password_recovery" class="authenty password-recovery">
         <div class="section-content">
           <div class="wrap">
@@ -115,7 +115,7 @@
               <div class="form-wrap">
                 <div class="row">
                   @if ($logo)
-                  <div class="col-xs-12 col-sm-3 brand" data-animation="fadeInUp">                      
+                  <div class="col-xs-12 col-sm-3 brand" data-animation="fadeInUp">
                       <!--
                       <h2>Authenty</h2>
                       <p>Authentication made beautiful</p>
@@ -138,49 +138,49 @@
                           <button type="submit" class="btn btn-block reset">Reset Password</button>
                         </div>
                       </div>
-                    </form> 
+                    </form>
                   </div>
                 </div>
-                  
+
               </div>
             </div>
           </div>
         </div>
       </section>
-      
-    </section>  
-    
-    
+
+    </section>
+
+
     <!-- js library -->
     <script src="{{ asset('assets/vendor/ctrl/vendor/jquery/jquery-1.11.3.min.js') }}"></script>
     <script src="{{ asset('assets/vendor/ctrl/vendor/jquery/jquery-ui-1.11.4.min.js') }}"></script>
     <script src="{{ asset('assets/vendor/ctrl/vendor/bootstrap/js/bootstrap.min.js') }}"></script>
 
-    <script src="{{ asset('assets/vendor/ctrl/login/js/waypoints.min.js') }}"></script>    
+    <script src="{{ asset('assets/vendor/ctrl/login/js/waypoints.min.js') }}"></script>
     <!-- Not needed, replaced by the Ajax code below
     <script src="{{ asset('assets/vendor/ctrl/login/js/authenty.js') }}"></script>
     -->
-    <script src="{{ asset('assets/vendor/ctrl/login/js/scrollTo.min.js') }}"></script>    
+    <script src="{{ asset('assets/vendor/ctrl/login/js/scrollTo.min.js') }}"></script>
     <!-- Not needed?
     <script src="js/preview/jquery.malihu.PageScroll2id.js"></script>
     <script src="js/preview/jquery.address-1.6.min.js"></script>
     <script src="js/preview/xinit.js"></script>
     -->
-    
+
     <script src="{{ asset('assets/vendor/ctrl/vendor/jquery.form/jquery.form.min.js') }}"></script>
-    
+
     <script>
       // Custom error handler based on /ctrl/js/forms.js
-       // wait for the DOM to be loaded 
-      $(document).ready(function() { 
-          
-        var options = { 
+       // wait for the DOM to be loaded
+      $(document).ready(function() {
+
+        var options = {
               dataType: 'json',
-              success: function(responseText, statusText, xhr, $form)  { 
-                redirect = responseText.redirect;  
-                window.location.replace(redirect);                
+              success: function(responseText, statusText, xhr, $form)  {
+                redirect = responseText.redirect;
+                window.location.replace(redirect);
               },
-              error: function(jqXHR, textStatus, errorThrown ) { 
+              error: function(jqXHR, textStatus, errorThrown ) {
                 // Don't even bother displaying the error message here; it's just "Login failed"
                 if (jqXHR.status == 500) {
                   // Major error; it's possible to update Handler.php to provide a nicer error in error.exception
@@ -195,36 +195,36 @@
                 else {
                   $('#form_1 .fa-user').removeClass('success').addClass('fail');
                   $('#form_1').addClass('fail');
-                }                
+                }
             }
-          }; 
-       
+          };
+
           $('form.ajax').ajaxForm(options);
-          
-      }); 
+
+      });
 
 
 
       (function($) {
-        
+
         // get full window size
         $(window).on('load resize', function(){
             var w = $(window).width();
             var h = $(window).height();
 
             $('section').height(h);
-        });   
+        });
 
         // scrollTo plugin
         $('#forgot').scrollTo({ easing: 'easeInOutQuint', speed: 1500 });
-      
+
         // set focus on input
         var firstInput = $('section').find('input[type=text], input[type=email]').filter(':visible:first');
-        
+
         if (firstInput != null) {
                 firstInput.focus();
             }
-        
+
         $('section').waypoint(function (direction) {
           var target = $(this).find('input[type=text], input[type=email]').filter(':visible:first');
           target.focus();
@@ -236,8 +236,8 @@
         }, {
             offset: -400
         });
-        
-        
+
+
         // animation handler
         $('[data-animation-delay]').each(function () {
             var animationDelay = $(this).data("animation-delay");
@@ -249,7 +249,7 @@
                 "animation-delay": animationDelay
             });
         });
-        
+
         $('[data-animation]').waypoint(function (direction) {
             if (direction == "down") {
                 $(this).addClass("animated " + $(this).data("animation"));
@@ -263,7 +263,7 @@
         }, {
             offset: '100%'
         });
-      
+
       })(jQuery);
     </script>
   </body>
