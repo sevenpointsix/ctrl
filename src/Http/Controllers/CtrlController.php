@@ -2179,7 +2179,10 @@ class CtrlController extends Controller
 		// We need to disable Debugbar when returning Froala AJAX, if used
 		$this->disableDebugBar();
 
-		// dd($_POST);
+		/* For Chrome's benefit, otherwise dd() isn't rendered in the console
+		http_response_code(500);
+		dd($_POST);
+		*/
 		try {
 			$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
 		}
