@@ -268,7 +268,7 @@ class CtrlSynch extends Command
                             $exclude_fields_from_form = ['created_at','updated_at','deleted_at','url','uri'];
                             if (strpos($ctrl_property->name,'meta_') === 0) {
                                 $ctrl_property->fieldset = 'SEO';
-                                $ctrl_property->label    = str_replace('Meta ','',$ctrl_property->label);
+                                $ctrl_property->label    = ucfirst(str_replace('Meta ','',$ctrl_property->label));
                             }
                             else if (!in_array($ctrl_property->name, $exclude_fields_from_form)) {
                                 $ctrl_property->fieldset = 'Details';
