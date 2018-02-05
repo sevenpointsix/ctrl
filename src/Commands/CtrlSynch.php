@@ -261,9 +261,16 @@ class CtrlSynch extends Command
                             $ctrl_property->local_key = '';
                             $ctrl_property->pivot_table = '';
 
-                            // There are some columns we rarely want to display as editable fields
+                            /*
+                            * There are some columns we rarely want to display as editable fields
+                            * and some we want to add to specific fieldsets, such as Meta data:
+                            **/
                             $exclude_fields_from_form = ['created_at','updated_at','deleted_at','url','uri'];
-                            if (!in_array($ctrl_property->name, $exclude_fields_from_form)) {
+                            if (strpos($ctrl_property->name,'meta_') === 0) {
+                                $ctrl_property->fieldset = 'SEO';
+                                $ctrl_property->label    = str_replace('Meta ','',$ctrl_property->label);
+                            }
+                            else if (!in_array($ctrl_property->name, $exclude_fields_from_form)) {
                                 $ctrl_property->fieldset = 'Details';
                             }
                         }
