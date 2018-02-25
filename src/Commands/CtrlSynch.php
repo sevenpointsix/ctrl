@@ -441,7 +441,7 @@ class CtrlSynch extends Command
                     // $ctrl_property->order      = $column_order++;
                     $ctrl_property->order      = $column_ordering[$model_name]++;
                     $ctrl_property->field_type = 'dropdown';
-                    $ctrl_property->label      = ucfirst(str_plural(str_replace('_id', '', $column_name)));
+                    $ctrl_property->label      = ucfirst($ctrl_property_name);
                     $ctrl_property->fieldset   = ''; // We don't always want to include these...
                 }
 
