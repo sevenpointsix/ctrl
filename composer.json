@@ -20,6 +20,11 @@
             "php artisan vendor:publish --tag=config",
             "php artisan vendor:publish --tag=migrations",
             "php artisan vendor:publish --tag=public --force"
+        ],
+        "post-install-cmd": [
+            "php artisan vendor:publish --tag=config",
+            "php artisan vendor:publish --tag=migrations",
+            "php artisan vendor:publish --tag=public --force"
         ]
     },
     "extra": {
