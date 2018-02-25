@@ -415,9 +415,9 @@ class CtrlSynch extends Command
                  * Should we accommodate this? If so...
                  */
                 if ($pivot_key === false) {
-                    $pivot_key = array_search(str_replace('_id', 's', $pivot_one),$pivot_table_parts);
+                    $pivot_key = array_search(str_plural(str_replace('_id', '', $pivot_one)),$pivot_table_parts);
                     if ($pivot_key === false) {
-                        $this->error("Cannot identify property name for pivot key $pivot_key");
+                        $this->error("Cannot identify property name for pivot key $pivot_one");
                         // Dummy message for commit
                     }
                 }
