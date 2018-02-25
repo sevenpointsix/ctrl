@@ -35,6 +35,26 @@ class CtrlServiceProvider extends ServiceProvider{
 	public function boot()
 	{
 
+		$ctrl_folder = app_path('Ctrl/');
+
+		/**
+		 * We always need a CtrlModules file, even before we publish anything, otherwise
+		 * CtrlSynch objects to the missing file. So, copy a placeholder here:
+		 */
+		$ctrlModulesFile = $ctrl_folder.'/CtrlModules.php';
+		if (!File::exists($ctrlModulesFile)) {
+			if ( ! File::copy(__DIR__.'/Modules/CtrlModulesPlaceholder.php', $ctrlModulesFile))
+			{
+				die("Couldn't copy CtrlModules file!");
+			}
+			else {
+				echo("CtrlModules file copied");
+			}
+		}
+		else {
+			echo("CtrlModules file exists");
+		}
+
 		// If we run `artisan vendor publish --force`, we can overwrite config files;
 		// this is user error (most likely, my user error), but it's a major cock-up so let's catch it
 
@@ -76,8 +96,6 @@ class CtrlServiceProvider extends ServiceProvider{
 				}
 			}
 		}
-		/* Can I put this here? Just check that we have a Ctrl folder, for models and Modules */
-		$ctrl_folder = app_path('Ctrl/');
 
 		// Don't create a Ctrl folder if this is the local ctrl-c.ms site; that site uses symlinks to other folders
         if (!File::exists($ctrl_folder) && env('APP_URL', false) != 'http://dev.ctrl-c.ms') {
