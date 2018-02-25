@@ -409,6 +409,19 @@ class CtrlSynch extends Command
                 // This will break product_profile_cache into an array, remove "product", and then rejoin it as "profile_cache"
                 $pivot_table_parts = explode('_', $pivot_table);
                 $pivot_key = array_search(str_replace('_id', '', $pivot_one),$pivot_table_parts);
+
+                /**
+                 * Now... older sites might have plurals in the pivot table names.
+                 * Should we accommodate this? If so...
+                 */
+                if ($pivot_key === false) {
+                    $pivot_key = array_search(str_replace('_id', 's', $pivot_one),$pivot_table_parts);
+                    if ($pivot_key === false) {
+                        $this->error("Cannot identify property name for pivot key $pivot_key");
+                        // Dummy message for commit
+                    }
+                }
+
                 unset($pivot_table_parts[$pivot_key]);
                 $ctrl_property_name = implode('_', $pivot_table_parts);
 
