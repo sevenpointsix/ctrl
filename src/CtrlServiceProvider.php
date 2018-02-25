@@ -39,20 +39,12 @@ class CtrlServiceProvider extends ServiceProvider{
 
 		/**
 		 * We always need a CtrlModules file, even before we publish anything, otherwise
-		 * CtrlSynch objects to the missing file. So, copy a placeholder here:
+		 * CtrlSynch objects to the missing file. We used to do this via publishes() but
+		 * that doesn't happen soon enough in the process. So, do it here:
 		 */
 		$ctrlModulesFile = $ctrl_folder.'/CtrlModules.php';
 		if (!File::exists($ctrlModulesFile)) {
-			if ( ! File::copy(__DIR__.'/Modules/CtrlModulesPlaceholder.php', $ctrlModulesFile))
-			{
-				die("Couldn't copy CtrlModules file!");
-			}
-			else {
-				echo("CtrlModules file copied");
-			}
-		}
-		else {
-			echo("CtrlModules file exists");
+			File::copy(__DIR__.'/Modules/CtrlModules.php', $ctrlModulesFile);
 		}
 
 		// If we run `artisan vendor publish --force`, we can overwrite config files;
@@ -114,6 +106,10 @@ class CtrlServiceProvider extends ServiceProvider{
 		], 'config'); // See https://laravel.com/docs/5.0/packages#publishing-file-groups
 
 		// Make sure we have a CtrlModules file:
+		/**
+		 * As per the note at the start of this function, this isn't really used any more;
+		 * might be useful to re-publish at some point though?
+		 */
 		$this->publishes([
 	        __DIR__.'/Modules/CtrlModules.php' => $ctrl_folder.'/CtrlModules.php',
 	    ],'config');
