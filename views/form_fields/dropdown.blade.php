@@ -2,31 +2,43 @@
 
 @section('input')
 
-    @if (is_array($field['value'])) {{-- Indicates a multiple select --}}
-    <select class="form-control" id="{{ $field['id'] }}" style="width: 100%" name="{{ $field['name'] }}[]" multiple>
-        {{-- See "Responsive Design" here for a note on the width/100%: https://select2.github.io/examples.html --}}
-        @foreach ($field['value'] as $value=>$text)
-            <option value="{{ $value }}" selected="selected">{{ $text }}</option>
-        @endforeach
-    </select>
-
-    @elseif (empty($field['related_ctrl_class_name']))  {{-- Indicates an enum field, no need for select2 --}}
-    <select class="form-control enum" id="{{ $field['id'] }}" style="width: 100%" name="{{ $field['name'] }}">
-        @foreach ($field['values'] as $value=>$text)
-            <option value="{{ $value }}" @if ($field['value'] == $value) selected="selected" @endif>{{ $text }}</option>
-        @endforeach
-    </select>
-
+    @if (!empty($field['readOnly']))
+        {{-- Could be a few bugs here, not tested it with multiples. Sue me --}}
+        @if (is_array($field['value']))
+            <input type="text" class="form-control" value="{{ implode(', ',$field['value']) }}" readonly>
+        @elseif (is_array($field['values']))
+            <input type="text" class="form-control" value="{{ implode(', ',$field['values']) }}" readonly>
+        @else
+            <input type="text" class="form-control" value="{{ $field['value'] }}" readonly>
+        @endif
     @else
 
-    <select class="form-control" id="{{ $field['id'] }}" style="width: 100%" name="{{ $field['name'] }}">
-        {{-- <option value="">None</option> // Replaced by a placeholder value in the select2 config --}}
-        <option value="0"></option> {{-- Not entirely sure why the placeholder in the select2 config is a better choice here, but it works; see below --}}
-        @if ($field['value'])
-            <option value="{{ $field['value'] }}" selected="selected">{{ $field['values'][$field['value']] }}</option>
-        @endif
-    </select>
+        @if (is_array($field['value'])) {{-- Indicates a multiple select --}}
+        <select class="form-control" id="{{ $field['id'] }}" style="width: 100%" name="{{ $field['name'] }}[]" multiple >
+            {{-- See "Responsive Design" here for a note on the width/100%: https://select2.github.io/examples.html --}}
+            @foreach ($field['value'] as $value=>$text)
+                <option value="{{ $value }}" selected="selected">{{ $text }}</option>
+            @endforeach
+        </select>
 
+        @elseif (empty($field['related_ctrl_class_name']))  {{-- Indicates an enum field, no need for select2 --}}
+        <select class="form-control enum" id="{{ $field['id'] }}" style="width: 100%" name="{{ $field['name'] }}">
+            @foreach ($field['values'] as $value=>$text)
+                <option value="{{ $value }}" @if ($field['value'] == $value) selected="selected" @endif>{{ $text }}</option>
+            @endforeach
+        </select>
+
+        @else
+
+        <select class="form-control" id="{{ $field['id'] }}" style="width: 100%" name="{{ $field['name'] }}">
+            {{-- <option value="">None</option> // Replaced by a placeholder value in the select2 config --}}
+            <option value="0"></option> {{-- Not entirely sure why the placeholder in the select2 config is a better choice here, but it works; see below --}}
+            @if ($field['value'])
+                <option value="{{ $field['value'] }}" selected="selected">{{ $field['values'][$field['value']] }}</option>
+            @endif
+        </select>
+
+        @endif
     @endif
 @overwrite
 {{-- Note that we need @overwrite because we include multiple instances of templates that extend form_fields.master: see https://github.com/laravel/framework/issues/1058 --}}
