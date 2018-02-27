@@ -111,18 +111,31 @@ class CtrlSymLink extends Command
             }
             else {
                 $env_contents = File::get($env_file);
-                $new_env_contents = preg_replace('/\nDB_DATABASE\=.*\n/', "\nDB_DATABASE=$database\n", $env_contents);
-                if ($env_contents == $new_env_contents) {
-                    $this->error("Unable to update .env, cannot locate DB_DATABASE key.");
+
+                $find       = '/\nDB_DATABASE\=.*\n/';
+                $replace    = "\nDB_DATABASE=$database\n";
+
+                if (preg_match($find, $env_contents)) {
+                    $new_env_contents = preg_replace($find, $replace, $env_contents);
+                    if ($env_contents == $new_env_contents) {
+                        $this->comment(".env file unchanged.");
+                    }
+                    else {
+                        File::put($env_file, $new_env_contents);
+                        $this->line('Database switched to '.$database);
+                    }
+                    $this->call('ctrl:synch', [
+                        'action' => 'files'
+                    ]);
                 }
                 else {
-                    File::put($env_file, $new_env_contents);
-                    $this->line('Database switched to '.$database);
+                    $this->error("Unable to update .env, cannot locate DB_DATABASE key.");
                 }
+
             }
         }
         else {
-            $this->comment('Don\'t forget to switch database in .env if necessary.');
+            $this->comment('Don\'t forget to switch database in .env if necessary; this can now be passed in as a second argument.');
         }
 
         /**
