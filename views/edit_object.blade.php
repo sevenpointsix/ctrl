@@ -118,8 +118,13 @@
 		  <hr />
 		  	<div class="row">
 			  	<div class="col-md-6 col-xs-12">
+
+						@if ($mode == 'view')
+						<a class="btn btn-default" href="{{ $back_link }}"><i class="fa fa-arrow-circle-left"></i> Back</a>
+						@else
 			  		<a class="btn btn-default" href="{{ $back_link }}"><i class="fa fa-remove"></i> Cancel</a>
-					<button type="submit" class="btn btn-success" data-loading-text="<i class='fa fa-circle-o-notch fa-spin fa-fw'></i> Saving..."><i class="fa fa-check-square"></i> Save</button>
+						<button type="submit" class="btn btn-success" data-loading-text="<i class='fa fa-circle-o-notch fa-spin fa-fw'></i> Saving..."><i class="fa fa-check-square"></i> Save</button>
+						@endif
 				</div>
 				<div class="col-md-6 col-xs-12">
 					@if ($row_buttons)

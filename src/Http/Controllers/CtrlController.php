@@ -1518,7 +1518,7 @@ class CtrlController extends Controller
     	}
 
     	// TODO: check permissions using the module here if necessary
-    	if ($ctrl_class->can('view')) {
+    	if ($scope != 'view' && $ctrl_class->can('view')) {
     		$view_link = route('ctrl::view_object',[$ctrl_class->id,$object_id]);
     	}
     	else {
@@ -2147,7 +2147,7 @@ class CtrlController extends Controller
 		 * We can, but only if we're *editing* an object, not adding one...
 		 */
 
-		$row_buttons = $this->get_row_buttons($ctrl_class->id, $object->id, $filter_string, 'edit');
+		$row_buttons = $this->get_row_buttons($ctrl_class->id, $object->id, $filter_string, $mode);
 
 		return view('ctrl::edit_object',[
 			'ctrl_class'         => $ctrl_class,
@@ -2159,7 +2159,8 @@ class CtrlController extends Controller
 			'object'             => $object,
 			'tabbed_form_fields' => $tabbed_form_fields,
 			'hidden_form_fields' => $hidden_form_fields,
-			'row_buttons'		 => $row_buttons
+			'row_buttons'		 => $row_buttons,
+			'mode'				 => $mode
 		]);
 	}
 
