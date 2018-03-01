@@ -514,6 +514,14 @@ $(function() {
 
 	      <ul class="nav navbar-nav navbar-right">
 
+			@if ($export_link)
+				<li><a href="{{ $export_link }}"><i class="fa fa-download"></i> Export</a></li>
+			@endif
+
+			@if ($import_link)
+				<li><a href="{{ $import_link }}"><i class="fa fa-upload"></i> Import</a></li>
+			@endif
+
 	  		@if ($show_all_link)
 			<li><a href="{{ $show_all_link }}" _class="btn btn-default navbar-btn">@if ($icon = $ctrl_class->get_icon())<i class="{{ $icon }}"></i> @endif Show all</a></li>
 			@endif
@@ -552,7 +560,8 @@ $(function() {
             <tr>
             	{!! $th_columns !!}
                 <th width="1"  data-orderable="false"  data-searchable="false">
-                @if ($add_link)<a href="{{ $add_link }}" class="btn btn-success pull-right"><i class="fa fa-plus"></i> Add</a>@endif
+				@if ($add_link)<a href="{{ $add_link }}" class="btn btn-success pull-right"><i class="fa fa-plus"></i> Add</a>@endif
+
                 {{-- Or use a split button if necessary --}}
                 {{-- <!-- Split button --><div class="btn-group flex"><a href="{{ route('ctrl::edit_object',$ctrl_class->id) }}" class="btn btn-success"><i class="fa fa-plus"></i> Add</a><button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span><span class="sr-only">Toggle Dropdown</span></button><ul class="dropdown-menu dropdown-menu-right"><li><a href="#">Action</a></li></ul></div>--}}
                 </th>

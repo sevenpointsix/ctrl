@@ -700,6 +700,7 @@ class CtrlController extends Controller
         	$show_all_link = route('ctrl::list_objects',$ctrl_class->id);
         }
 
+		/* Think $this->can() replaces this:
         $can_add           = true;
         if ($this->module->enabled('permissions')) {
 			$custom_permission = $this->module->run('permissions',[
@@ -714,8 +715,16 @@ class CtrlController extends Controller
 		else if (!$ctrl_class->can('add')) {
 			$can_add = false;
 		}
-		//dd($can_add);
-        $add_link = $can_add ? route('ctrl::edit_object',[$ctrl_class->id,0,$filter_string]) : '';
+		*/
+		$can_add = $this->can($ctrl_class->id,'add');
+		$add_link = $can_add ? route('ctrl::edit_object',[$ctrl_class->id,0,$filter_string]) : '';
+
+		$can_export = $this->can($ctrl_class->id,'export');
+		$export_link = $can_export ? route('ctrl::export_objects',[$ctrl_class->id,$filter_string]) : '';
+
+		// Import button here untested!!
+		$can_import = $this->can($ctrl_class->id,'import');
+        $import_link = $can_import ? route('ctrl::import_objects',[$ctrl_class->id,$filter_string]) : '';
 
         //$key = 		$key = $this->get_row_buttons($ctrl_class->id,0,true);
         // Dropping the key, we don't use it; see notes elsewhere
@@ -741,6 +750,8 @@ class CtrlController extends Controller
 			'show_all_link'        => (!empty($show_all_link) ? $show_all_link : false),
 			'can_reorder'          => $can_reorder,
 			'add_link'             => $add_link,
+			'export_link'          => $export_link,
+			'import_link'          => $import_link,
 			'key'                  => $key,
 			'page_length'          => $page_length,
 			'custom_css'		   => (!empty($custom_css) ? $custom_css : false)
