@@ -77,9 +77,18 @@ class CtrlController extends Controller
             ->where('id', $new_user->id)
             ->update([
             	'password' => \Hash::make($new_user->plaintext_password),
-            	'plaintext_password'=>'',
+            	'plaintext_password'=>''
+			]);
+			/**
+			 * Also set a default group if necessary:
+			 */
+			DB::table('users')
+			->where('id', $new_user->id)
+			->where('ctrl_group','')
+            ->update([
             	'ctrl_group'=>'user'
             ]);
+
 		}
 
 		/**
