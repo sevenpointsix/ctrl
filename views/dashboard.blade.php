@@ -35,7 +35,7 @@
 	  // Could add <span class=\"label label-default pull-right\">Test</span> here
 
 	}).bind("typeahead:select", function(obj, datum, name) {
-		document.location = datum.edit_link; // Jump to the "Edit" link
+		document.location = datum.link; // Jump to the "Edit" or "View" link
 	});;
 
 	$('[data-toggle="tooltip"]').tooltip();

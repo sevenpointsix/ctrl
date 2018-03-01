@@ -2807,12 +2807,33 @@ class CtrlController extends Controller
 
 		if ($search_term) {
 
-			// Loop through all classes that we can edit
+			// Loop through all classes that we can edit or view
+
 			$ctrl_classes = CtrlClass::whereRaw(
-			   '(find_in_set(?, permissions))',
-			   ['edit']
-			)->get();
+				'(find_in_set(?, permissions) or find_in_set(?, permissions))',
+				['edit','view']
+			 )->get();
+
 			foreach ($ctrl_classes as $ctrl_class) {
+				if ($this->module->enabled('permissions')) {
+					$can_edit = $this->module->run('permissions',[
+						$ctrl_class->id,
+						'edit',
+					]);
+					$can_view = $this->module->run('permissions',[
+						$ctrl_class->id,
+						'view',
+					]);
+				}
+				else {
+					$can_edit = $ctrl_class->can('edit');
+					$can_view = $ctrl_class->can('view');
+				}
+
+				if (!$can_edit && !$can_view) {
+					continue;
+				}
+
 				$class   = $ctrl_class->get_class();
 
 				// What are the searchable columns?
@@ -2836,13 +2857,34 @@ class CtrlController extends Controller
 						*/
 						$query->orWhere($searchable_property->name,'LIKE',"%$search_term%");
 					}
+
+					/**
+					 * Dump SQL if necessary
+					 */
+					if (false) {
+						$sql      = str_replace(array('%', '?'), array('%%', '%s'), $query->toSql());
+						$bindings = $query->getBindings();
+						array_walk($bindings, function(&$value, $key) {
+							if (!is_numeric($value)) $value = "'$value'";
+						});
+						dd(vsprintf($sql, $bindings));
+					}
+
 					$objects = $query->get();
 					if (!$objects->isEmpty()) {
 					    foreach ($objects as $object) {
+
+							if ($can_edit) {
+								$link = route('ctrl::edit_object',[$ctrl_class->id,$object->id]);
+							}
+							else if ($can_view) {
+								$link = route('ctrl::view_object',[$ctrl_class->id,$object->id]);
+							}
+
 					    	$result             = new \StdClass;
 					    	$result->class_name = $ctrl_class->get_singular();
 					    	$result->title      = $this->get_object_title($object);
-					    	$result->edit_link  = route('ctrl::edit_object',[$ctrl_class->id,$object->id]);
+					    	$result->link  		= $link;
 					    	$result->icon       = $ctrl_class->get_icon() ? $ctrl_class->get_icon() : 'fa fa-toggle-right';
 					    	$json[]             = $result;
 					    }

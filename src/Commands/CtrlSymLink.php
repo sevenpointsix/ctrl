@@ -124,6 +124,12 @@ class CtrlSymLink extends Command
                         File::put($env_file, $new_env_contents);
                         $this->line('Database switched to '.$database);
                     }
+                    /**
+                     * For some reason, this is triggering, but only generating (say) 2 files
+                     * rather than 20? Why? Do we have to refresh the .env file?
+                     * Try calling this? php artisan config:clear
+                     */
+                    $this->call('config:clear');
                     $this->call('ctrl:synch', [
                         'action' => 'files'
                     ]);
