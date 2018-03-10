@@ -530,8 +530,8 @@ class CtrlController extends Controller
 		// (Search in set code here: http://stackoverflow.com/questions/28055363/laravel-eloquent-find-in-array-from-sql)
 		// Some minor duplication of code from get_data here:
 		$headers = $ctrl_class->ctrl_properties()->whereRaw(
-		   '(find_in_set(?, flags) or find_in_set(?, flags))', // Note that the bracket grouping is required: http://stackoverflow.com/questions/27193509/laravel-eloquent-whereraw-sql-clause-returns-all-rows-when-using-or-operator
-		   ['header','search']
+		   '(find_in_set(?, flags))', // Note that the bracket grouping is required: http://stackoverflow.com/questions/27193509/laravel-eloquent-whereraw-sql-clause-returns-all-rows-when-using-or-operator
+		   ['header']
 		)->get();
 
 		/*
@@ -569,7 +569,8 @@ class CtrlController extends Controller
         		}
         	}
 
-        	$column = new \StdClass;
+			$column = new \StdClass;
+
         	if ($header->relationship_type) {
         		// We need to identify the "string" column for this related class
         		// Note that this doesn't yet handle hasMany relationships, I don't think?
@@ -586,12 +587,6 @@ class CtrlController extends Controller
 				$value = $header->name.'.'.$string->name; // $header->name might not always hold true here?
         		$column->data = $value;
         		$column->name = $value;
-
-        		// Hide any columns that are searchable, but not headers (probably quite rare in practice)
-        		// See https://datatables.net/reference/option/columns.visible
-        		if (in_array('search', explode(',',$header->flags)) && !in_array('header', explode(',',$header->flags))) {
-        			$column->visible = false;
-        		}
 
         		// Get around a problem with datatables if there's no relationship defined
         		// See https://datatables.net/manual/tech-notes/4
@@ -640,11 +635,11 @@ class CtrlController extends Controller
         			$th_columns[] = '<th data-search-text="'.($make_searchable ? 'true' : 'false').'" data-orderable="'.($make_orderable ? 'true' : 'false').'">'.$header->label.'</th>';
         		}
 
-        	}
+			}
+
         	$js_columns[] = $column;
 
         }
-        // dd($js_columns);
         if ($this->module->enabled('custom_columns')) {
 			$custom_columns = $this->module->run('custom_columns',[
 				$ctrl_class->id,
