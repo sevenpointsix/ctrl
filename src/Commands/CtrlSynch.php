@@ -187,7 +187,17 @@ class CtrlSynch extends Command
                 }
 
                 $columns = DB::select("SHOW COLUMNS FROM {$standard_table}");
-                if ($pass == 1) $column_ordering[$model_name] = 1;
+
+                /**
+                 * New: get the previous highest order value here, to keep things in a sensible order:
+                 */
+                if ($pass == 1) {
+                    $highestOrder = DB::table('ctrl_properties')
+                                        ->where('ctrl_class_id',$ctrl_class->id)
+                                        ->max('order');
+                    $column_ordering[$model_name] = $highestOrder + 1;
+                }
+
                 foreach ($columns as $column) {
 
                     $column_name = $column->Field;
