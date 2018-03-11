@@ -452,6 +452,19 @@
 			}
 		}
 
+		/**
+		 * Filter objects before exporting them; very basic for now
+		 *
+		 * @param Integer $ctrl_class_id The ID of a CtrlClass
+		 * @param Object  $objects A collection of Eloquent objects
+		 * @return void
+		 */
+		protected function filter_export_objects($ctrl_class_id,$objects) {
+			/**
+			 * Note that if we're using Carbon we'll need to `use Carbon\Carbon` at the top of CtrlModules
+			 */
+			return $objects->whereDate('created_at', '>=', Carbon::now()->subDays(10)->toDateString());
+		}
 
 		/**
 		 * Filter the objects returned to DataTables by @get_data

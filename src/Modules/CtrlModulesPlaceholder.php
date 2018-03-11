@@ -4,6 +4,11 @@
 	 * Placeholder
 	 */
 
+/**
+ * I don't think this is used any more? We were trying to work around an issue with a missing
+ * CtrlModules file I think? I believe we can delete this file.
+ */
+
 	namespace App\Ctrl;
 
 	use \Sevenpointsix\Ctrl\Models\CtrlClass;

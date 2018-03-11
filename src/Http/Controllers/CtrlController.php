@@ -794,11 +794,20 @@ class CtrlController extends Controller
 		$class   = $ctrl_class->get_class();
 
 		if (!empty($headers)) {
-			$objects = $class::select($headers)->get();
+			$objects = $class::select($headers);
 		}
 		else {
-			$objects = $class::get();
+			$objects = $class::select();
 		}
+
+		if ($this->module->enabled('filter_export_objects')) {
+			$objects = $this->module->run('filter_export_objects',[
+				'ctrl_class_id' => $ctrl_class->id,
+				'objects'    	=> $objects
+			]);
+		}
+
+		$objects = $objects->get();
 
 		$filename = 'export-'.str_slug($ctrl_class->get_plural());
 
