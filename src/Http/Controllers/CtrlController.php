@@ -327,22 +327,24 @@ class CtrlController extends Controller
 
 			$import_link = $export_link = false;
 
-			if ($ctrl_class->can('export')) {
+			if ($this->can($ctrl_class->id,'export')) {
 				$export_link  = route('ctrl::export_objects',[$ctrl_class->id]); // This omits the filter string; will we ever use this? Possible from an existing (filtered) list...
 			}
 
-			if ($ctrl_class->can('import')) {
+			if ($this->can($ctrl_class->id,'import')) {
 				$import_link  = route('ctrl::import_objects',[$ctrl_class->id]); // As above, this omits the filter string; will we ever use this?
 			}
 
-			$import_export_links[] = [
-				'id'          => $ctrl_class->id,
-				'title'       => ucwords($ctrl_class->get_plural()),
-				'icon'        => ($icon = $ctrl_class->get_icon()) ? '<i class="'.$icon.' fa-fw"></i> ' : '',
-				'icon_only'   => ($icon = $ctrl_class->get_icon()) ? $icon : '',
-				'export_link' => (!empty($export_link)) ? $export_link : false,
-				'import_link' => (!empty($import_link)) ? $import_link : false
-			];
+			if ($export_link || $import_link) {
+				$import_export_links[] = [
+					'id'          => $ctrl_class->id,
+					'title'       => ucwords($ctrl_class->get_plural()),
+					'icon'        => ($icon = $ctrl_class->get_icon()) ? '<i class="'.$icon.' fa-fw"></i> ' : '',
+					'icon_only'   => ($icon = $ctrl_class->get_icon()) ? $icon : '',
+					'export_link' => (!empty($export_link)) ? $export_link : false,
+					'import_link' => (!empty($import_link)) ? $import_link : false
+				];
+			}
 		}
 
 		$dashboard_links = [];
