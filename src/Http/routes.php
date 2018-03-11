@@ -47,6 +47,11 @@ Route::group(['as' => 'ctrl::','prefix'=>env('CTRL_PREFIX', 'admin'),'middleware
 		'uses'=>'CtrlController@delete_object'
 	]);
 
+	Route::post('update/{ctrl_class_id}/{object_id}',[
+		'as'=>'update_object',
+		'uses'=>'CtrlController@update_object'
+	]);
+
 	Route::post('save/{ctrl_class_id}/{object_id?}/{filter_string?}',[
 		'as'=>'save_object',
 		'uses'=>'CtrlController@save_object'

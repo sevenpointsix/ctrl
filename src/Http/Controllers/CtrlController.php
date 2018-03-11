@@ -1628,14 +1628,37 @@ class CtrlController extends Controller
         	$filtered_list_links[]  = [
     			'icon'       => $filter_ctrl_class->get_icon(),
     			'count'      => $count,
-    			'title'      => $filter_list_title, // A generic title, only used by the key at the moment
+    			'title'      => $filter_list_title,
     			// 'list_title' => $filter_list_title, // Not used
     			'list_link'  => $filter_list_link,
     			// 'add_title'  => $filter_add_title, // No longer used
     			// 'add_link'   => $filter_add_link, // No longer used
     		];
 
-    	}
+		}
+
+		// Do we have any properties we can toggle?
+    	$toggleLinks       	= [];
+    	$toggleProperties 	= $ctrl_class->ctrl_properties()->whereRaw(
+		   '(find_in_set(?, flags))',
+		   ['toggle']
+		)->get();
+		if ($toggleProperties) {
+			$class  = $ctrl_class->get_class();
+			$object = $class::where('id',$object_id)->firstOrFail();
+			foreach ($toggleProperties as $toggleProperty) {
+				$column = $toggleProperty->name;
+				$state  = $object->$column; // Assume this is a 1 or 0 state for now
+
+				$toggleLinks[]  = [
+					'class'      => $state ? 'btn-warning' : 'btn-default',
+					'icon'       => $state ? 'fa fa-check-square-o' : 'fa fa-square-o',
+					'title'      => $toggleProperty->label,
+					'link'		 => route('ctrl::update_object',[$ctrl_class->id,$object->id]),
+					'rel'		 => implode('~',[$toggleProperty->id, $state ? 0 : 1])
+				];
+			}
+		}
 
     	// Any custom buttons?
     	if ($this->module->enabled('custom_buttons')) {
@@ -1669,7 +1692,8 @@ class CtrlController extends Controller
     		'view_link'           => $view_link,
     		'edit_link'           => $edit_link,
     		'delete_link'         => $delete_link,
-    		'filtered_list_links' => $filtered_list_links,
+			'filtered_list_links' => $filtered_list_links,
+			'toggleLinks' 		  => $toggleLinks,
     		'custom_buttons'      => isset($custom_buttons) ? $custom_buttons : [],
     		'can_reorder'         => $can_reorder
     	]);
@@ -2177,6 +2201,54 @@ class CtrlController extends Controller
 			'row_buttons'		 => $row_buttons,
 			'mode'				 => $mode
 		]);
+	}
+
+	/**
+	 * Update an existing object of a given CtrlClass
+	 * to set a property to a specfic value, set in $_POST
+	 * Designed to be used with Ajax, I think?
+	 * This is currently only used by the Toggle buttons --
+	 * we could extend it to allow multiple values to be set,
+	 * but realistically will this ever be necessary?
+	 *
+	 * @param  Request  $request
+	 * @param  integer $ctrl_class_id The ID of the class we're editing
+	 * @param  integer $object_id The ID of the object we're editing
+	 *
+	 * @return Response
+	 */
+	public function update_object(Request $request, $ctrl_class_id, $object_id)
+	{
+
+		try {
+			$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
+		}
+		catch (\Exception $e) {
+			trigger_error($e->getMessage());
+		}
+
+		$object = $this->get_object_from_ctrl_class_id($ctrl_class->id,$object_id);
+
+		$update = $request->input('update');
+		list($ctrl_property_id, $value) = explode('~', $update);
+
+		$ctrl_property = CtrlProperty::where('id',$ctrl_property_id)->first();
+		if (is_null($ctrl_property)) trigger_error("Cannot load related_ctrl_property");
+
+		$column = $ctrl_property->name;
+
+		$object->$column = $value;
+
+		$object->save();
+
+        if ($request->ajax()) {
+            return json_encode([
+                'success'=>1
+            ]);
+        }
+        else {
+            return back();
+        }
 	}
 
 	/**

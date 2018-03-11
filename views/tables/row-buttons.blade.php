@@ -58,6 +58,16 @@
 	  	@endif
 	  @endif
 
+	@forelse ($toggleLinks as $toggleLink)
+		<div class="btn-group">
+			<a href="{{ $toggleLink['link'] }}" class="btn btn-sm {{ $toggleLink['class'] }} update-item"  rel="{{ $toggleLink['rel'] }}"  data-toggle="tooltip" data-placement="bottom" title="{{ $toggleLink['title'] }}">
+		    <i class="{{ $toggleLink['icon'] }}"></i>
+		  </a>
+		</div>
+	@empty
+		<!-- No custom buttons -->
+	@endforelse
+
 	@forelse ($custom_buttons as $custom_button)
 		<div class="btn-group">
 			<a href="{{ $custom_button['link'] }}" class="btn btn-sm @if ($custom_button['count'] == 0) btn-default @else btn-warning @endif {{ $custom_button['class'] }}" rel="{{ $custom_button['rel'] }}"  data-toggle="tooltip" data-placement="bottom" title="{{ $custom_button['title'] }}">
