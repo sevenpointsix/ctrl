@@ -23,7 +23,7 @@ class CreateCtrlPropertiesTable extends Migration
                 $table->string('foreign_key')->nullable();
                 $table->string('local_key')->nullable();
                 $table->string('pivot_table')->nullable();
-                $table->enum('flags',[])->nullable(); // *** SEE BELOW
+                $table->enum('flags',['string','header','required','read_only','search','filtered_list','linked_list'])->nullable(); // *** SEE BELOW
                 $table->string('label')->nullable();
                 $table->enum('field_type', array('text','textarea','redactor','dropdown','checkbox','date','datetime','image','file','email','froala'))->nullable();
                 $table->string('fieldset')->nullable();
