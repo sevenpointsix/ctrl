@@ -22,7 +22,7 @@ class CreateCtrlClassesTable extends Migration
                 $table->string('singular');
                 $table->string('plural');
                 $table->string('description');
-                $table->enum('permissions', [])->nullable(); // *** SEE BELOW
+                $table->enum('permissions', ['list','add','edit','delete','view','copy','export','import','preview'])->nullable(); // *** SEE BELOW
                 $table->string('menu_title')->nullable();
                 $table->string('icon');
                 $table->integer('order');
