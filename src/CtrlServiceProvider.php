@@ -35,7 +35,12 @@ class CtrlServiceProvider extends ServiceProvider{
 	public function boot()
 	{
 
-		$ctrl_folder = app_path('Ctrl/');
+		$ctrl_folder = app_path('Ctrl');
+
+		// Don't create a Ctrl folder if this is the local ctrl-c.ms site; that site uses symlinks to other folders
+		if (!File::exists($ctrl_folder) && env('APP_URL', false) != 'http://dev.ctrl-c.ms') {
+			File::makeDirectory($ctrl_folder,0777,true); // See http://laravel-recipes.com/recipes/147/creating-a-directory
+		}
 
 		/**
 		 * We always need a CtrlModules file, even before we publish anything, otherwise
@@ -88,11 +93,6 @@ class CtrlServiceProvider extends ServiceProvider{
 				}
 			}
 		}
-
-		// Don't create a Ctrl folder if this is the local ctrl-c.ms site; that site uses symlinks to other folders
-        if (!File::exists($ctrl_folder) && env('APP_URL', false) != 'http://dev.ctrl-c.ms') {
-            File::makeDirectory($ctrl_folder,0777,true); // See http://laravel-recipes.com/recipes/147/creating-a-directory
-        }
 
 		// This folder holds the core views used by the CMS...
 		$this->loadViewsFrom(realpath(__DIR__.'/../views'), 'ctrl');
