@@ -498,4 +498,18 @@ EOD;
 			*/
 		}
 
+		/**
+		 * Allow the DataTable to be ordered by a certain column by default
+		 * @param  object $ctrl_class 	The CtrlClass of objects that we're listing
+		  * @return array An array like [[ 3, 'desc' ], [ 0, 'asc' ]]
+		  * See: https://datatables.net/examples/basic_init/table_sorting.html
+		 */
+		protected function defaultTableOrder($ctrl_class) {
+			/* For example:
+			if (in_array($ctrl_class->name,['Contactform','Picontactform'])) {
+				return '[[ 3, "desc" ]]';
+			}
+			*/
+		}
+
 	}
