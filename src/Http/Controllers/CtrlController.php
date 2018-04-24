@@ -737,6 +737,15 @@ class CtrlController extends Controller
 			]);
 		}
 
+		/**
+		 * Force a default order in DataTables
+		 */
+		if ($this->module->enabled('defaultTableOrder')) {
+			$defaultOrder = $this->module->run('defaultTableOrder',[
+				$ctrl_class
+			]);
+		}
+
 		return view('ctrl::list_objects',[
 			'ctrl_class'           => $ctrl_class,
 			'th_columns'           => implode("\n",$th_columns),
@@ -751,7 +760,8 @@ class CtrlController extends Controller
 			'import_link'          => $import_link,
 			'key'                  => $key,
 			'page_length'          => $page_length,
-			'custom_css'		   => (!empty($custom_css) ? $custom_css : false)
+			'custom_css'		   => (!empty($custom_css) ? $custom_css : false),
+			'defaultOrder'         => (!empty($defaultOrder) ? $defaultOrder : false),
 		]);
 	}
 

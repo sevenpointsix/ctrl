@@ -247,14 +247,12 @@ $(function() {
     } );
 
     var table = $('#data-table').DataTable({
-    	/* Remve the header altogether, we'll search on individual columns instead
-    	dom: "<'row table-header'<'col-sm-6'f><'col-sm-6'<'dataTables_custom_buttons pull-right'>>>" +
-			 "<'row'<'col-sm-12'tr>>" +
-			 "<'row'<'col-sm-5'i><'col-sm-7'p>>",
-			 */
+
 		stateSave: true, // From https://datatables.net/reference/option/stateSave, means we retain search terms and current page when returning to the table
-			// NOTE: this doesn't work! It only works if we change the initialisation function to dataTable, not DataTable, but that breaks everything else! WTF?
-			// No, this works fine in fact -- why did I think it didn't?
+
+		@if ($defaultOrder)
+			"order": {!! $defaultOrder !!},
+		@endif
 
 		"sPaginationType": "simple_numbers", // use "listbox" for Argos-style dropdowns, but I'm going off these
 		@if ($page_length === false)
