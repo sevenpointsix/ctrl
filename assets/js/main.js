@@ -63,7 +63,7 @@ function init_row_buttons() {
 			},
 			dataType: 'JSON',
 			success: function (data) {
-				table.draw(); // Redraw the table
+				table.draw('page'); // Redraw the table without changing pagination, https://datatables.net/reference/api/draw()
 			}
 		});
 		return false;
