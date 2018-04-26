@@ -13,7 +13,12 @@ $(document).delegate('*[data-toggle="lightbox"]', 'click', function(event) {
 // Set up some click events on the row buttons; now used on edit and list pages. "delete" only for now. Also init tooltips.
 function init_row_buttons() {
 
-	var table = $('#data-table').DataTable();
+	if ( $.isFunction($.fn.DataTable) ) {
+		var table = $('#data-table').DataTable();
+	}
+	else {
+		var table = false;
+	}
 
     // Add the "delete" option
    	$('div.row-buttons').on('click','a.delete-item',function() {
@@ -36,7 +41,9 @@ function init_row_buttons() {
 							newest_on_top: true,
 							delay: 2500,
 						});
-						table.draw(); // Redraw the table (to reflect fact that a row has been removed/deleted)
+						if (table) {
+							table.draw('page'); // Redraw the table (to reflect fact that a row has been removed/deleted)
+						}
 				    }
 				});
    			}
@@ -63,7 +70,9 @@ function init_row_buttons() {
 			},
 			dataType: 'JSON',
 			success: function (data) {
-				table.draw('page'); // Redraw the table without changing pagination, https://datatables.net/reference/api/draw()
+				if (table) {
+					table.draw('page'); // Redraw the table without changing pagination, https://datatables.net/reference/api/draw()
+				}
 			}
 		});
 		return false;
