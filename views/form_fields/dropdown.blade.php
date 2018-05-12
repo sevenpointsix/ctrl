@@ -7,7 +7,11 @@
         @if (is_array($field['value']))
             <input type="text" class="form-control" value="{{ implode(', ',$field['value']) }}" readonly>
         @elseif (is_array($field['values']))
-            <input type="text" class="form-control" value="{{ $value }}" readonly>
+            @if ($field['value'])
+            <input type="text" class="form-control" value="{{ $field['values'][$field['value']] }}" readonly>
+            @else
+            <input type="text" class="form-control" value="None" readonly>
+            @endif
         @else
             <input type="text" class="form-control" value="{{ $field['value'] }}" readonly>
         @endif
