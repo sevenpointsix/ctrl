@@ -819,6 +819,16 @@ class CtrlController extends Controller
 
 		$objects = $objects->get();
 
+		if ($this->module->enabled('manipulate_export_objects')) {
+			/**
+			 * See Russell & Russell
+			 */
+			$objects = $this->module->run('manipulate_export_objects',[
+				'ctrl_class_id' => $ctrl_class->id,
+				'objects'    	=> $objects
+			]);
+		}
+
 		$filename = 'export-'.str_slug($ctrl_class->get_plural());
 
 		\Maatwebsite\Excel\Facades\Excel::create($filename, function($excel) use ($objects) {
