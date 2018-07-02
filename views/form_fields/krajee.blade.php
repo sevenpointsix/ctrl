@@ -1,8 +1,20 @@
 @extends('ctrl::form_fields.master')
 
 @section('input')
+@if (!empty($field['readOnly']))
+    @if (!empty($field['value']))
+    <div class="row">
+      <div class="col-md-4">
+        <img src="{{ $field['value'] }}" class="img-responsive">
+      </div>
+    </div>
+    @else
+      <input type="text" class="form-control" readonly value="No image found">
+    @endif
+  @else
   <input type="file" id="{{ $field['id'] }}_krajee" name="{{ $field['name'] }}_krajee" @if (!empty($field['allow-multiple'])) multiple="multiple" @endif>
   <input type="hidden" id="{{ $field['id'] }}" name="{{ $field['name'] }}@if (!empty($field['allow-multiple']))[]@endif" value="{{ $field['value'] }}">
+  @endif
 @overwrite
 {{-- Note that we need @overwrite because we include multiple instances of templates that extend form_fields.master: see https://github.com/laravel/framework/issues/1058 --}}
 
