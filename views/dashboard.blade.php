@@ -217,7 +217,7 @@ span.input-group-addon+span.twitter-typeahead input.tt-input {
 
 		<div class="col-md-6">
 			@include('ctrl::messages') {{-- Is this the best place for these? --}}
-			<div class="panel panel-default">
+			<div class="panel panel-default" id="dashboard_search_panel">
 			  	<div class="panel-heading"><h3 class="panel-title"><i class="fa fa-list-alt fa-fw" style="font-weight: normal"></i> Dashboard</h3></div>
 			  	<div class="panel-body">
 
