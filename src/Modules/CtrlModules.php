@@ -145,7 +145,7 @@
 				return $headers;
 			}
 			else if ($action == 'get-callback-function') {
-				return $callback_function;
+				return (!empty($callback_function)) ? $callback_function : false; // Will this bork the main CtrlController, which I think expects a function...?
 			}
 			else if ($action == 'get-pre-import-function') {
 				return (!empty($pre_import_function)) ? $pre_import_function : false;
