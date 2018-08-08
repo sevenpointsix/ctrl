@@ -2784,13 +2784,19 @@ class CtrlController extends Controller
 	protected function disableDebugBar() {
 		// We need to disable Debugbar when returning Froala AJAX, if used
 	    if (\class_exists('Debugbar')) {
-	    	// Debugbar enabled, but in order to disable it, we also need to have enabled the Facade...
-	    	if (!array_key_exists('Debugbar', config('app.aliases'))) {
-	    		trigger_error("If using Debugbar, the alias must be enabled so that we can in turn disable Debugbar...");
-	    	}
-	    	else {
-	    		\Debugbar::disable();
-	    	}
+			// Debugbar enabled, but in order to disable it, we also need to have enabled the Facade...
+			// This isn't necessary if we're using 5.5+
+			if (\App::VERSION() >= 5.5) {
+				\Debugbar::disable();
+			}
+			else {
+				if (!array_key_exists('Debugbar', config('app.aliases'))) {
+					trigger_error("If using Debugbar, the alias must be enabled so that we can in turn disable Debugbar...");
+				}
+				else {
+					\Debugbar::disable();
+				}
+			}
 		}
 	}
 
