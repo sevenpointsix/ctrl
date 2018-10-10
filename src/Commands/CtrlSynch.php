@@ -297,7 +297,18 @@ class CtrlSynch extends Command
 
                         if (is_null($inverse_ctrl_class)) {
                             $this->error("Cannot load ctrl_class for inverse property $column_name of $standard_table");
-                            continue;
+
+                            /**
+                             * NEW! Let's ask what class it should be...
+                             */
+                            $inverse_table_name = $this->ask('What table does this property point to?');
+                            $inverse_ctrl_class = \Sevenpointsix\Ctrl\Models\CtrlClass::where([
+                                ['table_name',$inverse_table_name]
+                            ])->first();
+                            if (is_null($inverse_ctrl_class)) {
+                                $this->error("Nope, still can't load that!");
+                                continue;
+                            }
                         }
 
                         // Now -- if the inverse table name matches the current table name, this is a parent/child property (ie, page_id within the pages table);l
@@ -540,6 +551,21 @@ class CtrlSynch extends Command
             foreach ($relationship_properties as $relationship_property) {
                 $related_ctrl_class = \Sevenpointsix\Ctrl\Models\CtrlClass::find($relationship_property->related_to_id);
 
+                /**
+                 * Now. If we've set a custom property name (eg, "exclude_supplier_id")
+                 * then we need to generate a new model name here, otherwise we end up
+                 * with (eg) two properties called "profile" in the inverse relationship.
+                 * This assumes that the second matching property is always the "custom" one...
+                 */
+                if (isset($view_data[$relationship_property->relationship_type][$relationship_property->name])) {
+                    //$this->line($relationship_property->name." appears to be a custom class name?");
+                    /**
+                     * We could try and set a sensible name here based on the inverse property
+                     * but I'm actually not sure it's important, as long as the names don't clash
+                     */
+                    $relationship_property->name = 'secondary_' . $relationship_property->name;
+                }
+
                 $relationship_data = [
                     'name'        => $relationship_property->name,
                     'model'       => $related_ctrl_class->name,
@@ -550,7 +576,7 @@ class CtrlSynch extends Command
                 if ($relationship_property->relationship_type == 'belongsToMany') {
                     $relationship_data['pivot_table'] = $relationship_property->pivot_table;
                 }
-                $view_data[$relationship_property->relationship_type][] = $relationship_data;
+                $view_data[$relationship_property->relationship_type][$relationship_property->name] = $relationship_data;
             }
 
             // Do we have timestamps?
