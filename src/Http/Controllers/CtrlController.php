@@ -1166,7 +1166,23 @@ class CtrlController extends Controller
 				'allowed-types' => ['text'] /* Only allow text files for CSV upload */
 			];
 			$page_description = 'Use this page to import records from a CSV file';
-			$help_text = 'Please select a CSV file from your computer by clicking "Browse", and then click "Import". <a href="'.$sample_link.'">You can download an example CSV here</a>.';
+
+			/**
+			 * Allow this text to be customised...
+			 */
+			if ($this->module->enabled('custom_strings')) {
+				$custom_help_text = $this->module->run('custom_strings',[
+					$ctrl_class_id,
+					'import_objects.help_text'
+				]);
+			}
+			if (!empty($custom_help_text)) {
+				$help_text = $custom_help_text;
+			}
+			else {
+				$help_text = 'Please select a CSV file from your computer by clicking "Browse", and then click "Import". <a href="'.$sample_link.'">You can download an example CSV here</a>.';
+			}
+
 		}
 		else if ($import_type == 'files') {
 			$upload_field = [
