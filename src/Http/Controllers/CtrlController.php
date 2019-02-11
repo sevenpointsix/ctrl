@@ -1024,7 +1024,7 @@ class CtrlController extends Controller
     	// Found the tip here: https://github.com/Maatwebsite/Laravel-Excel/issues/388
     	ini_set('auto_detect_line_endings', true);
 
-    	Excel::filter('chunk')->load($csv_file)->chunk(250, function($results) use (
+    	Excel::filter('chunk')->load(storage_path('app/public/'.$csv_file))->chunk(250, function($results) use (
     		&$count,
     		$loop, // Does this need to be passed by reference?
     		$ctrl_class_id,
