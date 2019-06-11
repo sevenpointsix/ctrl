@@ -124,7 +124,7 @@
 
     <footer class="footer">
       <div class="container">
-        <p class="text-muted"><a href="{{ route('ctrl::logout') }}"><i class="fa fa-power-off"></i> Logout <!-- {{ Auth::user()->name }} --></a></p>
+        <p class="text-muted"><a href="{{ route('ctrl::logout') }}"><i class="fa fa-power-off"></i> Logout</a></p>
       </div>
     </footer>
 
