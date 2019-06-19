@@ -863,6 +863,8 @@ class CtrlController extends Controller
 			// $filter_string
 		]);
 
+			// Dummy comment to force a push to Packagist
+
 		$filename = 'import-'.str_slug($ctrl_class->get_plural()).'-example';
 
 		// \Maatwebsite\Excel\Facades\Excel::create($filename, function($excel) use ($headers) {
