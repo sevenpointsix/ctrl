@@ -2704,6 +2704,9 @@ class CtrlController extends Controller
 
 			}
 		}
+		else {
+			$response->error = 'Uploaded file cannot be found; please contact support';
+		}
 
 		return stripslashes(json_encode($response));
 	}
