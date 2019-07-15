@@ -61,8 +61,8 @@ class CtrlStorage extends Command
         }
 
         // Temporarily...
-        if ($direction == 'push' || $environment == 'production') {
-            $this->error("Currently this command will only pull files from the staging environment");
+        if ($direction == 'push') {
+            $this->error("Currently this command will only pull files");
             exit();
         }
 
@@ -73,7 +73,13 @@ class CtrlStorage extends Command
         $project_path   = realpath(base_path()); // eg, /Users/chrisgibson/Projects/argos-support.co.uk
         $website_folder = last(explode('/',$project_path)); // eg argos-support.co.uk
 
-        $remote_connection = 'phoenixdigital@staging.phoenixdigital.agency';
+        if ($environment == 'production') {
+            $remote_connection = 'phoenixdigital@avondale.phoenixdigital.agency';
+        }
+        else if ($environment == 'staging') {
+            $remote_connection = 'phoenixdigital@staging.phoenixdigital.agency';
+        }
+
         $remote_path       = '/var/www/'.$website_folder.'/public_html/storage/app/public/';
         $local_path        = storage_path('app/public');
 
