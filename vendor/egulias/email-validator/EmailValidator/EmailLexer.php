@@ -67,8 +67,6 @@ class EmailLexer extends AbstractLexer
         "\n"   => self::S_LF,
         "\r\n" => self::CRLF,
         'IPv6' => self::S_IPV6TAG,
-        '<'    => self::S_LOWERTHAN,
-        '>'    => self::S_GREATERTHAN,
         '{'    => self::S_OPENQBRACKET,
         '}'    => self::S_CLOSEQBRACKET,
         ''     => self::S_EMPTY,
@@ -79,10 +77,22 @@ class EmailLexer extends AbstractLexer
 
     protected $previous;
 
+    private static $nullToken = [
+        'value' => '',
+        'type' => null,
+        'position' => 0,
+    ];
+
+    public function __construct()
+    {
+        $this->previous = $this->token = self::$nullToken;
+    }
+
     public function reset()
     {
         $this->hasInvalidTokens = false;
         parent::reset();
+        $this->previous = $this->token = self::$nullToken;
     }
 
     public function hasInvalidTokens()
@@ -91,7 +101,7 @@ class EmailLexer extends AbstractLexer
     }
 
     /**
-     * @param $type
+     * @param string $type
      * @throws \UnexpectedValueException
      * @return boolean
      */
@@ -124,8 +134,10 @@ class EmailLexer extends AbstractLexer
     public function moveNext()
     {
         $this->previous = $this->token;
+        $hasNext = parent::moveNext();
+        $this->token = $this->token ?: self::$nullToken;
 
-        return parent::moveNext();
+        return $hasNext;
     }
 
     /**
@@ -191,7 +203,7 @@ class EmailLexer extends AbstractLexer
     }
 
     /**
-     * @param $value
+     * @param string $value
      * @return bool
      */
     protected function isNullType($value)
@@ -204,7 +216,7 @@ class EmailLexer extends AbstractLexer
     }
 
     /**
-     * @param $value
+     * @param string $value
      * @return bool
      */
     protected function isUTF8Invalid($value)

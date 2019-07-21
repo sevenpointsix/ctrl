@@ -3,10 +3,11 @@
 namespace Yajra\DataTables;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
 use Yajra\DataTables\Exceptions\Exception;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class EloquentDataTable extends QueryDataTable
 {
@@ -14,6 +15,17 @@ class EloquentDataTable extends QueryDataTable
      * @var \Illuminate\Database\Eloquent\Builder
      */
     protected $query;
+
+    /**
+     * Can the DataTable engine be created with these parameters.
+     *
+     * @param mixed $source
+     * @return bool
+     */
+    public static function canCreate($source)
+    {
+        return $source instanceof Builder || $source instanceof Relation;
+    }
 
     /**
      * EloquentEngine constructor.
@@ -111,7 +123,7 @@ class EloquentDataTable extends QueryDataTable
     protected function isNotEagerLoaded($relation)
     {
         return ! $relation
-            || ! in_array($relation, array_keys($this->query->getEagerLoads()))
+            || ! array_key_exists($relation, $this->query->getEagerLoads())
             || $relation === $this->query->getModel()->getTable();
     }
 
@@ -148,15 +160,15 @@ class EloquentDataTable extends QueryDataTable
                     break;
 
                 case $model instanceof HasOneOrMany:
-                    $table   = $model->getRelated()->getTable();
-                    $foreign = $model->getQualifiedForeignKeyName();
-                    $other   = $model->getQualifiedParentKeyName();
+                    $table     = $model->getRelated()->getTable();
+                    $foreign   = $model->getQualifiedForeignKeyName();
+                    $other     = $model->getQualifiedParentKeyName();
                     break;
 
                 case $model instanceof BelongsTo:
-                    $table   = $model->getRelated()->getTable();
-                    $foreign = $model->getQualifiedForeignKey();
-                    $other   = $model->getQualifiedOwnerKeyName();
+                    $table     = $model->getRelated()->getTable();
+                    $foreign   = $model->getQualifiedForeignKeyName();
+                    $other     = $model->getQualifiedOwnerKeyName();
                     break;
 
                 default:

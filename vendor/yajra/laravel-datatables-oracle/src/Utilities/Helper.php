@@ -3,8 +3,8 @@
 namespace Yajra\DataTables\Utilities;
 
 use DateTime;
-use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Str;
+use Illuminate\Contracts\Support\Arrayable;
 
 class Helper
 {
@@ -19,20 +19,20 @@ class Helper
     {
         if (self::isItemOrderInvalid($item, $array)) {
             return array_merge($array, [$item['name'] => $item['content']]);
-        } else {
-            $count = 0;
-            $last  = $array;
-            $first = [];
-            foreach ($array as $key => $value) {
-                if ($count == $item['order']) {
-                    return array_merge($first, [$item['name'] => $item['content']], $last);
-                }
+        }
 
-                unset($last[$key]);
-                $first[$key] = $value;
-
-                $count++;
+        $count = 0;
+        $last  = $array;
+        $first = [];
+        foreach ($array as $key => $value) {
+            if ($count == $item['order']) {
+                return array_merge($first, [$item['name'] => $item['content']], $last);
             }
+
+            unset($last[$key]);
+            $first[$key] = $value;
+
+            $count++;
         }
     }
 
@@ -78,7 +78,7 @@ class Helper
     public static function compileBlade($str, $data = [])
     {
         if (view()->exists($str)) {
-            return view($str, $data);
+            return view($str, $data)->render();
         }
 
         ob_start() && extract($data, EXTR_SKIP);
@@ -140,7 +140,7 @@ class Helper
      */
     public static function getOrMethod($method)
     {
-        if (!Str::contains(Str::lower($method), 'or')) {
+        if (! Str::contains(Str::lower($method), 'or')) {
             return 'or' . ucfirst($method);
         }
 
@@ -151,15 +151,20 @@ class Helper
      * Converts array object values to associative array.
      *
      * @param mixed $row
+     * @param array $filters
      * @return array
      */
-    public static function convertToArray($row)
+    public static function convertToArray($row, $filters = [])
     {
+        $row  = method_exists($row, 'makeHidden') ? $row->makeHidden(array_get($filters, 'hidden', [])) : $row;
         $data = $row instanceof Arrayable ? $row->toArray() : (array) $row;
-        foreach (array_keys($data) as $key) {
-            if (is_object($data[$key]) || is_array($data[$key])) {
-                $data[$key] = self::convertToArray($data[$key]);
+
+        foreach ($data as &$value) {
+            if (is_object($value) || is_array($value)) {
+                $value = self::convertToArray($value);
             }
+
+            unset($value);
         }
 
         return $data;
@@ -224,7 +229,7 @@ class Helper
     }
 
     /**
-     * Replace all pattern occurrences with keyword
+     * Replace all pattern occurrences with keyword.
      *
      * @param array  $subject
      * @param string $keyword
@@ -256,12 +261,12 @@ class Helper
     {
         $matches = explode(' as ', Str::lower($str));
 
-        if (!empty($matches)) {
+        if (! empty($matches)) {
             if ($wantsAlias) {
                 return array_pop($matches);
-            } else {
-                return array_shift($matches);
             }
+
+            return array_shift($matches);
         } elseif (strpos($str, '.')) {
             $array = explode('.', $str);
 
@@ -280,12 +285,25 @@ class Helper
      */
     public static function wildcardLikeString($str, $lowercase = true)
     {
-        $wild  = '%';
+        return static::wildcardString($str, '%', $lowercase);
+    }
+
+    /**
+     * Adds wildcards to the given string.
+     *
+     * @param string $str
+     * @param string $wildcard
+     * @param bool   $lowercase
+     * @return string
+     */
+    public static function wildcardString($str, $wildcard, $lowercase = true)
+    {
+        $wild  = $wildcard;
         $chars = preg_split('//u', $str, -1, PREG_SPLIT_NO_EMPTY);
 
         if (count($chars) > 0) {
             foreach ($chars as $char) {
-                $wild .= $char . '%';
+                $wild .= $char . $wildcard;
             }
         }
 

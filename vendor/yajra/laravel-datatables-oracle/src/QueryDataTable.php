@@ -2,11 +2,11 @@
 
 namespace Yajra\DataTables;
 
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
-use Illuminate\Database\Query\Builder;
-use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Str;
+use Illuminate\Database\Query\Builder;
 use Yajra\DataTables\Utilities\Helper;
+use Illuminate\Database\Query\Expression;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 
 class QueryDataTable extends DataTableAbstract
 {
@@ -44,6 +44,31 @@ class QueryDataTable extends DataTableAbstract
      * @var callable
      */
     protected $limitCallback;
+
+    /**
+     * Flag to skip total records count query.
+     *
+     * @var bool
+     */
+    protected $skipTotalRecords = false;
+
+    /**
+     * Flag to keep the select bindings.
+     *
+     * @var bool
+     */
+    protected $keepSelectBindings = false;
+
+    /**
+     * Can the DataTable engine be created with these parameters.
+     *
+     * @param mixed $source
+     * @return bool
+     */
+    public static function canCreate($source)
+    {
+        return $source instanceof Builder;
+    }
 
     /**
      * @param \Illuminate\Database\Query\Builder $builder
@@ -87,7 +112,7 @@ class QueryDataTable extends DataTableAbstract
      */
     protected function prepareQuery()
     {
-        if (!$this->prepared) {
+        if (! $this->prepared) {
             $this->totalRecords = $this->totalCount();
 
             if ($this->totalRecords) {
@@ -101,13 +126,57 @@ class QueryDataTable extends DataTableAbstract
     }
 
     /**
+     * Skip total records and set the recordsTotal equals to recordsFiltered.
+     * This will improve the performance by skipping the total count query.
+     *
+     * @return $this
+     */
+    public function skipTotalRecords()
+    {
+        $this->skipTotalRecords = true;
+
+        return $this;
+    }
+
+    /**
+     * Keep the select bindings.
+     *
+     * @return $this
+     */
+    public function keepSelectBindings()
+    {
+        $this->keepSelectBindings = true;
+
+        return $this;
+    }
+
+    /**
      * Count total items.
      *
-     * @return integer
+     * @return int
      */
     public function totalCount()
     {
+        if ($this->skipTotalRecords) {
+            return true;
+        }
+
         return $this->totalRecords ? $this->totalRecords : $this->count();
+    }
+
+    /**
+     * Count filtered items.
+     *
+     * @return int
+     */
+    protected function filteredCount()
+    {
+        $this->filteredRecords = $this->filteredRecords ?: $this->count();
+        if ($this->skipTotalRecords) {
+            $this->totalRecords = $this->filteredRecords;
+        }
+
+        return $this->filteredRecords;
     }
 
     /**
@@ -134,9 +203,12 @@ class QueryDataTable extends DataTableAbstract
     {
         $builder = clone $this->query;
 
-        if (!$this->isComplexQuery($builder)) {
+        if (! $this->isComplexQuery($builder)) {
             $row_count = $this->wrap('row_count');
             $builder->select($this->connection->raw("'1' as {$row_count}"));
+            if (! $this->keepSelectBindings) {
+                $builder->setBindings([], 'select');
+            }
         }
 
         return $builder;
@@ -206,21 +278,20 @@ class QueryDataTable extends DataTableAbstract
         $columns = $this->request->columns();
 
         foreach ($columns as $index => $column) {
-            if (!$this->request->isColumnSearchable($index)) {
+            $column = $this->getColumnName($index);
+
+            if (! $this->request->isColumnSearchable($index) || $this->isBlacklisted($column) && ! $this->hasFilterColumn($column)) {
                 continue;
             }
-
-            $column = $this->getColumnName($index);
 
             if ($this->hasFilterColumn($column)) {
                 $keyword = $this->getColumnSearchKeyword($index, $raw = true);
                 $this->applyFilterColumn($this->getBaseQueryBuilder(), $column, $keyword);
-                continue;
+            } else {
+                $column  = $this->resolveRelationColumn($column);
+                $keyword = $this->getColumnSearchKeyword($index);
+                $this->compileColumnSearch($index, $column, $keyword);
             }
-
-            $column  = $this->resolveRelationColumn($column);
-            $keyword = $this->getColumnSearchKeyword($index);
-            $this->compileColumnSearch($index, $column, $keyword);
 
             $this->isFilterApplied = true;
         }
@@ -286,7 +357,7 @@ class QueryDataTable extends DataTableAbstract
      */
     protected function getBaseQueryBuilder($instance = null)
     {
-        if (!$instance) {
+        if (! $instance) {
             $instance = $this->query;
         }
 
@@ -335,18 +406,20 @@ class QueryDataTable extends DataTableAbstract
     {
         switch ($this->connection->getDriverName()) {
             case 'oracle':
-                $sql = !$this->config->isCaseInsensitive()
+                $sql = ! $this->config->isCaseInsensitive()
                     ? 'REGEXP_LIKE( ' . $column . ' , ? )'
                     : 'REGEXP_LIKE( LOWER(' . $column . ') , ?, \'i\' )';
                 break;
 
             case 'pgsql':
                 $column = $this->castColumn($column);
-                $sql    = !$this->config->isCaseInsensitive() ? $column . ' ~ ?' : $column . ' ~* ? ';
+                $sql    = ! $this->config->isCaseInsensitive() ? $column . ' ~ ?' : $column . ' ~* ? ';
                 break;
 
             default:
-                $sql     = !$this->config->isCaseInsensitive() ? $column . ' REGEXP ?' : 'LOWER(' . $column . ') REGEXP ?';
+                $sql = ! $this->config->isCaseInsensitive()
+                    ? $column . ' REGEXP ?'
+                    : 'LOWER(' . $column . ') REGEXP ?';
                 $keyword = Str::lower($keyword);
         }
 
@@ -404,7 +477,7 @@ class QueryDataTable extends DataTableAbstract
     {
         if (strpos($column, '.') === false) {
             $q = $this->getBaseQueryBuilder($query);
-            if (!$q->from instanceof Expression) {
+            if (! $q->from instanceof Expression) {
                 $column = $q->from . '.' . $column;
             }
         }
@@ -504,6 +577,7 @@ class QueryDataTable extends DataTableAbstract
     public function limit(callable $callback)
     {
         $this->limitCallback = $callback;
+
         return $this;
     }
 
@@ -560,7 +634,7 @@ class QueryDataTable extends DataTableAbstract
                 return $orderable;
             })
             ->reject(function ($orderable) {
-                return $this->isBlacklisted($orderable['name']) && !$this->hasOrderColumn($orderable['name']);
+                return $this->isBlacklisted($orderable['name']) && ! $this->hasOrderColumn($orderable['name']);
             })
             ->each(function ($orderable) {
                 $column = $this->resolveRelationColumn($orderable['name']);
@@ -569,8 +643,8 @@ class QueryDataTable extends DataTableAbstract
                     $this->applyOrderColumn($column, $orderable);
                 } else {
                     $nullsLastSql = $this->getNullsLastSql($column, $orderable['direction']);
-                    $normalSql    = $this->wrap($column) . ' ' . $orderable['direction'];
-                    $sql          = $this->nullsLast ? $nullsLastSql : $normalSql;
+                    $normalSql = $this->wrap($column) . ' ' . $orderable['direction'];
+                    $sql = $this->nullsLast ? $nullsLastSql : $normalSql;
                     $this->query->orderByRaw($sql);
                 }
             });
@@ -628,7 +702,7 @@ class QueryDataTable extends DataTableAbstract
                     return $this->getColumnName($index);
                 })
                 ->reject(function ($column) {
-                    return $this->isBlacklisted($column) && !$this->hasFilterColumn($column);
+                    return $this->isBlacklisted($column) && ! $this->hasFilterColumn($column);
                 })
                 ->each(function ($column) use ($keyword, $query) {
                     if ($this->hasFilterColumn($column)) {
@@ -650,9 +724,34 @@ class QueryDataTable extends DataTableAbstract
      */
     protected function showDebugger(array $output)
     {
-        $output['queries'] = $this->connection->getQueryLog();
+        $query_log = $this->connection->getQueryLog();
+        array_walk_recursive($query_log, function (&$item, $key) {
+            $item = utf8_encode($item);
+        });
+
+        $output['queries'] = $query_log;
         $output['input']   = $this->request->all();
 
         return $output;
+    }
+
+    /**
+     * Attach custom with meta on response.
+     *
+     * @param array $data
+     * @return array
+     */
+    protected function attachAppends(array $data)
+    {
+        $appends = [];
+        foreach ($this->appends as $key => $value) {
+            if (is_callable($value)) {
+                $appends[$key] = value($value($this->getFilteredQuery()));
+            } else {
+                $appends[$key] = $value;
+            }
+        }
+
+        return array_merge($data, $appends);
     }
 }

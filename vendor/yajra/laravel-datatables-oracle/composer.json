@@ -14,20 +14,21 @@
     }
   ],
   "require": {
-    "php": ">=7.0",
-    "illuminate/database": "5.4.*|5.5.*",
-    "illuminate/filesystem": "5.4.*|5.5.*",
-    "illuminate/http": "5.4.*|5.5.*",
-    "illuminate/support": "5.4.*|5.5.*",
-    "illuminate/view": "5.4.*|5.5.*"
+    "php": "^7.1.3",
+    "illuminate/database": "5.8.*",
+    "illuminate/filesystem": "5.8.*",
+    "illuminate/http": "5.8.*",
+    "illuminate/support": "5.8.*",
+    "illuminate/view": "5.8.*"
   },
   "require-dev": {
-    "orchestra/testbench": "~3.5"
+    "orchestra/testbench": "^3.8"
   },
   "suggest": {
-    "yajra/laravel-datatables-buttons": "Plugin for server-side exporting of dataTable.",
-    "yajra/laravel-datatables-html": "Plugin for server-side HTML builder of dataTable.",
-    "yajra/laravel-datatables-fractal": "Plugin for server-side response using Fractal."
+    "yajra/laravel-datatables-buttons": "Plugin for server-side exporting of dataTables.",
+    "yajra/laravel-datatables-html": "Plugin for server-side HTML builder of dataTables.",
+    "yajra/laravel-datatables-fractal": "Plugin for server-side response using Fractal.",
+    "yajra/laravel-datatables-editor": "Plugin to use DataTables Editor (requires a license)."
   },
   "autoload": {
     "psr-4": {
@@ -44,7 +45,7 @@
   },
   "extra": {
     "branch-alias": {
-      "dev-master": "8.0-dev"
+      "dev-master": "9.0-dev"
     },
     "laravel": {
       "providers": [
@@ -57,6 +58,9 @@
   },
   "config": {
     "sort-packages": true
+  },
+  "scripts": {
+    "test": "vendor/bin/phpunit"
   },
   "minimum-stability": "dev",
   "prefer-stable": true

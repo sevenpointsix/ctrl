@@ -24,7 +24,7 @@ use Schema;
 
 use Yajra\DataTables\Facades\DataTables;
 use Maatwebsite\Excel\Facades\Excel;
-use Sunra\PhpSimple\HtmlDomParser; // For manipulating pages, eg, customising the dashboard
+use KubAT\PhpSimple\HtmlDomParser; // For manipulating pages, eg, customising the dashboard
 
 use \App\Ctrl\CtrlModules;
 use \Sevenpointsix\Ctrl\Models\CtrlClass;
@@ -378,7 +378,7 @@ class CtrlController extends Controller
  			// str_get_html($str, $lowercase=true, $forceTagsClosed=true, $target_charset = DEFAULT_TARGET_CHARSET, $stripRN=true, $defaultBRText=DEFAULT_BR_TEXT, $defaultSpanText=DEFAULT_SPAN_TEXT)
  			// From http://stackoverflow.com/questions/4812691/preserve-line-breaks-simple-html-dom-parser
  			$rendered_view = $view->render();
- 			$dom = \Sunra\PhpSimple\HtmlDomParser::str_get_html($rendered_view, false, false, 'UTF-8', false);
+ 			$dom = \KubAT\PhpSimple\HtmlDomParser::str_get_html($rendered_view, false, false, 'UTF-8', false);
 			$view = $this->module->run('manipulate_dom',[
 				$dom,
 				'dashboard'
