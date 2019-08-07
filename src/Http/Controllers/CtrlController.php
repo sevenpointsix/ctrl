@@ -829,6 +829,7 @@ class CtrlController extends Controller
 			]);
 		}
 
+		/** Old code for previous Maat Excel
 		$filename = 'export-'.str_slug($ctrl_class->get_plural());
 
 		\Maatwebsite\Excel\Facades\Excel::create($filename, function($excel) use ($objects) {
@@ -836,6 +837,14 @@ class CtrlController extends Controller
         		$sheet->fromModel($objects);
     		});
 		})->download('csv');
+		**/
+
+		$filename = 'export-'.str_slug($ctrl_class->get_plural()).'csv';
+		return $objects->downloadExcel(
+            $filename,
+			\Maatwebsite\Excel\Excel::CSV,
+			true
+        );
 	}
 
 	/**
