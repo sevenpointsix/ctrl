@@ -839,7 +839,7 @@ class CtrlController extends Controller
 		})->download('csv');
 		**/
 
-		$filename = 'export-'.str_slug($ctrl_class->get_plural()).'csv';
+		$filename = 'export-'.str_slug($ctrl_class->get_plural()).'.csv';
 		return $objects->downloadExcel(
             $filename,
 			\Maatwebsite\Excel\Excel::CSV,
