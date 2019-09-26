@@ -774,6 +774,9 @@ class CtrlController extends Controller
 	 */
 	public function export_objects(Request $request, $ctrl_class_id) {
 
+		ini_set("memory_limit",-1); // exporting large tables takes up loads of memory...
+		set_time_limit(0); // ... and time
+
 		// Check that we can specifically export this class:
 		$ctrl_class = CtrlClass::where('id',$ctrl_class_id)->firstOrFail();
 		if (!$ctrl_class->can('export')) {
