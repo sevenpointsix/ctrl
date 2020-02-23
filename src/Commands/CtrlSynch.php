@@ -6,6 +6,8 @@ use Illuminate\Console\Command;
 
 use \App\Ctrl\CtrlModules;
 
+use Illuminate\Support\Str;
+
 use DB;
 use Schema;
 use Config;
@@ -131,7 +133,7 @@ class CtrlSynch extends Command
                 $pivot_table   = true;
                 foreach ($table_columns as $table_column) {
                     $column_name = $table_column->Field;
-                    if (!ends_with($column_name,'_id')) {
+                    if (!Str::endsWith($column_name,'_id')) {
                         if (++$non_id_count > 1) { // Is this our second "non_id" column?
                             $pivot_table = false;
                             break;
@@ -213,7 +215,7 @@ class CtrlSynch extends Command
                         that table B exists before we can create *both* relationships.
                      */
 
-                    if (!ends_with($column_name,'_id') && $pass == 1) { // A straight property
+                    if (!Str::endsWith($column_name,'_id') && $pass == 1) { // A straight property
                         $ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrNew([
                             'ctrl_class_id' => $ctrl_class->id,
                             'name'          => $column_name
@@ -287,7 +289,7 @@ class CtrlSynch extends Command
 
                         $ctrl_property->save();
                     }
-                    else if (ends_with($column_name,'_id') && $pass == 2) { // A relationship
+                    else if (Str::endsWith($column_name,'_id') && $pass == 2) { // A relationship
 
                         // Identify the table (and hence ctrl class) that this is a relationship to
                         $inverse_table_name = str_plural(str_replace('_id', '', $column_name));
@@ -382,7 +384,7 @@ class CtrlSynch extends Command
                 if (!is_object($value)) {
                     $value = $key;
                 }
-                return ends_with($value->Field,'_id');
+                return Str::endsWith($value->Field,'_id');
             });
             // Make sure we have the columns in alphabetical order; is this necessary?
             // I think it's just the NAME of the pivot table that matters, and that's beyond our control

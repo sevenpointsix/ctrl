@@ -12,6 +12,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\Router;
 
 use File;
+use Illuminate\Support\Str;
 
 class CtrlServiceProvider extends ServiceProvider{
 
@@ -66,7 +67,8 @@ class CtrlServiceProvider extends ServiceProvider{
 					 * Bugfix: previously 'in_array('artisan', $args)' but
 					 * this trips up if you run php ../artisan from a subfolder
 					 */
-					ends_with($args[0],'artisan')
+					// ends_with($args[0],'artisan')
+					Str::endsWith($args[0],'artisan')
 
 					&& in_array('vendor:publish', $args)
 					&& (
