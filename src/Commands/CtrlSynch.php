@@ -122,7 +122,7 @@ class CtrlSynch extends Command
                 - Any tables prefixed with '_'
             */
 
-            if (in_array($table_name, $ignore_tables) || starts_with($table_name,'_')) continue;
+            if (in_array($table_name, $ignore_tables) || Str::startsWith($table_name,'_')) continue;
 
             // We now need to identify whether the table we're looking at is a pivot table or not
             // We assume a table is a pivot if it has two or three columns, with two "_id" columns
@@ -204,7 +204,7 @@ class CtrlSynch extends Command
 
                     $column_name = $column->Field;
 
-                    if (in_array($column_name, $ignore_columns) || starts_with($column_name,'_')) continue;
+                    if (in_array($column_name, $ignore_columns) || Str::startsWith($column_name,'_')) continue;
                         // Not sure we ever prefix columns with _, but I suppose it's possible
 
                     /*
