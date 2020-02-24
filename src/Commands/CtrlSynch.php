@@ -165,7 +165,7 @@ class CtrlSynch extends Command
         for ($pass = 1; $pass <= 2; $pass++) { // Properties on pass 1, relationships on pass 2
             foreach ($standard_tables as $standard_table) {
 
-                $model_name = studly_case(str_singular($standard_table));
+                $model_name = Str::studly(Str::singular($standard_table));
                 $ctrl_class = \Sevenpointsix\Ctrl\Models\CtrlClass::firstOrNew(['name' => $model_name]);
 
                 if (!$ctrl_class->exists) {
@@ -292,7 +292,7 @@ class CtrlSynch extends Command
                     else if (Str::endsWith($column_name,'_id') && $pass == 2) { // A relationship
 
                         // Identify the table (and hence ctrl class) that this is a relationship to
-                        $inverse_table_name = str_plural(str_replace('_id', '', $column_name));
+                        $inverse_table_name = Str::plural(str_replace('_id', '', $column_name));
                         $inverse_ctrl_class = \Sevenpointsix\Ctrl\Models\CtrlClass::where([
                             ['table_name',$inverse_table_name]
                         ])->first();
@@ -404,12 +404,12 @@ class CtrlSynch extends Command
                 }
 
                 // Identify the tables (and hence ctrl classes) that we're relating
-                $related_table_one = str_plural(str_replace('_id', '', $pivot_one));
+                $related_table_one = Str::plural(str_replace('_id', '', $pivot_one));
                 $related_ctrl_class_one = \Sevenpointsix\Ctrl\Models\CtrlClass::where([
                     ['table_name',$related_table_one]
                 ])->first();
 
-                $related_table_two = str_plural(str_replace('_id', '', $pivot_two));
+                $related_table_two = Str::plural(str_replace('_id', '', $pivot_two));
                 $related_ctrl_class_two = \Sevenpointsix\Ctrl\Models\CtrlClass::where([
                     ['table_name',$related_table_two]
                 ])->first();
@@ -438,7 +438,7 @@ class CtrlSynch extends Command
                  * Should we accommodate this? If so...
                  */
                 if ($pivot_key === false) {
-                    $pivot_key = array_search(str_plural(str_replace('_id', '', $pivot_one)),$pivot_table_parts);
+                    $pivot_key = array_search(Str::plural(str_replace('_id', '', $pivot_one)),$pivot_table_parts);
                     if ($pivot_key === false) {
                         $this->error("Cannot identify property name for pivot key $pivot_one");
                         // Dummy message for commit
@@ -464,7 +464,7 @@ class CtrlSynch extends Command
                     // $ctrl_property->order      = $column_order++;
                     $ctrl_property->order      = $column_ordering[$model_name]++;
                     $ctrl_property->field_type = 'dropdown';
-                    $ctrl_property->label      = ucfirst($ctrl_property_name);
+                    $ctrl_property->label      = ucfirst(str_replace('_',' ',$ctrl_property_name));
                     $ctrl_property->fieldset   = ''; // We don't always want to include these...
                 }
 

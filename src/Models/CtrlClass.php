@@ -4,6 +4,8 @@ namespace Sevenpointsix\Ctrl\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use Illuminate\Support\Str;
+
 class CtrlClass extends Model
 {
 
@@ -69,10 +71,10 @@ class CtrlClass extends Model
             $plural = $this->plural;
         }
         else if ($this->singular) {
-            $plural = str_plural($this->singular);
+            $plural = Str::plural($this->singular);
         }
         else {
-            $plural = strtolower(str_plural($this->name));
+            $plural = strtolower(Str::plural($this->name));
         }
         return $plural;
     }
