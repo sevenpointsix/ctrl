@@ -710,7 +710,11 @@ class CtrlSynch extends Command
                 }
             }
             else {
-                $table_name = $ctrl_property->ctrl_class->table_name;
+                if (is_object($ctrl_property->ctrl_class)) {
+                    $table_name = $ctrl_property->ctrl_class->table_name;
+                } else {
+                    $this->error("Cannot load CTRL Class for CTRL Property ".$ctrl_property->id);
+                }
 
                 // Has the table been deleted?!
                 if (!Schema::hasTable($table_name)) {
