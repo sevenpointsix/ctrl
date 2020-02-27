@@ -22,6 +22,8 @@ use Storage;
 use Log;
 use Schema;
 
+use Illuminate\Support\Str;
+
 use Yajra\DataTables\Facades\DataTables;
 use Maatwebsite\Excel\Facades\Excel;
 use KubAT\PhpSimple\HtmlDomParser; // For manipulating pages, eg, customising the dashboard
@@ -833,7 +835,7 @@ class CtrlController extends Controller
 		}
 
 		/** Old code for previous Maat Excel
-		$filename = 'export-'.str_slug($ctrl_class->get_plural());
+		$filename = 'export-'.Str::slug($ctrl_class->get_plural());
 
 		\Maatwebsite\Excel\Facades\Excel::create($filename, function($excel) use ($objects) {
 		    $excel->sheet('sheet_1', function($sheet) use ($objects) {
@@ -842,7 +844,7 @@ class CtrlController extends Controller
 		})->download('csv');
 		**/
 
-		$filename = 'export-'.str_slug($ctrl_class->get_plural()).'.csv';
+		$filename = 'export-'.Str::slug($ctrl_class->get_plural()).'.csv';
 		return $objects->downloadExcel(
             $filename,
 			\Maatwebsite\Excel\Excel::CSV,
@@ -877,7 +879,7 @@ class CtrlController extends Controller
 
 			// Dummy comment to force a push to Packagist
 
-		$filename = 'import-'.str_slug($ctrl_class->get_plural()).'-example';
+		$filename = 'import-'.Str::slug($ctrl_class->get_plural()).'-example';
 
 		// \Maatwebsite\Excel\Facades\Excel::create($filename, function($excel) use ($headers) {
 		Excel::create($filename, function($excel) use ($headers) {
@@ -998,7 +1000,7 @@ class CtrlController extends Controller
 		// Convert all headers into slugged values, as per http://www.maatwebsite.nl/laravel-excel/docs/import#results
 		// Excel does this on import automatically, so we need compare slugged values with the headers Excel has converted
 		// Technically this uses the protected function Excel::getSluggedIndex()
-		// but it's essentially the same as Laravel's str_slug():
+		// but it's essentially the same as Laravel's Str::slug():
 		$slugged_headers = array_map('str_slug',$required_headers,
 			array_fill(0,count($required_headers),'_')
 			// This passes an '_' parameter to str_slug;
@@ -1430,7 +1432,7 @@ class CtrlController extends Controller
 						}
 					}
 					$path_parts = pathinfo($url);
-					$basename   = str_limit($path_parts['basename'],20);
+					$basename   = Str::limit($path_parts['basename'],20);
 
 					return sprintf('<div class="media"><div class="media-left"><a href="%1$s" data-toggle="lightbox" data-title="%2$s"><img class="media-object" src="%1$s" height="30"></a></div></div>',$url, $basename);
 				}
@@ -1444,7 +1446,7 @@ class CtrlController extends Controller
 	    			$url  = asset('storage/'.ltrim($file,'/'));
 
 	    			$path_parts = pathinfo($url);
-	    			$basename   = str_limit($path_parts['basename'],20);
+	    			$basename   = Str::limit($path_parts['basename'],20);
 
 	    			if (!file_exists($path)) {
 	    				return 'File missing';
@@ -2477,10 +2479,10 @@ class CtrlController extends Controller
         // Set the URL automatically as well:
         if (Schema::hasColumn($ctrl_class->table_name, 'url') && !$object->url) {
         	$title = $this->get_object_title($object);
-        	$slug  = str_slug($title);
+        	$slug  = Str::slug($title);
         	$append = 1;
         	while (!is_null(DB::table($ctrl_class->table_name)->where('url', $slug)->first())) {
-        		$slug = str_slug($title .' '.$append++);
+        		$slug = Str::slug($title .' '.$append++);
         		if ($append >= 100) {
         			trigger_error("Infinite loop");
         		}
