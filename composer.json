@@ -17,15 +17,13 @@
         }
     },
     "scripts": {
-        "post-update-cmd": [
-            "php artisan vendor:publish --tag=config",
-            "php artisan vendor:publish --tag=migrations",
-            "php artisan vendor:publish --tag=public --force"
+        "post-package-update": [
+            "php artisan vendor:publish --tag=config --provider=\"App\\Providers\\CtrlServiceProvider\"",
+            "php artisan vendor:publish --tag=public --force --provider=\"App\\Providers\\CtrlServiceProvider\"",
         ],
-        "post-install-cmd": [
-            "php artisan vendor:publish --tag=config",
-            "php artisan vendor:publish --tag=migrations",
-            "php artisan vendor:publish --tag=public --force"
+        "post-package-install": [
+            "php artisan vendor:publish --tag=config --provider=\"App\\Providers\\CtrlServiceProvider\"",
+            "php artisan vendor:publish --tag=public --force --provider=\"App\\Providers\\CtrlServiceProvider\""
         ]
     },
     "extra": {
