@@ -121,9 +121,14 @@ class CtrlServiceProvider extends ServiceProvider{
 	        	// We could potentially just use 'vendor/ctrl'; check best practice here.
 	    ], 'public');
 
+		/**
+		 * I think that loadMigrationsFrom() is a better approach in Laravel 6:
 	    $this->publishes([
             realpath(__DIR__.'/../database/migrations') => database_path('/migrations')
-        ], 'migrations');
+		], 'migrations');
+		**/
+
+		$this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
 	}
 
