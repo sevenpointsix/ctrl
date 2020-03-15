@@ -512,4 +512,32 @@ EOD;
 			*/
 		}
 
+		/**
+		 * Manipulate values in the Datatable
+		 * @param object $ctrl_class 	The CtrlClass of objects that we're listing
+		 * @param object $header A CtrlProperty that's flagged as a header
+		 * @param object $datatable The Datatable we're rendering
+		 *
+		 * @return void
+		 */
+		protected function custom_column_values($ctrl_class, $header, &$datatable) {
+			$property = $header->name;
+			switch ($ctrl_class->name) {
+				case '[CLASS_NAME]':
+					if ($header->name == '[HEADER NAME]') {
+						$datatable->editColumn($property, function($object) use ($property) {
+							/** For example...
+							if ($object->$property) {
+								return 'Yes';
+							}
+							else {
+								return 'No';
+							}
+							**/
+						});
+					}
+				break;
+			}
+		}
+
 	}

@@ -1373,6 +1373,14 @@ class CtrlController extends Controller
 			foreach ($custom_columns as $custom_column=>$details) {
 				$add_select = \DB::raw(sprintf('(%s) AS `%s`',$details['raw_sql'],$custom_column));
 				$objects->addSelect($add_select);
+
+				/**
+				 * Add these to the headers array so that we can still manipulat the value in custom_column_values()
+				 */
+				$custom_header             = new CtrlProperty();
+				$custom_header->field_type = 'custom';
+				$custom_header->name       = $custom_column;
+				$headers[] = $custom_header;
 			}
 		}
 
@@ -1536,6 +1544,14 @@ class CtrlController extends Controller
 				$datatable->editColumn($property, function($object) use ($property) {
 		    		return \Carbon\Carbon::parse($object->$property)->format('jS F Y \a\t H:i');
 	        	});
+			}
+
+			if ($this->module->enabled('custom_column_values')) {
+				$this->module->run('custom_column_values',[
+					$ctrl_class,
+					$header,
+					&$datatable
+				]);
 			}
 		}
 
