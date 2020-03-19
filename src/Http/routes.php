@@ -104,17 +104,25 @@ Route::group(['as' => 'ctrl::','prefix'=>env('CTRL_PREFIX', 'admin'),'middleware
 		// 		 so we have control over how that works.
 
 		$path = storage_path("app/public/$file");
-
 		if ($mode == 'view') {
-		    $image = Image::make($path)->resize(600, 600, function ($constraint) {
-			    $constraint->aspectRatio();
-			    $constraint->upsize();
-			});
+			if (!file_exists($path)) {
+				$image = Image::canvas(200, 200, '#ffffff')
+								->text('?', 100, 100);
+			} else {
+				$image = Image::make($path)->resize(600, 600, function ($constraint) {
+					$constraint->aspectRatio();
+					$constraint->upsize();
+				});
+			}
 		    return $image->response();
 		}
 		else if ($mode == 'download') {
-			$path_parts = pathinfo($path);
-			return response()->download($path, "image.".$path_parts['extension']);
+			if (!file_exists($path)) {
+				abort(404);
+			} else {
+				$path_parts = pathinfo($path);
+				return response()->download($path, "image.".$path_parts['extension']);
+			}
 		}
 		else {
 			abort(404);
