@@ -19,7 +19,7 @@
     "scripts": {
         "post-package-update": [
             "php artisan vendor:publish --tag=config --provider=\"App\\Providers\\CtrlServiceProvider\"",
-            "php artisan vendor:publish --tag=public --force --provider=\"App\\Providers\\CtrlServiceProvider\"",
+            "php artisan vendor:publish --tag=public --force --provider=\"App\\Providers\\CtrlServiceProvider\""
         ],
         "post-package-install": [
             "php artisan vendor:publish --tag=config --provider=\"App\\Providers\\CtrlServiceProvider\"",
