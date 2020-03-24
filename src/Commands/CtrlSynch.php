@@ -291,75 +291,89 @@ class CtrlSynch extends Command
                     }
                     else if (Str::endsWith($column_name,'_id') && $pass == 2) { // A relationship
 
-                        // Identify the table (and hence ctrl class) that this is a relationship to
-                        $inverse_table_name = Str::plural(str_replace('_id', '', $column_name));
-                        $inverse_ctrl_class = \Sevenpointsix\Ctrl\Models\CtrlClass::where([
-                            ['table_name',$inverse_table_name]
-                        ])->first();
+                        $ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrNew([
+                            'ctrl_class_id' => $ctrl_class->id,
+                            'name'          => str_replace('_id', '', $column_name)
+                        ]);
+                        if ($ctrl_property->exists) {
+                            // Property $column_name already exists, so we're not re-synching the relationship
+                            // We may need to introduce a --force option if this prevents us from synching new classes
+                        } else {
 
-                        if (is_null($inverse_ctrl_class)) {
-                            $this->error("Cannot load ctrl_class for inverse property $column_name of $standard_table");
-
-                            /**
-                             * NEW! Let's ask what class it should be...
-                             */
-                            $inverse_table_name = $this->ask('What table does this property point to?');
+                            // Identify the table (and hence ctrl class) that this is a relationship to
+                            $inverse_table_name = Str::plural(str_replace('_id', '', $column_name));
                             $inverse_ctrl_class = \Sevenpointsix\Ctrl\Models\CtrlClass::where([
                                 ['table_name',$inverse_table_name]
                             ])->first();
+
                             if (is_null($inverse_ctrl_class)) {
-                                $this->error("Nope, still can't load that!");
-                                continue;
+                                $this->error("Cannot load ctrl_class for inverse property $column_name of $standard_table");
+
+                                /**
+                                 * NEW! Let's ask what class it should be...
+                                 */
+                                $inverse_table_name = $this->ask('What table does this property point to?');
+                                $inverse_ctrl_class = \Sevenpointsix\Ctrl\Models\CtrlClass::where([
+                                    ['table_name',$inverse_table_name]
+                                ])->first();
+                                if (is_null($inverse_ctrl_class)) {
+                                    $this->error("Still can't identify table, so create as a standard property");
+                                    $ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrNew([
+                                        'ctrl_class_id' => $ctrl_class->id,
+                                        'name'          => $column_name
+                                    ]);
+                                    continue;
+                                }
                             }
+
+                            // Now -- if the inverse table name matches the current table name, this is a parent/child property (ie, page_id within the pages table);l
+                            if ($inverse_table_name == $standard_table) {
+                                $ctrl_property_name         = 'parent'; //str_replace('_id', '', $column_name);
+                                $inverse_ctrl_property_name = 'children';
+                            }
+                            else {
+                                $ctrl_property_name         = str_replace('_id', '', $column_name);
+                                $inverse_ctrl_property_name = strtolower($ctrl_class->name);
+                            }
+
+                            $ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrNew([
+                                'ctrl_class_id'     => $ctrl_class->id,
+                                'related_to_id'     => $inverse_ctrl_class->id,
+                                'name'              => $ctrl_property_name,
+                                'relationship_type' => 'belongsTo',
+                                'foreign_key'       => $column_name,
+                                'local_key'         => 'id'
+                            ]);
+
+                            // Only set these if they're not already set, otherwise we'll overwrite custom settings:
+                            if (!$ctrl_property->exists) {
+                                // $ctrl_property->order      = $column_order++;
+                                $ctrl_property->order      = $column_ordering[$model_name]++;
+                                $ctrl_property->field_type = 'dropdown';
+                                $ctrl_property->label      = ucfirst(str_replace('_id', '', $column_name));
+                                $ctrl_property->fieldset   = 'Details'; // Assume we always want to include simple "belongsTo" relationships on the form
+                            }
+
+                            $ctrl_property->save(); // As above, no need to explicitly save relationship
+
+                            // We do need to create the inverse property though:
+
+                            $inverse_ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrNew([
+                                'name'              => $inverse_ctrl_property_name,
+                                    // 'name' here could possibly be ascertained in other ways; TBC
+                                'ctrl_class_id'     => $inverse_ctrl_class->id,
+                                'related_to_id'     => $ctrl_class->id,
+                                'relationship_type' => 'hasMany',
+                                    // This could in theory be haveOne, but in practice hasOne is very rarely used;
+                                    // any hasOne relationship could actually be a hasMany in most cases.
+                                'foreign_key'       => $column_name,
+                                'local_key'         => 'id'
+                            ]);
+
+                            // $inverse_ctrl_property->order      = $column_order++; // Useful not to create these with NULL orders
+                            $inverse_ctrl_property->order = $column_ordering[$model_name]++;
+                            $inverse_ctrl_property->save();  // As above, no need to explicitly save relationship
                         }
-
-                        // Now -- if the inverse table name matches the current table name, this is a parent/child property (ie, page_id within the pages table);l
-                        if ($inverse_table_name == $standard_table) {
-                            $ctrl_property_name         = 'parent'; //str_replace('_id', '', $column_name);
-                            $inverse_ctrl_property_name = 'children';
-                        }
-                        else {
-                            $ctrl_property_name         = str_replace('_id', '', $column_name);
-                            $inverse_ctrl_property_name = strtolower($ctrl_class->name);
-                        }
-
-                        $ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrNew([
-                            'ctrl_class_id'     => $ctrl_class->id,
-                            'related_to_id'     => $inverse_ctrl_class->id,
-                            'name'              => $ctrl_property_name,
-                            'relationship_type' => 'belongsTo',
-                            'foreign_key'       => $column_name,
-                            'local_key'         => 'id'
-                        ]);
-
-                        // Only set these if they're not already set, otherwise we'll overwrite custom settings:
-                        if (!$ctrl_property->exists) {
-                            // $ctrl_property->order      = $column_order++;
-                            $ctrl_property->order      = $column_ordering[$model_name]++;
-                            $ctrl_property->field_type = 'dropdown';
-                            $ctrl_property->label      = ucfirst(str_replace('_id', '', $column_name));
-                            $ctrl_property->fieldset   = 'Details'; // Assume we always want to include simple "belongsTo" relationships on the form
-                        }
-
-                        $ctrl_property->save(); // As above, no need to explicitly save relationship
-
-                        // We do need to create the inverse property though:
-
-                        $inverse_ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrNew([
-                            'name'              => $inverse_ctrl_property_name,
-                                // 'name' here could possibly be ascertained in other ways; TBC
-                            'ctrl_class_id'     => $inverse_ctrl_class->id,
-                            'related_to_id'     => $ctrl_class->id,
-                            'relationship_type' => 'hasMany',
-                                // This could in theory be haveOne, but in practice hasOne is very rarely used;
-                                // any hasOne relationship could actually be a hasMany in most cases.
-                            'foreign_key'       => $column_name,
-                            'local_key'         => 'id'
-                        ]);
-
-                        // $inverse_ctrl_property->order      = $column_order++; // Useful not to create these with NULL orders
-                        $inverse_ctrl_property->order = $column_ordering[$model_name]++;
-                        $inverse_ctrl_property->save();  // As above, no need to explicitly save relationship
                     }
                     if ($pass == 1) $columns_processed++;
                 }
