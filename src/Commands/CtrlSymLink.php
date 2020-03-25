@@ -16,7 +16,6 @@ class CtrlSymLink extends Command
     protected $signature = 'ctrl:symlink
                                 {folder? : the project folder to point to, such as argos-support.co.uk }
                                 {database? : the database the site will use }
-                                {webroot=webroot : the name of the webroot we\'re using, defaults to \'webroot\' }
                             ';
 
     /**
@@ -45,7 +44,7 @@ class CtrlSymLink extends Command
     {
 
         if (
-            env('APP_URL', false) != 'http://dev.ctrl-c.ms'
+            env('APP_URL', false) != 'http://ctrl-test.test'
             ||
             app()->environment() != 'local'
         ) {
@@ -55,7 +54,6 @@ class CtrlSymLink extends Command
 
         $project_folder = $this->argument('folder');
         $database       = $this->argument('database');
-        $webroot        = $this->argument('webroot');
 
         if (!$project_folder) {
             $this->error("Sample usage: ctrl:symlink argos-support.co.uk");
@@ -63,7 +61,7 @@ class CtrlSymLink extends Command
         }
 
         $project_root = realpath(base_path().'/..'); // eg, /Users/chrisgibson/Projects
-        $project_path = implode('/', [$project_root,$project_folder]);
+        $project_path = implode('/', [$project_root,str_replace('.test','',$project_folder)]);
 
         if(!File::exists($project_path)) {
             $this->error("$project_folder doesn't seem to be a valid project folder");
@@ -81,17 +79,20 @@ class CtrlSymLink extends Command
 
         // OK, we have a valid app/Ctrl folder to link to. Remove the existing one (if present) and then create a new symlink:
         $symlink = app_path('Ctrl');
+
         if (is_link($symlink)) {
             $this->line("Removing existing symlink at $symlink");
             unlink($symlink);
+        } else if (file_exists($symlink)) {
+            $this->line("Deleting existing folder at $symlink");
+            File::deleteDirectory($symlink);
         }
-
         $this->line("Creating new symlink at ".implode('/',['app','Ctrl']));
         symlink ($ctrl_path, $symlink); // Effectively ln -s $ctrl_path $symlink
 
         // Also create a symlink to Http/Controllers/Ctrl if it exists; see $description above
 
-        $custom_controller_path = implode('/', [$project_path,$webroot,'app','Http','Controllers','Ctrl']);
+        $custom_controller_path = implode('/', [$project_path,'app','Http','Controllers','Ctrl']);
         $symlink = app_path('Http/Controllers/Ctrl');
 
         if (is_link($symlink)) {

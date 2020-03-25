@@ -1371,11 +1371,17 @@ class CtrlController extends Controller
 		}
 		if (!empty($custom_columns)) {
 			foreach ($custom_columns as $custom_column=>$details) {
-				$add_select = \DB::raw(sprintf('(%s) AS `%s`',$details['raw_sql'],$custom_column));
-				$objects->addSelect($add_select);
+
+				if (!empty($details['raw_sql'])) {
+					$add_select = \DB::raw(sprintf('(%s) AS `%s`',$details['raw_sql'],$custom_column));
+					$objects->addSelect($add_select);
+				} else {
+					$add_select = \DB::raw(sprintf('(\'empty\') AS `%s`',$custom_column));
+					$objects->addSelect($add_select);
+				}
 
 				/**
-				 * Add these to the headers array so that we can still manipulat the value in custom_column_values()
+				 * Add these to the headers array so that we can still manipulate the value in custom_column_values()
 				 */
 				$custom_header             = new CtrlProperty();
 				$custom_header->field_type = 'custom';
