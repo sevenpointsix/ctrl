@@ -7,6 +7,7 @@ use Illuminate\Console\Command;
 use \App\Ctrl\CtrlModules;
 
 use Illuminate\Support\Str;
+use Illuminate\Support\Arr;
 
 use DB;
 use Schema;
