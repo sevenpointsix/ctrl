@@ -394,7 +394,7 @@ class CtrlSynch extends Command
             $columns = DB::select("SHOW COLUMNS FROM {$pivot_table}");
 
             // Filter out anything that isn't an _id
-            $columns = array_where($columns, function ($key, $value) {
+            $columns = Arr::where($columns, function ($key, $value) {
                 // Jesus, $key and $value are transposed in Laravel 5.4!
                 if (!is_object($value)) {
                     $value = $key;
@@ -403,7 +403,7 @@ class CtrlSynch extends Command
             });
             // Make sure we have the columns in alphabetical order; is this necessary?
             // I think it's just the NAME of the pivot table that matters, and that's beyond our control
-            $columns = array_sort($columns, function ($value) {
+            $columns = Arr::sort($columns, function ($value) {
                 return $value->Field;
             });
 
