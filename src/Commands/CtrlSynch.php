@@ -126,7 +126,8 @@ class CtrlSynch extends Command
 
             // We now need to identify whether the table we're looking at is a pivot table or not
             // We assume a table is a pivot if it has two or three columns, with two "_id" columns
-            $table_columns = DB::select("SHOW COLUMNS FROM {$table_name}"); // Bindings fail here for some reason
+            // -- EXCLUDING id, created_at and updated_at
+            $table_columns = DB::select("SHOW COLUMNS FROM {$table_name} WHERE Field != 'id' AND Field != 'updated_at' AND Field != 'created_at'"); // Bindings fail here for some reason
             $pivot_table   = false;
             $non_id_count  = 0;
             if (count($table_columns) == 2 || count($table_columns) == 3) {
