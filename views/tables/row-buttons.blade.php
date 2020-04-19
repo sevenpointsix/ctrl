@@ -70,7 +70,7 @@
 
 	@forelse ($custom_buttons as $custom_button)
 		<div class="btn-group">
-			<a href="{{ $custom_button['link'] }}" class="btn btn-sm @if ($custom_button['count'] == 0) btn-default @else btn-warning @endif {{ $custom_button['class'] }}" rel="{{ $custom_button['rel'] }}"  data-toggle="tooltip" data-placement="bottom" title="{{ $custom_button['title'] }}">
+			<a href="{{ $custom_button['link'] }}" class="btn btn-sm @if (empty($custom_button['count'])) btn-default @else btn-warning @endif {{ $custom_button['class'] }}" rel="{{ $custom_button['rel'] }}"  data-toggle="tooltip" data-placement="bottom" title="{{ $custom_button['title'] }}" @if (!empty($custom_button['target'])) target="{{ $custom_button['target'] }}" @endif>
 		    @if ($custom_button['icon'])<i class="{{ $custom_button['icon'] }}"></i>@else<i class="fa fa-bars"></i>@endif
 		  </a>
 		</div>
