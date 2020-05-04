@@ -1658,7 +1658,7 @@ class CtrlController extends Controller
     														->firstOrFail();
     			}
     			else {
-    				throw new Exception('Cannot set up a filtered list for a '.$filter_ctrl_property->relationship_type.' relationship.');
+    				throw new \Exception('Cannot set up a filtered list for a '.$filter_ctrl_property->relationship_type.' relationship.');
     			}
 
     		}
