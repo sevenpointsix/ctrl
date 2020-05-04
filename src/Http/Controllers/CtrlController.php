@@ -1644,6 +1644,37 @@ class CtrlController extends Controller
     		 	- We need to find the "test" property of the "Many" object, so that we can show Many items where "test" is the value of this object
     		 I believe we can do this by matching the foreign key
     		 */
+
+			if ($filter_ctrl_property->relationship_type == 'belongsTo') {
+				/**
+				 * TODO: add a single edit link here, it's a "filtered list" of 1
+				 */
+
+				$related_ctrl_class = CtrlClass::where('id',$filter_ctrl_property->related_to_id)->firstOrFail();
+
+				$class  = $ctrl_class->get_class();
+				$object = $class::where('id',$object_id)->firstOrFail();
+
+				$related_object_id = $object->{$filter_ctrl_property->foreign_key};
+
+				if ($related_object_id) {
+					$filter_list_link      = route('ctrl::edit_object',[$related_ctrl_class->id, $related_object_id]);
+					$count = 1;
+				} else {
+					$filter_list_link      = '#';
+					$count = 0;
+				}
+				$filter_list_title     = $filter_ctrl_property->label ? $filter_ctrl_property->label : ucwords($related_ctrl_class->get_plural());
+
+				$filtered_list_links[]  = [
+					'icon'       => $related_ctrl_class->get_icon(),
+					'count'      => $count,
+					'title'      => $filter_list_title,
+					'list_link'  => $filter_list_link,
+				];
+			} else {
+
+
     		try {
     			if ($filter_ctrl_property->relationship_type == 'hasMany') {
     				$inverse_filter_ctrl_property = CtrlProperty::where('ctrl_class_id',$filter_ctrl_property->related_to_id)
@@ -1723,6 +1754,7 @@ class CtrlController extends Controller
     			// 'add_title'  => $filter_add_title, // No longer used
     			// 'add_link'   => $filter_add_link, // No longer used
     		];
+			}
 
 		}
 
