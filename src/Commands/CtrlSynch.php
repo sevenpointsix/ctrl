@@ -300,8 +300,9 @@ class CtrlSynch extends Command
                         if ($ctrl_property->exists) {
                             // Property $column_name already exists, so we're not re-synching the relationship
                             // We may need to introduce a --force option if this prevents us from synching new classes
+                            $this->line("CtrlProperty for CtrlClass {$ctrl_class->id} exists");
                         } else {
-
+                            $this->line("CtrlProperty for CtrlClass {$ctrl_class->id} (".str_replace('_id', '', $column_name).") does not exist");
                             // Identify the table (and hence ctrl class) that this is a relationship to
                             $inverse_table_name = Str::plural(str_replace('_id', '', $column_name));
                             $inverse_ctrl_class = \Sevenpointsix\Ctrl\Models\CtrlClass::where([
@@ -312,6 +313,18 @@ class CtrlSynch extends Command
                                 $this->error("Cannot load ctrl_class for inverse property $column_name of $standard_table");
 
                                 /**
+                                 * Have we already created this as a parent or child property?
+                                 */
+                                $parent_child_ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::where('ctrl_class_id', $ctrl_class->id)->where(function($q) {
+                                    $q->where('name', 'parent')
+                                        ->orWhere('name', 'children');
+                                })->where('foreign_key', $column_name)->first();
+                                if (!is_null($parent_child_ctrl_property)) {
+                                    $this->line("Property already exists as a parent/child relationship");
+                                    continue;
+                                }
+
+                                /**
                                  * NEW! Let's ask what class it should be...
                                  */
                                 $inverse_table_name = $this->ask('What table does this property point to?');
@@ -320,10 +333,10 @@ class CtrlSynch extends Command
                                 ])->first();
                                 if (is_null($inverse_ctrl_class)) {
                                     $this->error("Still can't identify table, so create as a standard property");
-                                    $ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrNew([
-                                        'ctrl_class_id' => $ctrl_class->id,
-                                        'name'          => $column_name
-                                    ]);
+                                    $ctrl_property->field_type = $ctrl_property->get_field_type_from_column($column->Type);
+                                    $ctrl_property->order      = $column_ordering[$model_name]++;
+                                    $ctrl_property->label      = ucfirst(str_replace('_',' ',$ctrl_property->name));
+                                    $ctrl_property->save();
                                     continue;
                                 }
                             }
@@ -446,23 +459,34 @@ class CtrlSynch extends Command
                 // New approach:
 
                 // This will break product_profile_cache into an array, remove "product", and then rejoin it as "profile_cache"
+
+                /**
+                 * Ah -- this falls over on pivot tables where one or both classes already contain an underscore...
+                 */
+                /**
+                 * Let's patch in a quick fix that will handle up to two classes with one underscore each
+                 * In fact, let's rewrite this altogether
+                 */
+
+                /*
                 $pivot_table_parts = explode('_', $pivot_table);
                 $pivot_key = array_search(str_replace('_id', '', $pivot_one),$pivot_table_parts);
 
-                /**
-                 * Now... older sites might have plurals in the pivot table names.
-                 * Should we accommodate this? If so...
-                 */
+                // Handle plurals in pivot tables (old sites or ropey databases only)
                 if ($pivot_key === false) {
                     $pivot_key = array_search(Str::plural(str_replace('_id', '', $pivot_one)),$pivot_table_parts);
                     if ($pivot_key === false) {
-                        $this->error("Cannot identify property name for pivot key $pivot_one");
-                        // Dummy message for commit
+                        $this->error("Cannot identify property name for pivot key $pivot_one (pivot_two is $pivot_two");
+                        $this->error(print_r($pivot_table_parts, true));
                     }
                 }
 
                 unset($pivot_table_parts[$pivot_key]);
                 $ctrl_property_name = implode('_', $pivot_table_parts);
+                */
+                $pivot_table_with_pivot_one = str_replace(str_replace('_id', '', $pivot_one), '', $pivot_table);
+                $ctrl_property_name         = trim($pivot_table_with_pivot_one, '_');
+                // This no longer handles plurals in pivot tables! see code above for reference if we ever need this
 
                 // $ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrCreate([ // Should this be first or New?
                 $ctrl_property = \Sevenpointsix\Ctrl\Models\CtrlProperty::firstOrNew([ // Try it...
