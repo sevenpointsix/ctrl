@@ -1661,8 +1661,17 @@ class CtrlController extends Controller
 					$filter_list_link      = route('ctrl::edit_object',[$related_ctrl_class->id, $related_object_id]);
 					$count = 1;
 				} else {
-					$filter_list_link      = '#';
-					$count = 0;
+					// Will we always want to add new objects in this scenario...?
+					/**
+					 * Now, this is tricky. We need to understand what we're filtering on;
+					 * we're listing (eg) individuals, linking to their smart match, but we need to
+					 * identify the "individual" property of a "smart match". I don't think we know that here.
+					 * This should load it but I don't know if it's reliable...
+					 */
+					$filtered_property  = CtrlProperty::where('ctrl_class_id', $filter_ctrl_property->related_to_id)->where('related_to_id', $filter_ctrl_property->ctrl_class_id)->first();
+					$filter_string    = implode(',',[$filtered_property->id,$object->id]);
+					$filter_list_link = route('ctrl::edit_object', [$related_ctrl_class->id, 0, $filter_string]);
+					$count            = 0;
 				}
 				$filter_list_title     = $filter_ctrl_property->label ? $filter_ctrl_property->label : ucwords($related_ctrl_class->get_plural());
 
@@ -2108,19 +2117,19 @@ class CtrlController extends Controller
 					}
 				}
 			}
-			else {
-				// Do we have a default value set in the querystring?
-				if ($default_values && $mode == 'add') { // We're adding a new object
-					foreach ($default_values as $default_value) {
-						if ($ctrl_property->id == $default_value['ctrl_property_id']) {
-							$value = $default_value['value'];
-						}
+
+			// Do we have a default value set in the querystring?
+			if ($default_values && $mode == 'add') { // We're adding a new object
+				foreach ($default_values as $default_value) {
+					if ($ctrl_property->id == $default_value['ctrl_property_id']) {
+						$value = $default_value['value'];
 					}
 				}
-				if (!isset($value)) { // No default value, so pull it from the existing object
-					$value      = $object->$field_name;
-				}
 			}
+			if (!isset($value)) { // No default value, so pull it from the existing object
+				$value      = $object->$field_name;
+			}
+
 
 			// Do we have a range of valid values for this field? For example, an ENUM or relationship field
 			if ($ctrl_property->related_to_id) {
@@ -2296,7 +2305,7 @@ class CtrlController extends Controller
         else {
         	// Is this a sensible fallback?
         	// Only if we can list the items... we almost always can
-        	$back_link        = $ctrl_class->can('list') ? route('ctrl::list_objects',[$ctrl_class->id,$filter_string]) : route('ctrl::dashboard');
+        	$back_link        = $ctrl_class->can('list') ? route('ctrl::list_objects',[$ctrl_class->id,$filter_string]) : url()->previous();
         }
 
 		// Similarly... once we've saved a filtered object, we want to bounce back to a filtered list. This enables it:
@@ -2519,16 +2528,19 @@ class CtrlController extends Controller
 				) {
 	        	$object->$column = '';
 			}
-			/*
-			** Also handle checkboxes; set to zero if we don't have a value
-			**/
-			else if (
-				$check_nullable_property->field_type == 'checkbox'
-				&& empty($_POST[$column])
+		}
+
+		$check_boolean_properties = $ctrl_class->ctrl_properties()
+                                              ->where('fieldset','!=','')
+                                              ->where('field_type','=','checkbox')
+											  ->get();
+		foreach ($check_boolean_properties as $check_boolean_property) {
+			$column = $check_boolean_property->name;
+			if (empty($_POST[$column])
 			) {
 				$object->$column = 0;
 			}
-        }
+		}
 
         // Set the URL automatically as well:
         if (Schema::hasColumn($ctrl_class->table_name, 'url') && !$object->url) {
@@ -2591,10 +2603,14 @@ class CtrlController extends Controller
 	            		$object->$related_field_name()->sync($related_objects);
 	            	}
 	            	else if ($related_ctrl_property->relationship_type == 'hasMany') {
+						if (!is_array($related_objects)) {
+							// If we're saving a single hasMany value from a hidden field...?
+							// This happened for LE when saving smart matches for individuals
+							// (where the individual is displayed as a readonly value)
+							$related_objects = [$related_objects];
+						}
 	            		$object->$related_field_name()->saveMany($related_objects);
 	            	}
-
-
 
 					/*
 		            // A hasMany relationship needs saveMany
@@ -2677,7 +2693,7 @@ class CtrlController extends Controller
         	$redirect = route('ctrl::list_objects',[$ctrl_class->id,$filter_string]);
         }
         else {
-  			$redirect = route('ctrl::dashboard');
+  			$redirect = url()->previous(); // route('ctrl::dashboard');
         }
 
         if ($request->ajax()) {

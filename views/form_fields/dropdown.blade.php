@@ -4,16 +4,21 @@
 
     @if (!empty($field['readOnly']))
         {{-- Could be a few bugs here, not tested it with multiples. Sue me --}}
+        {{-- Hidden fields are new, for LE Smart Matches... not tested anywhere else!! --}}
         @if (is_array($field['value']))
             <input type="text" class="form-control" value="{{ implode(', ',$field['value']) }}" readonly>
+            {{-- Not sure how to set the hidden field here? --}}
         @elseif (is_array($field['values']))
             @if ($field['value'])
             <input type="text" class="form-control" value="{{ $field['values'][$field['value']] }}" readonly>
+            <input type="hidden" name="{{ $field['name'] }}" value="{{ $field['value'] }}">
             @else
             <input type="text" class="form-control" value="None" readonly>
+            <input type="hidden" name="{{ $field['name'] }}" value="0">
             @endif
         @else
             <input type="text" class="form-control" value="{{ $field['value'] }}" readonly>
+            <input type="hidden" name="{{ $field['name'] }}" value="{{ $field['value'] }}">
         @endif
     @else
 
