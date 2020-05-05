@@ -365,7 +365,7 @@ class CtrlSynch extends Command
                                 // $ctrl_property->order      = $column_order++;
                                 $ctrl_property->order      = $column_ordering[$model_name]++;
                                 $ctrl_property->field_type = 'dropdown';
-                                $ctrl_property->label      = ucfirst(str_replace('_id', '', $column_name));
+                                $ctrl_property->label      = ucfirst(str_replace(['_id', '_'], ['', ' '], $column_name));
                                 $ctrl_property->fieldset   = 'Details'; // Assume we always want to include simple "belongsTo" relationships on the form
                             }
 
