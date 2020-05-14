@@ -444,7 +444,7 @@ class CtrlSynch extends Command
                 ])->first();
 
                 if (is_null($related_ctrl_class_one) || is_null($related_ctrl_class_two)) {
-                    $this->error("Cannot load related ctrl_classes  $related_ctrl_class_one, $related_ctrl_class_two for pivot table; may not be a problem");
+                    $this->error("Cannot load both ctrl_classes for tables $related_table_one and $related_table_two, based on pivot columns $pivot_one and $pivot_two; this may not be a problem");
                     continue;
                 }
 
