@@ -128,16 +128,17 @@ class CtrlSynch extends Command
             // We now need to identify whether the table we're looking at is a pivot table or not
             // We assume a table is a pivot if it has two or three columns, with two "_id" columns
             // -- EXCLUDING id, created_at and updated_at
+            // This allows for a pivot between two tables, with a maximum of one pivot value
+            // This is pretty flaky TBH, there must be a better way to do this
             $table_columns = DB::select("SHOW COLUMNS FROM {$table_name} WHERE Field != 'id' AND Field != 'updated_at' AND Field != 'created_at'"); // Bindings fail here for some reason
             $pivot_table   = false;
             $non_id_count  = 0;
             if (count($table_columns) == 2 || count($table_columns) == 3) {
-                $pivot_table   = true;
                 foreach ($table_columns as $table_column) {
                     $column_name = $table_column->Field;
-                    if (!Str::endsWith($column_name,'_id')) {
-                        if (++$non_id_count > 1) { // Is this our second "non_id" column?
-                            $pivot_table = false;
+                    if (Str::endsWith($column_name,'_id')) {
+                        if (++$id_count >= 2) { // Is this our second "_id" column?
+                            $pivot_table = true;
                             break;
                         }
                     }
