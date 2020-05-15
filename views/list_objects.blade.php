@@ -224,6 +224,19 @@ function stopPropagation(evt) {
 
 $(function() {
 
+	/**
+	* New, Video modals, from https://stackoverflow.com/a/54481920/1463965
+	**/
+	$('body').on('click',".videoModal", function () {
+		var theModal = $(this).data("target"),
+			videoSRC = $(this).attr("data-video");
+		$(theModal + ' source').attr('src', videoSRC);
+		$(theModal + ' video').load();
+		$(theModal + ' button[data-dismiss="modal"]').click(function () {
+			$(theModal + ' video').get(0).pause();
+			$(theModal + ' video').get(0).currentTime = 0;
+		});
+	});
 	/* No longer necessary, we've removed the main search input
 	$.extend($.fn.dataTableExt.oStdClasses, {
 		"sFilterInput": "form-control", // Remove the default input-sm
@@ -574,6 +587,25 @@ $(function() {
     	</div>
     @endif
 
+	{{-- Purely for ShowPonyPrep --}}
+	<div class="modal fade" id="videoModal" tabindex="-1" role="dialog" aria-labelledby="videoModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title" id="videoModalLabel">Video Preview</h4>
+				</div>
+				<div class="modal-body">
+					<video controls width="100%">
+						<source src="" type="video/mp4">
+					</video>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
 
 @stop
 

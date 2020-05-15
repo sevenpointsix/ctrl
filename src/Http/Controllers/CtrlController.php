@@ -556,19 +556,20 @@ class CtrlController extends Controller
         	// Aha, this IS necessary; for example, when we want to only show the "Carousel" categories on Argos.
         	$make_searchable = true;
 			$make_orderable = true;
-			if ($header->field_type == 'image') {
+			if ($header->field_type == 'image' || $header->field_type == 'video') {
 				/**
-				* It makes no sense to search image columns either
+				* It makes no sense to search image or video columns either
+				* (assuming video columns will have a preview, as per ShowPonyPrep)
 				* Ordering might make sense if you want to list all items without an image first...
 				**/
 				$make_searchable = false;
 			}
 			else {
-        	foreach ($filter_array as $filter) {
-        		if ($header->id == $filter['ctrl_property_id']) {
-        			// This header (a header being a CTRL Property) exists in the filter array, so don't allow it to be searchable
-        			$make_searchable = false;
-        			break;
+        		foreach ($filter_array as $filter) {
+        			if ($header->id == $filter['ctrl_property_id']) {
+        				// This header (a header being a CTRL Property) exists in the filter array, so don't allow it to be searchable
+        				$make_searchable = false;
+        				break;
 					}
         		}
         	}
@@ -1407,6 +1408,7 @@ class CtrlController extends Controller
 	 * TODO: establish what image and file columns we have here, and then call editColumn dynamically below;
 	 */
 		$imageColumns = [];
+		$videoColumns = [];
 		$fileColumns  = [];
 		$rawColumns   = ['order','action']; // Columns that allow raw HTML
 		foreach ($headers as $header) {
@@ -1415,13 +1417,16 @@ class CtrlController extends Controller
 					$imageColumns[] = $header->name;
 					$rawColumns[]   = $header->name;
 					break;
+				case 'video':
+					$videoColumns[] = $header->name;
+					$rawColumns[]   = $header->name;
+					break;
 				case 'file':
 					$fileColumns[] = $header->name;
 					$rawColumns[]  = $header->name;
 					break;
 			}
 		}
-
         $datatable = DataTables::of($objects)
         	->setRowId('id') // For reordering
         	->editColumn('order', function($object) { // Set the displayed value of the order column to just show the icon
@@ -1438,10 +1443,19 @@ class CtrlController extends Controller
 						$url = $src;
 					}
 					else {
+						/*
 						$path = storage_path('app/public/'.ltrim($src,'/'));
 						$url  = asset('storage/'.ltrim($src,'/'));
-
 						if (!file_exists($path)) {
+							return 'Image missing <!--'.$path.'-->';
+						}
+						*/
+						/**
+						 * Better approach:
+						 */
+						$path = Storage::disk('public')->path($src);
+						$url  = Storage::disk('public')->url($src);
+						if (!Storage::disk('public')->exists($src)) {
 							return 'Image missing <!--'.$path.'-->';
 						}
 					}
@@ -1449,6 +1463,44 @@ class CtrlController extends Controller
 					$basename   = Str::limit($path_parts['basename'],20);
 
 					return sprintf('<div class="media"><div class="media-left"><a href="%1$s" data-toggle="lightbox" data-title="%2$s"><img class="media-object" src="%1$s" height="30"></a></div></div>',$url, $basename);
+				}
+        	});
+		}
+		foreach ($videoColumns as $videoColumn) {
+        	$datatable->editColumn($videoColumn, function($object) use ($videoColumn) {
+	    		if ($video_src = $object->$videoColumn) {
+					/**
+					 * Do we have a corresponding _thumbnail field? If so, use that:
+					 */
+					$thumbnail = $videoColumn.'_thumbnail';
+					if (!empty($object->$thumbnail)) {
+						$src = $object->$thumbnail;
+						if (strpos($src,'http') === 0) {
+							// Remote file, treat as is
+							$url = $src;
+						}
+						else {
+							/*
+							$path = storage_path('app/public/'.ltrim($src,'/'));
+							$url  = asset('storage/'.ltrim($src,'/'));
+							if (!file_exists($path)) {
+								return 'Image missing <!--'.$path.'-->';
+							}
+							*/
+							/**
+							 * Better approach:
+							 */
+							$path = Storage::disk('public')->path($src);
+							$url  = Storage::disk('public')->url($src);
+							if (!Storage::disk('public')->exists($src)) {
+								return 'Image missing <!--'.$path.'-->';
+							}
+						}
+
+						return sprintf('<div class="media"><div class="media-left"><a href="#" class="videoModal" data-toggle="modal" data-target="#videoModal" data-video="%1$s"><img class="media-object" src="%2$s" height="30"></a></div></div>',Storage::disk('public')->url($video_src), $url);
+					} else {
+						return sprintf('<a href="#" class="videoModal" data-toggle="modal" data-target="#videoModal" data-video="%1$s">%2$s</a>',Storage::disk('public')->url($video_src), $video_src);
+					}
 				}
         	});
         }
