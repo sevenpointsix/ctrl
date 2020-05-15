@@ -132,7 +132,7 @@ class CtrlSynch extends Command
             // This is pretty flaky TBH, there must be a better way to do this
             $table_columns = DB::select("SHOW COLUMNS FROM {$table_name} WHERE Field != 'id' AND Field != 'updated_at' AND Field != 'created_at'"); // Bindings fail here for some reason
             $pivot_table   = false;
-            $non_id_count  = 0;
+            $id_count  = 0;
             if (count($table_columns) == 2 || count($table_columns) == 3) {
                 foreach ($table_columns as $table_column) {
                     $column_name = $table_column->Field;
