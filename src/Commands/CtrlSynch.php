@@ -753,27 +753,28 @@ class CtrlSynch extends Command
             else {
                 if (is_object($ctrl_property->ctrl_class)) {
                     $table_name = $ctrl_property->ctrl_class->table_name;
-                } else {
-                    $this->error("Cannot load CTRL Class for CTRL Property ".$ctrl_property->id);
-                }
 
-                // Has the table been deleted?!
-                if (!Schema::hasTable($table_name)) {
-                    // I believe that this table should now have already been deleted, in the first foreach loop above
-                    $this->error("Table $table_name doesn't exist");
-                    $missing_columns = true;
-                }
-                else {
-
-                    $table_column = DB::select("SHOW COLUMNS FROM {$table_name} LIKE '{$ctrl_property->name}'");
-                    if (!$table_column) {
-                        $this->error("The standard column for {$ctrl_property->ctrl_class->name}::{$ctrl_property->name} (from the table '{$table_name}') appears not to exist");
+                    // Has the table been deleted?!
+                    if (!Schema::hasTable($table_name)) {
+                        // I believe that this table should now have already been deleted, in the first foreach loop above
+                        $this->error("Table $table_name doesn't exist");
                         $missing_columns = true;
-                        if ($force) {
-                            $ctrl_property->delete();
-                            $this->info("Deleting it...");
+                    }
+                    else {
+
+                        $table_column = DB::select("SHOW COLUMNS FROM {$table_name} LIKE '{$ctrl_property->name}'");
+                        if (!$table_column) {
+                            $this->error("The standard column for {$ctrl_property->ctrl_class->name}::{$ctrl_property->name} (from the table '{$table_name}') appears not to exist");
+                            $missing_columns = true;
+                            if ($force) {
+                                $ctrl_property->delete();
+                                $this->info("Deleting it...");
+                            }
                         }
                     }
+
+                } else {
+                    $this->error("Cannot load CTRL Class for CTRL Property ".$ctrl_property->id);
                 }
             }
         }
