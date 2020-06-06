@@ -129,11 +129,14 @@ class CtrlSymLink extends Command
                      * For some reason, this is triggering, but only generating (say) 2 files
                      * rather than 20? Why? Do we have to refresh the .env file?
                      * Try calling this? php artisan config:clear
+                     * Nope, that doesn't work, unsurprisingly.
                      */
+                    /*
                     $this->call('config:clear');
                     $this->call('ctrl:synch', [
                         'action' => 'files'
                     ]);
+                    */
                 }
                 else {
                     $this->error("Unable to update .env, cannot locate DB_DATABASE key.");
@@ -150,6 +153,7 @@ class CtrlSymLink extends Command
          */
         $this->call('view:clear');
 
-        $this->info('Done.');
+        $this->info('Done. You will now need to run this command:');
+        $this->line('php artisan ctrl:synch files'); // See note above re. cached .env file
     }
 }
