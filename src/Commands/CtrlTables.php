@@ -112,8 +112,8 @@ class CtrlTables extends Command
      */
     public function import() {
          $response = DB::unprepared(File::get($this->sql_file));
-         if ($response) { // Bizarrely, I'm getting true on error, false on success. WTF.
-            $this->error("Possible error?");
+         if (!$response) {
+            $this->error("Possible error when importing SQL file");
          }
          $this->info("Data file imported, about to synch the model files");
 
