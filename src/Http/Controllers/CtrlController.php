@@ -577,35 +577,44 @@ class CtrlController extends Controller
 			$column = new \StdClass;
 
         	if ($header->relationship_type) {
-        		// We need to identify the "string" column for this related class
-        		// Note that this doesn't yet handle hasMany relationships, I don't think?
-        		// We also haven't allowed for classes with multiple "string" values;
-        		// we may have to utilise something from http://datatables.yajrabox.com/eloquent/dt-row for that
 
-        		$related_objects = $this->get_object_from_ctrl_class_id($header->related_to_id);
+				if ($header->relationship_type == 'belongsToMany') {
+					/**
+					 * NOTE: we concatenate hasMany relationships into a single string value,
+					 * and treat it as such. This works well BUT, as things stand, we can't
+					 * search on that concatenated string; so hide the search box. See @get_data
+					 * If this ever becomes an issue, we can probably fix the code elsewhere.
+					 * I'm assuming it makes no sense to order these columns either
+					 */
+					$column->data = $header->name;
+					$column->name = $ctrl_class->table_name.'.'.$header->name;
+					$th_columns[] = '<th data-search-text="false" data-orderable="false">'.$header->label.'</th>';
+				} else {
 
-        		$related_ctrl_class = CtrlClass::where('id',$header->related_to_id)->firstOrFail();
-        		$string = $related_ctrl_class->ctrl_properties()->whereRaw(
-				   'find_in_set(?, flags)',
-				   ['string']
-				)->firstOrFail();
-				$value = $header->name.'.'.$string->name; // $header->name might not always hold true here?
-        		$column->data = $value;
-        		$column->name = $value;
+					$related_objects = $this->get_object_from_ctrl_class_id($header->related_to_id);
 
-        		// Get around a problem with datatables if there's no relationship defined
-        		// See https://datatables.net/manual/tech-notes/4
-				$column->defaultContent = 'None'; // We can't filter the list to show all "None" items though... not yet.
+					$related_ctrl_class = CtrlClass::where('id',$header->related_to_id)->firstOrFail();
+					$string = $related_ctrl_class->ctrl_properties()->whereRaw(
+					'find_in_set(?, flags)',
+					['string']
+					)->firstOrFail();
+					$value = $header->name.'.'.$string->name; // $header->name might not always hold true here?
+					$column->data = $value;
+					$column->name = $value;
 
-        		// Only set data-search-dropdown (which converts the header to a dropdown) if we would have fewer than 50 items in the list:
-        		if ($related_objects::count() < 50) {
-        			$th_columns[] = '<th data-search-dropdown="'.($make_searchable ? 'true' : 'false').'" data-orderable="false">'.$header->label.'</th>';
-        		}
-        		else {
-        			$th_columns[] = '<th data-search-text="'.($make_searchable ? 'true' : 'false').'" data-orderable="'.($make_orderable ? 'true' : 'false').'">'.$header->label.'</th>';
-        		}
-        	}
-        	else {
+					// Get around a problem with datatables if there's no relationship defined
+					// See https://datatables.net/manual/tech-notes/4
+					$column->defaultContent = 'None'; // We can't filter the list to show all "None" items though... not yet.
+
+					// Only set data-search-dropdown (which converts the header to a dropdown) if we would have fewer than 50 items in the list:
+					if ($related_objects::count() < 50) {
+						$th_columns[] = '<th data-search-dropdown="'.($make_searchable ? 'true' : 'false').'" data-orderable="false">'.$header->label.'</th>';
+					}
+					else {
+						$th_columns[] = '<th data-search-text="'.($make_searchable ? 'true' : 'false').'" data-orderable="'.($make_orderable ? 'true' : 'false').'">'.$header->label.'</th>';
+					}
+				}
+        	} else {
         		$column->data = $header->name;
         		$column->name = $ctrl_class->table_name.'.'.$header->name;
         			// Again, see http://datatables.yajrabox.com/eloquent/relationships
@@ -1407,10 +1416,11 @@ class CtrlController extends Controller
 	/**
 	 * TODO: establish what image and file columns we have here, and then call editColumn dynamically below;
 	 */
-		$imageColumns = [];
-		$videoColumns = [];
-		$fileColumns  = [];
-		$rawColumns   = ['order','action']; // Columns that allow raw HTML
+		$imageColumns   = [];
+		$videoColumns   = [];
+		$fileColumns    = [];
+		$hasManyColumns = [];
+		$rawColumns     = ['order','action'];  // Columns that allow raw HTML
 		foreach ($headers as $header) {
 			switch ($header->field_type) {
 				case 'image':
@@ -1425,6 +1435,13 @@ class CtrlController extends Controller
 					$fileColumns[] = $header->name;
 					$rawColumns[]  = $header->name;
 					break;
+			}
+			/**
+			 * This is a hasMany relationship, so we need to concatenate this into a single string value
+			 */
+			if ($header->relationship_type == 'belongsToMany') {
+				$hasManyColumns[] = $header;
+				// Don't need $rawColumns, that just allows us to render HTML in the table cell
 			}
 		}
         $datatable = DataTables::of($objects)
@@ -1522,7 +1539,24 @@ class CtrlController extends Controller
 					}
 				}
         	});
-        }
+		}
+
+		foreach ($hasManyColumns as $hasManyColumn) {
+			$property = $hasManyColumn->name;
+			$datatable->editColumn($property, function($object) use ($property) {
+				$objects = $object->$property;
+				if ($objects->count() > 0) {
+					$string = [];
+					foreach ($objects as $object) {
+						$string[] = $this->get_object_title($object);
+					}
+					return implode(', ', $string);
+				} else {
+					return 'None';
+				}
+			});
+		}
+
         $datatable->addColumn('action', function ($object) use ($ctrl_class, $filter_string) {
             	return $this->get_row_buttons($ctrl_class->id, $object->id, $filter_string);
             })
