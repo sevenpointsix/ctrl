@@ -889,19 +889,15 @@ class CtrlController extends Controller
 
 			// Dummy comment to force a push to Packagist
 
-		$filename = 'import-'.Str::slug($ctrl_class->get_plural()).'-example';
+		$filename = 'import-'.Str::slug($ctrl_class->get_plural()).'-example.csv';
 
-		// \Maatwebsite\Excel\Facades\Excel::create($filename, function($excel) use ($headers) {
-		Excel::create($filename, function($excel) use ($headers) {
-			 $excel->sheet('Sheetname', function($sheet) use ($headers) {
-
-		        $sheet->fromArray(array(
-		            $headers
-		        ),null,'A1',false,false);
-
-		    });
-		})->download('csv');;
-
+		// New approach for Maat 3.0
+		$collection = collect([$headers]);
+		return $collection->downloadExcel(
+			$filename,
+			$writerType = null,
+			$headings = false
+		);
 
 	}
 
