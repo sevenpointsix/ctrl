@@ -110,7 +110,10 @@ class CtrlSynch extends Command
         // Get the current database name (from https://octobercms.com/forum/post/howto-get-the-default-database-name-in-eloquentlaravel-config)
         $database_name = Config::get('database.connections.'.Config::get('database.default').'.database');
         $tables = DB::select('SHOW TABLES');
-        $ignore_tables = ['ctrl_classes','ctrl_properties','migrations','password_resets','revisions','jobs','failed_jobs'];
+        $ignore_tables = [
+            'ctrl_classes','ctrl_properties','migrations','password_resets','revisions','jobs','failed_jobs',
+            'telescope_monitoring', 'telescope_entries_tags', 'telescope_entries'
+        ];
         foreach ($tables as $table) {
             $table_name = $table->{'Tables_in_'.$database_name};
 
