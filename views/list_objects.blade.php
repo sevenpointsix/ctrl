@@ -91,7 +91,10 @@
 	}
 
 	/* Stretch the column search fields and dropdowns so that they're full-width */
+	/** I don't think we should do this with select boxes...? Try this, but it may break some sites:
 	table.dataTable thead th select.form-control, table.dataTable thead th .input-group {
+	**/
+	table.dataTable thead th .input-group {
 		width: 90%;
 	}
 	 table.dataTable thead th .input-group span.input-group-addon:first-child {
