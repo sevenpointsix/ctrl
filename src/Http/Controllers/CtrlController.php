@@ -3191,7 +3191,7 @@ class CtrlController extends Controller
 			// As above
 			return 'an';
 		}
-		else if (in_array($string{0},array('a','e','i','o','u'))) {
+		else if (in_array($string[0],array('a','e','i','o','u'))) {
 			return 'an';
 		}
 		else {
