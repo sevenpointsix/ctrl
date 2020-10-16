@@ -2267,8 +2267,14 @@ class CtrlController extends Controller
 						// Hmmm. Since we switched to Ajax select2 lists, I think we've broken ENUM selects...
 						$values[$enum_value] = $enum_value;
 					}
+				} else {
+					if ($this->module->enabled('custom_select_values')) {
+						$values = $this->module->run('custom_select_values',[
+							$ctrl_class,
+							$ctrl_property							
+						]);
+					}
 				}
-
 			}
 
 			// Build the form_field and it to the tabs

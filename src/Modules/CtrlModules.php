@@ -540,4 +540,26 @@ EOD;
 			}
 		}
 
+		/**
+		 * Customise the values of a select list; currently used for the User::group list
+		 * @param object $ctrl_class 
+		 * @param object $ctrl_property 
+		 * @return array 
+		 */
+		protected function custom_select_values($ctrl_class, $ctrl_property) {
+			/** Example from Argos:
+			if ($ctrl_class->name == 'User' && $ctrl_property->name == 'ctrl_group') {
+				return [
+					'user'    => 'Standard user',
+					'tmti'    => 'TMTI',
+					'reports' => 'Reports',
+					'repairs' => 'Repairs (do not use)',
+					'api'     => 'API only'
+				];
+			} else {
+				return [];
+			}
+			*/
+		}
+
 	}
