@@ -11,16 +11,22 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 @endif
 
+@if (!empty($audit_trail))
+use OwenIt\Auditing\Contracts\Auditable;
+@endif
+
 use Hash;
 
-class {{ $model_name }} extends Model
+class {{ $model_name }} extends Model @if (!empty($audit_trail)) implements Auditable @endif 
 {
 
 	@if (!empty($soft_deletes))
 	   use SoftDeletes;
     @endif
 
-	// TODO: use Revisionable: https://github.com/VentureCraft/revisionable
+	@if (!empty($audit_trail))
+        use \OwenIt\Auditing\Auditable;
+    @endif
 
     /**
      * The table associated with the model.

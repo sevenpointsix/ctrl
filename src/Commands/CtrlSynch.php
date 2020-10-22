@@ -111,7 +111,7 @@ class CtrlSynch extends Command
         $database_name = Config::get('database.connections.'.Config::get('database.default').'.database');
         $tables = DB::select('SHOW TABLES');
         $ignore_tables = [
-            'ctrl_classes','ctrl_properties','migrations','password_resets','revisions','jobs','failed_jobs',
+            'ctrl_classes','ctrl_properties','migrations','password_resets','revisions','audits','jobs','failed_jobs',
             'telescope_monitoring', 'telescope_entries_tags', 'telescope_entries'
         ];
         foreach ($tables as $table) {
@@ -544,6 +544,7 @@ class CtrlSynch extends Command
             $view_data = [
                 'model_name'    => $ctrl_class->name,
                 'soft_deletes'  => false, // Let's leave soft deletes for now
+                'audit_trail'   => true, // Use Auditable. Could use an env() variable for this
                 'table_name'    => $ctrl_class->table_name,
                 'fillable'      => [],
                 'belongsTo'     => [],
